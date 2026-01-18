@@ -18,6 +18,13 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ast  # Added for persistent notice list parsing
 
+st.set_page_config(
+    page_title="Ruby Springfield College | Official Portal",
+    page_icon="🎓", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 # --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
@@ -264,7 +271,6 @@ def get_available_classes():
             classes.append(class_name)
     return sorted(list(set(classes))) if classes else ["JSS 1A"]
 
-st.set_page_config(page_title="RSC | Official Portal", page_icon="🎓", layout="wide")
 
 # Initialize session state for all toggles
 for key in ['show_students', 'show_subjects', 'show_cal', 'show_exam', 'show_contact']:
