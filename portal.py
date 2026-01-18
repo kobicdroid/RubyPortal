@@ -24,6 +24,19 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+# --- STEP 3: VISIBLE SCHOOL BRANDING ---
+st.write(
+    """
+    <div style="text-align: center;">
+        <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
+        <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
+        <p>Maiduguri, Borno State, Nigeria</p>
+        <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+st.vertical_spacer = st.write("<br>", unsafe_allow_html=True) # Adds some space before login
 
 # --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
 def load_portal_data():
