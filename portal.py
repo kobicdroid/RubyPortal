@@ -27,18 +27,26 @@ st.set_page_config(
 )
 
 # --- STEP 2: GOOGLE SEARCH VERIFICATION & SEO ---
-# This section makes your portal visible to Google's robots
+# Updated for high-priority injection
+st.write(
+    """
+    <div style="display:none;">
+        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
+        <p>Google Verification for Ruby Springfield College Portal</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 st.markdown(
     """
     <head>
-        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
         <meta name="description" content="Official Student Result and Management Portal for Ruby Springfield College, Maiduguri.">
         <meta name="keywords" content="Ruby Springfield College, Ruby School Portal, Result Checker, Maiduguri Schools">
     </head>
     """,
     unsafe_allow_html=True
 )
-
 # --- STEP 3: VISIBLE SCHOOL BRANDING ---
 st.write(
     """
@@ -1314,6 +1322,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
