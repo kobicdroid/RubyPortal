@@ -27,24 +27,27 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: THE GOOGLE BOT BYPASS (ANALYTICS INJECTION) ---
-import streamlit.components.v1 as components
-
-# This injects the verification code into the raw HTML frame
+# --- STEP 2: THE GOOGLE ROBOT BYPASS ---
+# We use a static component because Google bots often miss dynamic Streamlit tags
 components.html(
     """
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg');
-    </script>
-    <div style="display:none;">google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg');</script>
+        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
+    </head>
+    <body>
+        <div style="display:none;">google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</div>
+    </body>
+    </html>
     """,
     height=0,
 )
-
 
 # --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
 def load_portal_data():
@@ -1295,6 +1298,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
