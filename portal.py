@@ -27,13 +27,24 @@ st.set_page_config(
 )
 
 # --- STEP 2: GOOGLE SEARCH VERIFICATION & SEO ---
-# Updated for high-priority injection
-st.write(
-    """
-    <div style="display:none;">
+# We use both markdown and a hidden div to ensure Google finds the tag
+st.markdown(
+    f"""
+    <div style="display:none; visibility:hidden; height:0; width:0;">
         <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
-        <p>Google Verification for Ruby Springfield College Portal</p>
+        <p>Google-Site-Verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</p>
     </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Invisible Meta Tags for Search Engines
+st.markdown(
+    """
+    <head>
+        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
+        <meta name="description" content="Official Student Result and Management Portal for Ruby Springfield College, Maiduguri.">
+    </head>
     """,
     unsafe_allow_html=True
 )
@@ -1310,6 +1321,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
