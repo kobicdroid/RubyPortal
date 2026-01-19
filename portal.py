@@ -35,19 +35,6 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
-
-# --- STEP 3: PERSISTENT STORAGE ENGINE ---
-def load_portal_data():
-    storage_path = "portal_data.xlsx"
-    # Using your updated 2026 CBT Optimization defaults
-    defaults = {
-        'news_title': "🚀 CBT Center Optimization 2026", 
-        'news_desc': "Our state-of-the-art CBT facility is now fully optimized for the upcoming cycle.",
-        'calendar': "Mid-term: Feb 14-17 | Exams: March 25, 2026", 
-        'exams': "Full uniform (Light Brown/Ash) and valid ID required.", 
-        'contact': "Principal: +234 813 103 2577 | Old GRA, Maiduguri",
-        'notices_data': "[]"  
-    }
     
     if os.path.exists(storage_path):
         try:
@@ -1307,4 +1294,5 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
