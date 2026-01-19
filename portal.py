@@ -18,37 +18,27 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ast  # Added for persistent notice list parsing
 import streamlit.components.v1 as components
-# --- STEP 1: BROWSER CONFIGURATION ---
 
+# --- STEP 1: THE "MASTER" BROWSER INJECTION ---
+# We put the verification code in the title so Google sees it instantly.
 st.set_page_config(
-    page_title="Ruby Springfield College | Official Portal",
+    page_title="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg | Ruby Springfield College",
     page_icon="🎓", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # --- STEP 2: THE GOOGLE ROBOT BYPASS ---
-# This injects the verification directly into the HTML source
+import streamlit.components.v1 as components
 components.html(
     """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','GTM-lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg');</script>
+    <div style="display:none;">
+        <p>google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</p>
         <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
-    </head>
-    <body>
-        <div style="display:none;">google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</div>
-    </body>
-    </html>
+    </div>
     """,
     height=0,
 )
-
 # --- STEP 3: PERSISTENT STORAGE ENGINE ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
@@ -1298,6 +1288,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
