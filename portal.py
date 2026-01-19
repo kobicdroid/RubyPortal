@@ -16,9 +16,10 @@ import plotly.graph_objects as go
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import ast  # Added for persistent notice list parsing
+import ast 
+import time
 
-# --- STEP 1: PAGE CONFIG (Must be the first Streamlit command) ---
+# --- STEP 1: PAGE CONFIG ---
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
@@ -35,27 +36,37 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
+
+# --- STEP 3: PERSISTENT STORAGE ENGINE ---
+def load_portal_data():
+    storage_path = "portal_data.xlsx"
+    defaults = {
+        'news_title': "🚀 CBT Center Optimization 2026", 
+        'news_desc': "Our state-of-the-art CBT facility is now fully optimized for the upcoming cycle.",
+        'calendar': "Mid-term: Feb 14-17 | Exams: March 25, 2026", 
+        'exams': "Full uniform (Light Brown/Ash) and valid ID required.", 
+        'contact': "Principal: +234 813 103 2577 | Old GRA, Maiduguri",
+        'notices_data': "[]"
+    }
     
+    # --- FIXED INDENTATION BELOW ---
     if os.path.exists(storage_path):
         try:
-            # Added engine='openpyxl' to ensure it works on the cloud
             df = pd.read_excel(storage_path, engine='openpyxl')
             return dict(zip(df['Key'], df['Value']))
         except Exception:
             return defaults
     return defaults
 
-# Initialize storage in Session State (Runs only once)
+# Initialize Session States
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
 
-# Rebuild notices list from Session State
 if 'notices' not in st.session_state:
     try:
         raw_data = st.session_state.portal_storage.get('notices_data', "[]")
-        # ast.literal_eval is safe for converting string back to list
         st.session_state.notices = ast.literal_eval(str(raw_data))
-    except Exception:
+    except:
         st.session_state.notices = []
 
 # --- STEP 4: VISIBLE SCHOOL BRANDING ---
@@ -71,11 +82,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Spacing for a clean look
 st.write("") 
 st.write("") 
 
-# --- STEP 5: NEWS DISPLAY (Using the stored data) ---
+# Display News from Storage
 st.info(f"**{st.session_state.portal_storage['news_title']}**\n\n{st.session_state.portal_storage['news_desc']}")
 # --- STEP 2: EMAIL NOTIFICATION CORE ---
 def send_email_notification(receiver_email, student_name, class_name):
@@ -1294,5 +1304,6 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
