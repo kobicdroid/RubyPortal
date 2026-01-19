@@ -21,10 +21,6 @@ import streamlit.components.v1 as components
 import time
 import pandas as pd
 
-import streamlit as st
-import streamlit.components.v1 as components
-import pandas as pd
-import os
 
 # --- STEP 1: THE "ROBOT-FIRST" CONFIG ---
 st.set_page_config(
@@ -1294,6 +1290,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
