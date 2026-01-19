@@ -28,7 +28,7 @@ st.set_page_config(
 )
 
 # --- STEP 2: THE GOOGLE ROBOT BYPASS ---
-# We use a static component because Google bots often miss dynamic Streamlit tags
+# This injects the verification directly into the HTML source
 components.html(
     """
     <!DOCTYPE html>
@@ -49,7 +49,7 @@ components.html(
     height=0,
 )
 
-# --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
+# --- STEP 3: PERSISTENT STORAGE ENGINE ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
     defaults = {
@@ -58,7 +58,7 @@ def load_portal_data():
         'calendar': "Mid-term: Feb 14-17 | Exams: March 25, 2026", 
         'exams': "Full uniform (Light Brown/Ash) and valid ID required.", 
         'contact': "Principal: +234 813 103 2577 | Old GRA, Maiduguri",
-        'notices_data': "[]"  # Persistent placeholder for notice board
+        'notices_data': "[]"
     }
     
     if os.path.exists(storage_path):
@@ -1298,6 +1298,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
