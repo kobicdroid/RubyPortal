@@ -27,37 +27,28 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: THE GOOGLE BYPASS ---
-# This injects the tag directly into the iframe that Google scans
-components.html(
-    """
-    <html>
-        <head>
-            <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
-        </head>
-        <body>
-            <div style="text-align: center; font-family: Arial, sans-serif;">
-                <h1 style="color: #1E3A8A;">Ruby Springfield College</h1>
-                <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
-                <p>Maiduguri, Borno State, Nigeria</p>
-                <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
-            </div>
-        </body>
-    </html>
-    """,
-    height=200,
-)
+# --- STEP 2: FORCED GOOGLE VERIFICATION ---
+# We use a standard Streamlit call here because Google's bot reads these first
+st.caption("Verified Site Ownership: google9502e6452ca52fd2.html")
+st.write(f"", unsafe_allow_html=True)
 
-# Keep the standard markdown as a backup for SEO keywords
+# --- STEP 3: VISIBLE SCHOOL BRANDING ---
 st.markdown(
     """
+    <div style="text-align: center;">
+        <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
+        <h2 style="color: #555;">Official Academic Management & Result Portal</h2>
+        <p>Maiduguri, Borno State, Nigeria</p>
+        <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
+    </div>
     <head>
-        <meta name="description" content="Official Student Result and Management Portal for Ruby Springfield College, Maiduguri.">
-        <meta name="keywords" content="Ruby Springfield College, Ruby School Portal, Result Checker, Maiduguri Schools">
+        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
     </head>
-    """,
+    """, 
     unsafe_allow_html=True
 )
+st.write("<br>", unsafe_allow_html=True)
+
 
 # --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
 def load_portal_data():
@@ -1308,6 +1299,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
