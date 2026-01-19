@@ -15,14 +15,16 @@ import gc
 import plotly.graph_objects as go
 import smtplib
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import ast  
-import streamlit.components.v1 as components
-import time
+import streamlit as st
 import pandas as pd
-
+import os
+import ast
+import time
+from email.mime.multipart import MIMEMultipart
+import streamlit.components.v1 as components
 
 # --- STEP 1: THE "ROBOT-FIRST" CONFIG ---
+# This title is what Google will show when users search for you
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
@@ -40,15 +42,24 @@ def load_portal_data():
         'contact': "Principal: +234 813 103 2577 | Old GRA, Maiduguri",
         'notices_data': "[]"
     }
+    
     if os.path.exists(storage_path):
         try:
-            df = pd.read_excel(storage_path)
+            # We use openpyxl engine here to ensure it works on the web
+            df = pd.read_excel(storage_path, engine='openpyxl')
             return dict(zip(df['Key'], df['Value']))
-        except Exception: return defaults
+        except Exception as e:
+            st.error(f"Error loading Excel: {e}")
+            return defaults
     return defaults
 
-portal_data = load_portal_data()# Rebuild notices list from Excel storage on startup/refresh
-if 'notices' not in st.session_state:
+portal_data = load_portal_data()
+
+# Example of how to use your 'ast' import for the notices list
+notices_list = ast.literal_eval(portal_data.get('notices_data', '[]'))
+
+st.title(portal_data['news_title'])
+st.info(portal_data['news_desc'])if 'notices' not in st.session_state:
     try:
         raw_data = st.session_state.portal_storage.get('notices_data', "[]")
         st.session_state.notices = ast.literal_eval(str(raw_data))
@@ -1272,6 +1283,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
