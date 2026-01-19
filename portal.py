@@ -18,58 +18,78 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ast  # Added for persistent notice list parsing
 
+# --- STEP 1: PAGE CONFIG (Must be the first Streamlit command) ---
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
-# --- STEP 3: VISIBLE SCHOOL BRANDING ---
-st.write(
+
+# --- STEP 2: GOOGLE SEARCH VERIFICATION ---
+st.markdown(
     """
-    <div style="text-align: center;">
-        <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
-        <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
-        <p>Maiduguri, Borno State, Nigeria</p>
-        <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
+    <div style="display:none;">
+    <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
     </div>
     """, 
     unsafe_allow_html=True
 )
-st.vertical_spacer = st.write("<br>", unsafe_allow_html=True) # Adds some space before login
 
-# --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
+# --- STEP 3: PERSISTENT STORAGE ENGINE ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
+    # Using your updated 2026 CBT Optimization defaults
     defaults = {
         'news_title': "🚀 CBT Center Optimization 2026", 
         'news_desc': "Our state-of-the-art CBT facility is now fully optimized for the upcoming cycle.",
         'calendar': "Mid-term: Feb 14-17 | Exams: March 25, 2026", 
         'exams': "Full uniform (Light Brown/Ash) and valid ID required.", 
         'contact': "Principal: +234 813 103 2577 | Old GRA, Maiduguri",
-        'notices_data': "[]"  # Persistent placeholder for notice board
+        'notices_data': "[]"  
     }
     
     if os.path.exists(storage_path):
         try:
-            df = pd.read_excel(storage_path)
+            # Added engine='openpyxl' to ensure it works on the cloud
+            df = pd.read_excel(storage_path, engine='openpyxl')
             return dict(zip(df['Key'], df['Value']))
         except Exception:
             return defaults
     return defaults
 
-# Initialize storage and Persistent Notices
+# Initialize storage in Session State (Runs only once)
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
 
-# Rebuild notices list from Excel storage on startup/refresh
+# Rebuild notices list from Session State
 if 'notices' not in st.session_state:
     try:
         raw_data = st.session_state.portal_storage.get('notices_data', "[]")
+        # ast.literal_eval is safe for converting string back to list
         st.session_state.notices = ast.literal_eval(str(raw_data))
-    except:
+    except Exception:
         st.session_state.notices = []
 
+# --- STEP 4: VISIBLE SCHOOL BRANDING ---
+st.markdown(
+    """
+    <div style="text-align: center;">
+        <h1 style="color: #1E3A8A; font-family: 'Arial'; margin-bottom: 0;">Ruby Springfield College</h1>
+        <h3 style="color: #555; margin-top: 0;">Official Academic Management & Result Portal</h3>
+        <p style="font-weight: bold; color: #1E3A8A;">Maiduguri, Borno State, Nigeria</p>
+        <hr style="border: 1px solid #1E3A8A; width: 60%; margin: auto;">
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
+# Spacing for a clean look
+st.write("") 
+st.write("") 
+
+# --- STEP 5: NEWS DISPLAY (Using the stored data) ---
+st.info(f"**{st.session_state.portal_storage['news_title']}**\n\n{st.session_state.portal_storage['news_desc']}")
 # --- STEP 2: EMAIL NOTIFICATION CORE ---
 def send_email_notification(receiver_email, student_name, class_name):
     """
@@ -1287,3 +1307,4 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
