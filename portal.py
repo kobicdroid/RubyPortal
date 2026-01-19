@@ -31,7 +31,7 @@ st.set_page_config(
 st.markdown(
     """
     <head>
-        <meta name="google-site-verification" content="google9502e6452ca52fd2" />
+        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
         <meta name="description" content="Official Student Result and Management Portal for Ruby Springfield College, Maiduguri.">
         <meta name="keywords" content="Ruby Springfield College, Ruby School Portal, Result Checker, Maiduguri Schools">
     </head>
@@ -1314,5 +1314,6 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
