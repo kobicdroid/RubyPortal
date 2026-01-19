@@ -20,37 +20,36 @@ import ast
 import streamlit.components.v1 as components
 import time
 
-# --- THE GOOGLE SHORTCUT (SHUTDOWN SPECIAL) ---
-# This detects if Google is scanning the page and forces the code to show first
-if "googleeYWNDcrZgqM3lRLg" in str(st.query_params):
-    st.write("google-site-verification: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
-    st.stop()
+import streamlit as st
+import streamlit.components.v1 as components
+import pandas as pd
+# ... (keep other imports)
 
-# --- STEP 1: BROWSER CONFIGURATION ---
+# --- STEP 1: THE SIDEBAR BYPASS ---
+# Putting the code in the sidebar is a common trick to bypass loading delays
+with st.sidebar:
+    st.caption("v.1.0.4 | ID: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
+    st.write(f'', unsafe_allow_html=True)
+
+# --- STEP 2: BROWSER CONFIGURATION ---
 st.set_page_config(
-    page_title="Ruby Springfield College | Official Portal",
+    page_title="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0 | Ruby Springfield College",
     page_icon="🎓", 
     layout="wide"
 )
 
-# --- STEP 2: THE "VISIBLE BEACON" FIX ---
-# Forced Meta Tag injection
-st.markdown(f'<meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />', unsafe_allow_html=True)
-
-# Visible caption for the robot's text-parser
-st.caption("Site Verification Token: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
-
-# Hidden HTML component to catch the bot in the background
-components.html(
+# --- STEP 3: RAW HTML HEAD INJECTION ---
+# This is the standard method, kept as a backup
+st.markdown(
     """
-    <div style="display:none;">
-        google-site-verification: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0
-    </div>
-    """,
-    height=0
+    <head>
+        <meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />
+    </head>
+    """, 
+    unsafe_allow_html=True
 )
 
-# --- STEP 3: VISIBLE BRANDING ---
+# --- STEP 4: VISIBLE BRANDING ---
 st.markdown(
     """
     <div style="text-align: center;">
@@ -62,11 +61,6 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
-st.write("<br>", unsafe_allow_html=True)
-
-# --- ADDING A SMALL DELAY FOR THE BOT ---
-# This gives the Google Crawler 2 seconds to 'read' the page before the login loads
-time.sleep(2)
 # --- STEP 3: PERSISTENT STORAGE ENGINE ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
@@ -1316,6 +1310,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
