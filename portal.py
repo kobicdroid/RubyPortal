@@ -26,39 +26,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: GOOGLE SEARCH VERIFICATION & SEO ---
-# We use both markdown and a hidden div to ensure Google finds the tag
-st.markdown(
-    f"""
-    <div style="display:none; visibility:hidden; height:0; width:0;">
-        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
-        <p>Google-Site-Verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# Invisible Meta Tags for Search Engines
-st.markdown(
-    """
-    <head>
-        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
-        <meta name="description" content="Official Student Result and Management Portal for Ruby Springfield College, Maiduguri.">
-    </head>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    """
-    <head>
-        <meta name="description" content="Official Student Result and Management Portal for Ruby Springfield College, Maiduguri.">
-        <meta name="keywords" content="Ruby Springfield College, Ruby School Portal, Result Checker, Maiduguri Schools">
-    </head>
-    """,
-    unsafe_allow_html=True
-)
-# --- STEP 3: VISIBLE SCHOOL BRANDING ---
+# --- STEP 2 & 3: BRANDING & GOOGLE VERIFICATION ---
+# Combined block to ensure Google's robot sees the verification code immediately
 st.write(
     """
     <div style="text-align: center;">
@@ -66,11 +35,18 @@ st.write(
         <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
         <p>Maiduguri, Borno State, Nigeria</p>
         <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
+        <div style="color: transparent; font-size: 1px; line-height: 0;">google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</div>
     </div>
+    <head>
+        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
+        <meta name="description" content="Official Student Result and Management Portal for Ruby Springfield College, Maiduguri.">
+        <meta name="keywords" content="Ruby Springfield College, Ruby School Portal, Result Checker, Maiduguri Schools">
+    </head>
     """, 
     unsafe_allow_html=True
 )
-st.vertical_spacer = st.write("<br>", unsafe_allow_html=True) # Adds some space before login
+st.write("<br>", unsafe_allow_html=True) # Adds some space before login
+
 
 # --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
 def load_portal_data():
@@ -1321,6 +1297,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
