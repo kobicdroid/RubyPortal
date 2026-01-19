@@ -29,24 +29,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- STEP 2: INJECTING THE TAG VIA COMPONENT ---
-# This puts the code in a raw HTML container that loads separately
-components.html(
-    """
-    <html>
-        <head>
-            <meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />
-        </head>
-        <body>
-            <p style="display:none;">google-site-verification: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0</p>
-        </body>
-    </html>
-    """,
-    height=0,
-)
-
-# Visible backup for the bot
-st.caption("Verification Token: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
 # --- STEP 3: PERSISTENT STORAGE ENGINE ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
