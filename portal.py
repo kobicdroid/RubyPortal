@@ -21,27 +21,36 @@ import streamlit.components.v1 as components
 import time
 import pandas as pd
 
-# --- THE ADVANCED SHUTDOWN BYPASS ---
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import os
-import streamlit.components.v1 as components
 
-# --- STEP 1: THE "FORCE VERIFY" CONFIG ---
-# We put the verification code in the tab title so the robot sees it first
+# --- STEP 1: THE "ROBOT-FIRST" CONFIG ---
 st.set_page_config(
-    page_title="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0 | Ruby Springfield",
+    page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
     layout="wide"
 )
 
-# --- STEP 2: THE VISIBLE BEACON (DO NOT REMOVE UNTIL VERIFIED) ---
-# This creates a big blue box at the top that Google's robot MUST read.
-st.error(f"Google Verification Token: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
+# --- STEP 2: INJECTING THE TAG VIA COMPONENT ---
+# This puts the code in a raw HTML container that loads separately
+components.html(
+    """
+    <html>
+        <head>
+            <meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />
+        </head>
+        <body>
+            <p style="display:none;">google-site-verification: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0</p>
+        </body>
+    </html>
+    """,
+    height=0,
+)
 
-# Hidden Meta Tag for the "HTML Tag" method
-st.markdown('<meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />', unsafe_allow_html=True)
-
+# Visible backup for the bot
+st.caption("Verification Token: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
 # --- STEP 3: PERSISTENT STORAGE ENGINE ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
@@ -1285,6 +1294,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
