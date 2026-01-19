@@ -27,7 +27,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: GOOGLE SEARCH VERIFICATION ---
+# --- STEP 2: GOOGLE SEARCH VERIFICATION (Invisible) ---
 st.markdown(
     """
     <div style="display:none;">
@@ -37,42 +37,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- STEP 3: PERSISTENT STORAGE ENGINE ---
-def load_portal_data():
-    storage_path = "portal_data.xlsx"
-    defaults = {
-        'news_title': "🚀 CBT Center Optimization 2026", 
-        'news_desc': "Our state-of-the-art CBT facility is now fully optimized for the upcoming cycle.",
-        'calendar': "Mid-term: Feb 14-17 | Exams: March 25, 2026", 
-        'exams': "Full uniform (Light Brown/Ash) and valid ID required.", 
-        'contact': "Principal: +234 813 103 2577 | Old GRA, Maiduguri",
-        'notices_data': "[]"
-    }
-    
-    # --- FIXED INDENTATION BELOW ---
-    if os.path.exists(storage_path):
-        try:
-            df = pd.read_excel(storage_path, engine='openpyxl')
-            return dict(zip(df['Key'], df['Value']))
-        except Exception:
-            return defaults
-    return defaults
-
-# Initialize Session States
-if 'portal_storage' not in st.session_state:
-    st.session_state.portal_storage = load_portal_data()
-
-if 'notices' not in st.session_state:
-    try:
-        raw_data = st.session_state.portal_storage.get('notices_data', "[]")
-        st.session_state.notices = ast.literal_eval(str(raw_data))
-    except:
-        st.session_state.notices = []
-
-# --- STEP 4: VISIBLE SCHOOL BRANDING ---
+# --- STEP 3: VISIBLE SCHOOL BRANDING (TOP OF PAGE) ---
 st.markdown(
     """
-    <div style="text-align: center;">
+    <div style="text-align: center; padding-top: 10px;">
         <h1 style="color: #1E3A8A; font-family: 'Arial'; margin-bottom: 0;">Ruby Springfield College</h1>
         <h3 style="color: #555; margin-top: 0;">Official Academic Management & Result Portal</h3>
         <p style="font-weight: bold; color: #1E3A8A;">Maiduguri, Borno State, Nigeria</p>
@@ -83,10 +51,7 @@ st.markdown(
 )
 
 st.write("") 
-st.write("") 
-
-# Display News from Storage
-st.info(f"**{st.session_state.portal_storage['news_title']}**\n\n{st.session_state.portal_storage['news_desc']}")
+st.write("")
 # --- STEP 2: EMAIL NOTIFICATION CORE ---
 def send_email_notification(receiver_email, student_name, class_name):
     """
@@ -1304,6 +1269,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
