@@ -22,36 +22,25 @@ import time
 import pandas as pd
 
 # --- THE ADVANCED SHUTDOWN BYPASS ---
-# This serves the verification string as a plain page if called
-if "googleeYWNDcrZgqM3lRLg" in st.query_params:
-    st.write("google-site-verification: googleeYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0.html")
-    st.stop()
+import streamlit as st
+import pandas as pd
+import os
+import streamlit.components.v1 as components
 
-# --- STEP 1: BROWSER CONFIGURATION ---
-# Putting the code in the page_title is the "Nuclear Option" - Google reads this first!
+# --- STEP 1: THE "FORCE VERIFY" CONFIG ---
+# We put the verification code in the tab title so the robot sees it first
 st.set_page_config(
-    page_title="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0 | Ruby Springfield College",
+    page_title="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0 | Ruby Springfield",
     page_icon="🎓", 
     layout="wide"
 )
 
-# --- STEP 2: MULTI-LAYER INJECTION ---
-# We force the verification code to appear as the VERY FIRST piece of text on the page
-st.write(f"google-site-verification: googleeYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0.html")
+# --- STEP 2: THE VISIBLE BEACON (DO NOT REMOVE UNTIL VERIFIED) ---
+# This creates a big blue box at the top that Google's robot MUST read.
+st.error(f"Google Verification Token: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
 
-st.markdown(
-    """
-    <head>
-        <meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />
-    </head>
-    """, 
-    unsafe_allow_html=True
-)
-
-with st.sidebar:
-    st.caption("Admin ID: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
-    # Secret comment for crawlers
-    st.write("", unsafe_allow_html=True)
+# Hidden Meta Tag for the "HTML Tag" method
+st.markdown('<meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />', unsafe_allow_html=True)
 
 # --- STEP 3: PERSISTENT STORAGE ENGINE ---
 def load_portal_data():
@@ -64,17 +53,14 @@ def load_portal_data():
         'contact': "Principal: +234 813 103 2577 | Old GRA, Maiduguri",
         'notices_data': "[]"
     }
-    
     if os.path.exists(storage_path):
         try:
             df = pd.read_excel(storage_path)
             return dict(zip(df['Key'], df['Value']))
-        except Exception:
-            return defaults
+        except Exception: return defaults
     return defaults
 
-portal_data = load_portal_data()
-# Rebuild notices list from Excel storage on startup/refresh
+portal_data = load_portal_data()# Rebuild notices list from Excel storage on startup/refresh
 if 'notices' not in st.session_state:
     try:
         raw_data = st.session_state.portal_storage.get('notices_data', "[]")
@@ -1299,6 +1285,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
