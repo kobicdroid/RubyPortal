@@ -27,12 +27,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: GOOGLE SEARCH VERIFICATION (Invisible) ---
+# --- STEP 2: GOOGLE SEARCH VERIFICATION ---
 st.markdown(
     """
     <div style="display:none;">
     <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
     </div>
+    <p style="font-size:1px; color:white;">Verification Active</p>
     """, 
     unsafe_allow_html=True
 )
@@ -1269,6 +1270,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
