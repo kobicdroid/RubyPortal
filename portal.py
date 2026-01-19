@@ -27,28 +27,41 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: FORCED GOOGLE VERIFICATION ---
-# We use a standard Streamlit call here because Google's bot reads these first
-st.caption("Verified Site Ownership: google9502e6452ca52fd2.html")
-st.write(f"", unsafe_allow_html=True)
+# ... (Keep all your other imports)
 
-# --- STEP 3: VISIBLE SCHOOL BRANDING ---
+# --- STEP 1: THE "MASTER" BROWSER INJECTION ---
+# Google's bot reads the title of the page first. 
+# We are putting the verification code directly into the title.
+st.set_page_config(
+    page_title="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg | Ruby Springfield College",
+    page_icon="🎓", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# --- STEP 2: MULTI-LAYER VERIFICATION ---
 st.markdown(
+    """
+    <div style="display:none;">
+        <p>google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</p>
+        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# --- STEP 3: VISIBLE BRANDING ---
+st.write(
     """
     <div style="text-align: center;">
         <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
-        <h2 style="color: #555;">Official Academic Management & Result Portal</h2>
+        <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
         <p>Maiduguri, Borno State, Nigeria</p>
         <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
     </div>
-    <head>
-        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
-    </head>
     """, 
     unsafe_allow_html=True
 )
-st.write("<br>", unsafe_allow_html=True)
-
 
 # --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
 def load_portal_data():
@@ -1299,6 +1312,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
