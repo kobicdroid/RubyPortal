@@ -16,18 +16,29 @@ import plotly.graph_objects as go
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import streamlit.components.v1 as components
-import ast
-import time
+import ast  # Added for persistent notice list parsing
 
-# --- STEP 1: THE "ROBOT-FIRST" CONFIG ---
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+# --- STEP 3: VISIBLE SCHOOL BRANDING ---
+st.write(
+    """
+    <div style="text-align: center;">
+        <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
+        <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
+        <p>Maiduguri, Borno State, Nigeria</p>
+        <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+st.vertical_spacer = st.write("<br>", unsafe_allow_html=True) # Adds some space before login
 
-# --- STEP 3: PERSISTENT STORAGE ENGINE ---
+# --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
     defaults = {
@@ -36,35 +47,28 @@ def load_portal_data():
         'calendar': "Mid-term: Feb 14-17 | Exams: March 25, 2026", 
         'exams': "Full uniform (Light Brown/Ash) and valid ID required.", 
         'contact': "Principal: +234 813 103 2577 | Old GRA, Maiduguri",
-        'notices_data': "[]"
+        'notices_data': "[]"  # Persistent placeholder for notice board
     }
     
     if os.path.exists(storage_path):
         try:
-            df = pd.read_excel(storage_path, engine='openpyxl')
+            df = pd.read_excel(storage_path)
             return dict(zip(df['Key'], df['Value']))
-        except Exception as e:
-            st.error(f"Error loading Excel: {e}")
+        except Exception:
             return defaults
     return defaults
 
-# Load the data into a variable
-portal_data = load_portal_data()
+# Initialize storage and Persistent Notices
+if 'portal_storage' not in st.session_state:
+    st.session_state.portal_storage = load_portal_data()
 
-# Display News
-st.title(portal_data['news_title'])
-st.info(portal_data['news_desc'])
-
-# Corrected Notice Logic
+# Rebuild notices list from Excel storage on startup/refresh
 if 'notices' not in st.session_state:
     try:
-        # We use portal_data (the variable we created above)
-        raw_data = portal_data.get('notices_data', "[]")
+        raw_data = st.session_state.portal_storage.get('notices_data', "[]")
         st.session_state.notices = ast.literal_eval(str(raw_data))
     except:
         st.session_state.notices = []
-
-st.write(f"Current Notices: {len(st.session_state.notices)}")
 
 # --- STEP 2: EMAIL NOTIFICATION CORE ---
 def send_email_notification(receiver_email, student_name, class_name):
@@ -1283,33 +1287,3 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
