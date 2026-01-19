@@ -59,18 +59,6 @@ st.write(
     """, 
     unsafe_allow_html=True
 )
-st.vertical_spacer = st.write("<br>", unsafe_allow_html=True) # Adds some space before login# --- STEP 3: VISIBLE SCHOOL BRANDING ---
-st.write(
-    """
-    <div style="text-align: center;">
-        <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
-        <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
-        <p>Maiduguri, Borno State, Nigeria</p>
-        <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
 st.vertical_spacer = st.write("<br>", unsafe_allow_html=True) # Adds some space before login
 
 # --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
@@ -1322,6 +1310,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
