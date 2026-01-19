@@ -17,8 +17,9 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ast  # Added for persistent notice list parsing
-
+import streamlit.components.v1 as components
 # --- STEP 1: BROWSER CONFIGURATION ---
+
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
@@ -26,27 +27,37 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2 & 3: BRANDING & GOOGLE VERIFICATION ---
-# Combined block to ensure Google's robot sees the verification code immediately
-st.write(
+# --- STEP 2: THE GOOGLE BYPASS ---
+# This injects the tag directly into the iframe that Google scans
+components.html(
     """
-    <div style="text-align: center;">
-        <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
-        <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
-        <p>Maiduguri, Borno State, Nigeria</p>
-        <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
-        <div style="color: transparent; font-size: 1px; line-height: 0;">google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</div>
-    </div>
+    <html>
+        <head>
+            <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
+        </head>
+        <body>
+            <div style="text-align: center; font-family: Arial, sans-serif;">
+                <h1 style="color: #1E3A8A;">Ruby Springfield College</h1>
+                <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
+                <p>Maiduguri, Borno State, Nigeria</p>
+                <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
+            </div>
+        </body>
+    </html>
+    """,
+    height=200,
+)
+
+# Keep the standard markdown as a backup for SEO keywords
+st.markdown(
+    """
     <head>
-        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
         <meta name="description" content="Official Student Result and Management Portal for Ruby Springfield College, Maiduguri.">
         <meta name="keywords" content="Ruby Springfield College, Ruby School Portal, Result Checker, Maiduguri Schools">
     </head>
-    """, 
+    """,
     unsafe_allow_html=True
 )
-st.write("<br>", unsafe_allow_html=True) # Adds some space before login
-
 
 # --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
 def load_portal_data():
@@ -1297,6 +1308,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
