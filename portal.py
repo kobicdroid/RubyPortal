@@ -18,27 +18,44 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ast  # Added for persistent notice list parsing
 import streamlit.components.v1 as components
+import time
 
-# --- STEP 1: THE "MASTER" BROWSER INJECTION ---
-# We put the verification code in the title so Google sees it instantly.
+# --- STEP 1: BROWSER CONFIGURATION ---
 st.set_page_config(
-    page_title="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg | Ruby Springfield College",
+    page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# --- STEP 2: THE GOOGLE ROBOT BYPASS ---
-import streamlit.components.v1 as components
+# --- STEP 2: THE "VISIBLE BEACON" FIX ---
+# We put the NEW code here in three different ways so the bot cannot miss it.
+st.write(f'<meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />', unsafe_allow_html=True)
+
+# This puts the code as actual text on the page for the robot to read
+st.caption("Verification: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
+
 components.html(
     """
     <div style="display:none;">
-        <p>google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</p>
-        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
+        google-site-verification: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0
     </div>
     """,
-    height=0,
+    height=0
 )
+
+# --- STEP 3: VISIBLE BRANDING ---
+st.markdown(
+    """
+    <div style="text-align: center;">
+        <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
+        <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
+        <p>Maiduguri, Borno State, Nigeria</p>
+        <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
 # --- STEP 3: PERSISTENT STORAGE ENGINE ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
@@ -1288,6 +1305,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
