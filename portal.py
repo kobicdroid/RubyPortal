@@ -27,24 +27,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: THE GOOGLE ROBOT BYPASS ---
+# --- STEP 2: THE GOOGLE BOT BYPASS (ANALYTICS INJECTION) ---
 import streamlit.components.v1 as components
 
-# This is a 'Script' injection. Google bots look for these specifically.
+# This injects the verification code into the raw HTML frame
 components.html(
-    f"""
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VERIFICATION"></script>
+    """
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag(){{dataLayer.push(arguments);}}
+      function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      // Your specific verification code as a comment for the bot
-      // google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg
+      gtag('config', 'G-lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg');
     </script>
-    <div style="font-size: 8px; color: #f9f9f9;">Verification Code: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</div>
+    <div style="display:none;">google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</div>
     """,
     height=0,
 )
+
+
 # --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
@@ -1294,6 +1295,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
