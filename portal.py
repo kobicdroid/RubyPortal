@@ -19,48 +19,31 @@ from email.mime.multipart import MIMEMultipart
 import ast  
 import streamlit.components.v1 as components
 import time
-
-import streamlit as st
-import streamlit.components.v1 as components
 import pandas as pd
 # ... (keep other imports)
 
-# --- STEP 1: THE SIDEBAR BYPASS ---
-# Putting the code in the sidebar is a common trick to bypass loading delays
-with st.sidebar:
-    st.caption("v.1.0.4 | ID: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
-    st.write(f'', unsafe_allow_html=True)
+# --- THE ADVANCED SHUTDOWN BYPASS ---
+# This detects the specific URL Google looks for and serves the token immediately
+if "googleeYWNDcrZgqM3lRLg" in st.query_params or "verify" in st.query_params:
+    st.write("google-site-verification: googleeYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0.html")
+    st.stop()
 
-# --- STEP 2: BROWSER CONFIGURATION ---
+# --- STEP 1: BROWSER CONFIGURATION ---
 st.set_page_config(
-    page_title="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0 | Ruby Springfield College",
+    page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
     layout="wide"
 )
 
-# --- STEP 3: RAW HTML HEAD INJECTION ---
-# This is the standard method, kept as a backup
-st.markdown(
-    """
-    <head>
-        <meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />
-    </head>
-    """, 
-    unsafe_allow_html=True
-)
+# --- STEP 2: MULTI-LAYER INJECTION ---
+# 1. Header Injection
+st.markdown('<meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />', unsafe_allow_html=True)
 
-# --- STEP 4: VISIBLE BRANDING ---
-st.markdown(
-    """
-    <div style="text-align: center;">
-        <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
-        <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
-        <p>Maiduguri, Borno State, Nigeria</p>
-        <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
+# 2. Hidden Sidebar Token (Bots love sidebars)
+with st.sidebar:
+    
+    st.write("", unsafe_allow_html=True)
+    st.caption("System Verified: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
 # --- STEP 3: PERSISTENT STORAGE ENGINE ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
@@ -1310,6 +1293,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
