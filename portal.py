@@ -18,13 +18,40 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ast  # Added for persistent notice list parsing
 
+# --- STEP 1: BROWSER CONFIGURATION ---
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# --- STEP 2: GOOGLE SEARCH VERIFICATION & SEO ---
+# This section makes your portal visible to Google's robots
+st.markdown(
+    """
+    <head>
+        <meta name="google-site-verification" content="google9502e6452ca52fd2" />
+        <meta name="description" content="Official Student Result and Management Portal for Ruby Springfield College, Maiduguri.">
+        <meta name="keywords" content="Ruby Springfield College, Ruby School Portal, Result Checker, Maiduguri Schools">
+    </head>
+    """,
+    unsafe_allow_html=True
+)
+
 # --- STEP 3: VISIBLE SCHOOL BRANDING ---
+st.write(
+    """
+    <div style="text-align: center;">
+        <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
+        <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
+        <p>Maiduguri, Borno State, Nigeria</p>
+        <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+st.vertical_spacer = st.write("<br>", unsafe_allow_html=True) # Adds some space before login# --- STEP 3: VISIBLE SCHOOL BRANDING ---
 st.write(
     """
     <div style="text-align: center;">
@@ -1287,4 +1314,5 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
