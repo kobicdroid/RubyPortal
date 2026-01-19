@@ -22,8 +22,8 @@ import time
 import pandas as pd
 # --- THE ADVANCED SHUTDOWN BYPASS ---
 # This detects the specific URL Google looks for and serves the token immediately
-# This works even if the bot is too fast for the rest of the app to load.
-if "googleeYWNDcrZgqM3lRLg" in st.query_params or "verify" in st.query_params:
+# Use the URL: https://rubyspringfield-college.streamlit.app/?googleeYWNDcrZgqM3lRLg
+if "googleeYWNDcrZgqM3lRLg" in st.query_params:
     st.write("google-site-verification: googleeYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0.html")
     st.stop()
 
@@ -35,13 +35,20 @@ st.set_page_config(
 )
 
 # --- STEP 2: MULTI-LAYER INJECTION ---
-# 1. Invisible Meta Tag for Google Crawler
-st.markdown('<meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />', unsafe_allow_html=True)
+# This injects the meta tag into the HEAD section of the page
+st.markdown(
+    """
+    <head>
+        <meta name="google-site-verification" content="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0" />
+    </head>
+    """, 
+    unsafe_allow_html=True
+)
 
-# 2. Hidden Sidebar Token (Bots scan sidebars very reliably)
+# Visible Token in the Sidebar for extra bot-crawling security
 with st.sidebar:
+    st.caption("Admin ID: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
     st.write("", unsafe_allow_html=True)
-    st.caption("System Verified: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
 
 # --- STEP 3: PERSISTENT STORAGE ENGINE ---
 def load_portal_data():
@@ -63,11 +70,7 @@ def load_portal_data():
             return defaults
     return defaults
 
-# Load the data
 portal_data = load_portal_data()
-# Initialize storage and Persistent Notices
-if 'portal_storage' not in st.session_state:
-    st.session_state.portal_storage = load_portal_data()
 
 # Rebuild notices list from Excel storage on startup/refresh
 if 'notices' not in st.session_state:
@@ -1294,6 +1297,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
