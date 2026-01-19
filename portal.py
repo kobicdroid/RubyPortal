@@ -27,42 +27,24 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ... (Keep all your other imports)
+# --- STEP 2: THE GOOGLE ROBOT BYPASS ---
+import streamlit.components.v1 as components
 
-# --- STEP 1: THE "MASTER" BROWSER INJECTION ---
-# Google's bot reads the title of the page first. 
-# We are putting the verification code directly into the title.
-st.set_page_config(
-    page_title="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg | Ruby Springfield College",
-    page_icon="🎓", 
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# --- STEP 2: MULTI-LAYER VERIFICATION ---
-st.markdown(
-    """
-    <div style="display:none;">
-        <p>google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</p>
-        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
-    </div>
+# This is a 'Script' injection. Google bots look for these specifically.
+components.html(
+    f"""
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VERIFICATION"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+      // Your specific verification code as a comment for the bot
+      // google-site-verification: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg
+    </script>
+    <div style="font-size: 8px; color: #f9f9f9;">Verification Code: lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg</div>
     """,
-    unsafe_allow_html=True
+    height=0,
 )
-
-# --- STEP 3: VISIBLE BRANDING ---
-st.write(
-    """
-    <div style="text-align: center;">
-        <h1 style="color: #1E3A8A; font-family: 'Arial';">Ruby Springfield College</h1>
-        <h3 style="color: #555;">Official Academic Management & Result Portal</h3>
-        <p>Maiduguri, Borno State, Nigeria</p>
-        <hr style="border: 1px solid #1E3A8A; width: 50%; margin: auto;">
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
-
 # --- STEP 1: PERSISTENT STORAGE ENGINE (UPDATED) ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
@@ -1312,6 +1294,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
