@@ -20,22 +20,25 @@ import ast
 import streamlit.components.v1 as components
 import time
 import pandas as pd
+
 # --- THE ADVANCED SHUTDOWN BYPASS ---
-# This detects the specific URL Google looks for and serves the token immediately
-# Use the URL: https://rubyspringfield-college.streamlit.app/?googleeYWNDcrZgqM3lRLg
+# This serves the verification string as a plain page if called
 if "googleeYWNDcrZgqM3lRLg" in st.query_params:
     st.write("google-site-verification: googleeYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0.html")
     st.stop()
 
 # --- STEP 1: BROWSER CONFIGURATION ---
+# Putting the code in the page_title is the "Nuclear Option" - Google reads this first!
 st.set_page_config(
-    page_title="Ruby Springfield College | Official Portal",
+    page_title="eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0 | Ruby Springfield College",
     page_icon="🎓", 
     layout="wide"
 )
 
 # --- STEP 2: MULTI-LAYER INJECTION ---
-# This injects the meta tag into the HEAD section of the page
+# We force the verification code to appear as the VERY FIRST piece of text on the page
+st.write(f"google-site-verification: googleeYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0.html")
+
 st.markdown(
     """
     <head>
@@ -45,9 +48,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Visible Token in the Sidebar for extra bot-crawling security
 with st.sidebar:
     st.caption("Admin ID: eYWNDcrZgqM3lRLg_CyGaaGnr9HoMBRZ2a7yct2J3a0")
+    # Secret comment for crawlers
     st.write("", unsafe_allow_html=True)
 
 # --- STEP 3: PERSISTENT STORAGE ENGINE ---
@@ -71,7 +74,6 @@ def load_portal_data():
     return defaults
 
 portal_data = load_portal_data()
-
 # Rebuild notices list from Excel storage on startup/refresh
 if 'notices' not in st.session_state:
     try:
@@ -1297,6 +1299,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
