@@ -18,10 +18,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ast 
 import time
-import ast 
 
-
-# --- STEP 1: PAGE CONFIG (Always First) ---
+# --- STEP 1: PAGE CONFIG (Must be first) ---
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
@@ -30,11 +28,9 @@ st.set_page_config(
 )
 
 # --- STEP 2: HARD-CODED VERIFICATION & ANALYTICS ---
-# 1. Hidden text verification (Google Crawler method)
 verify_code = "lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg"
 st.write(f'<div style="display:none;">google-site-verification: {verify_code}</div>', unsafe_allow_html=True)
 
-# 2. Header-based verification and Analytics (Browser method)
 st.markdown(
     f"""
     <head>
@@ -67,7 +63,6 @@ st.markdown(
 st.write("") 
 
 # --- STEP 4: PERMANENT STORAGE ENGINE ---
-# This ensures your Calendar and News stop disappearing!
 def load_portal_data():
     storage_path = "portal_data.xlsx"
     defaults = {
@@ -79,10 +74,20 @@ def load_portal_data():
     if os.path.exists(storage_path):
         try:
             df = pd.read_excel(storage_path, engine='openpyxl')
-            return dict(zip(df['Key'], df['Value']))
+            # Ensure we convert the Excel columns to a dictionary correctly
+            return dict(zip(df['Key'].astype(str), df['Value'].astype(str)))
         except:
             return defaults
     return defaults
+
+# IMPORTANT: Actually run the function and save it to session state
+if 'portal_storage' not in st.session_state:
+    st.session_state.portal_storage = load_portal_data()
+
+# --- STEP 5: DISPLAY PERMANENT INFO (Calendar/News) ---
+# This ensures it doesn't disappear
+st.sidebar.header("📅 School Calendar")
+st.sidebar.info(st.session_state.portal_storage.get('calendar', 'No dates set.'))
 
 # --- STEP 2: EMAIL NOTIFICATION CORE ---
 def send_email_notification(receiver_email, student_name, class_name):
@@ -1301,6 +1306,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
