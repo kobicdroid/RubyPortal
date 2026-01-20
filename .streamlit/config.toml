@@ -5,3 +5,7 @@ showErrorDetails = false
 [theme]
 primaryColor = "#d33682"
 backgroundColor = "#002b36"
+
+[client]
+toolbarMode = "viewer"
+showErrorDetails = false
