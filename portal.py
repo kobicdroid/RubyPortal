@@ -18,8 +18,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ast 
 import time
+import requests # Added for the GitHub Robot
 
-# --- STEP 1: PAGE CONFIG (Must be first) ---
+# --- STEP 1: PAGE CONFIG ---
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
@@ -27,25 +28,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: HARD-CODED VERIFICATION & ANALYTICS ---
-verify_code = "lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg"
-st.write(f'<div style="display:none;">google-site-verification: {verify_code}</div>', unsafe_allow_html=True)
+# --- STEP 2: SECRETS (The Safe Box) ---
+# We pull these now so they are ready for the Admin Console
+try:
+    TOKEN = st.secrets["GITHUB_TOKEN"]
+    REPO = st.secrets["REPO_PATH"]
+except Exception as e:
+    st.warning("Running in Local Mode: Secrets not detected.")
 
-st.markdown(
-    f"""
-    <head>
-    <meta name="google-site-verification" content="{verify_code}" />
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-02JNLEG9BF"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){{dataLayer.push(arguments);}}
-      gtag('js', new Date());
-      gtag('config', 'G-02JNLEG9BF');
-    </script>
-    </head>
-    """, 
-    unsafe_allow_html=True
-)
+# --- STEP 3: GOOGLE VERIFICATION ---
+verify_code = "lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg"
+# This puts the code in the body where Google can find it
+st.markdown(f'<div style="display:none;">google-site-verification: {verify_code}</div>', unsafe_allow_html=True)
 
 # --- STEP 3: VISIBLE SCHOOL BRANDING ---
 st.markdown(
@@ -1320,5 +1314,6 @@ else:
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
