@@ -28,25 +28,25 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: GOOGLE ANALYTICS & SEARCH VERIFICATION ---
-# This makes your site "Searchable" and tracks visitors in real-time.
+# --- STEP 2: HARD-CODED VERIFICATION ---
+# We place this in a way that Google's crawler cannot miss it.
+st.write(f'<div style="display:none;">google-site-verification: google{st.secrets.get("GOOGLE_VERIFY", "lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg")}.html</div>', unsafe_allow_html=True)
+
 st.markdown(
     """
+    <head>
+    <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-02JNLEG9BF"></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-02JNLEG9BF');
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-02JNLEG9BF');
     </script>
-    
-    <div style="display:none;">
-        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
-    </div>
+    </head>
     """, 
     unsafe_allow_html=True
 )
-
 # --- STEP 3: VISIBLE SCHOOL BRANDING ---
 st.markdown(
     """
@@ -1279,6 +1279,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
