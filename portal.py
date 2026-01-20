@@ -868,26 +868,56 @@ elif page == "🛠️ Staff Management":
     ])
     
     # --- 1. UPLOAD TAB ---
+    # --- 1. UPLOAD TAB (WITH GITHUB AUTO-OVERWRITE) ---
     with tab_up:
         st.info("Upload class results here. Format: 'Report ClassName.xlsx'")
         target_class = st.text_input("Target Class Name (e.g., JSS 1A)", key="upload_target")
         new_file = st.file_uploader("Select Excel Spreadsheet", type=['xlsx'])
+        
         if st.button("Deploy to System") and new_file and target_class:
             save_filename = f"Report {target_class}.xlsx"
+            file_bytes = new_file.getvalue() # Get data for GitHub sync
+            
+            # 1. LOCAL SAVE (For immediate use in the portal)
             with open(save_filename, "wb") as f:
-                f.write(new_file.getbuffer())
-            log_activity("Admin", "Upload", f"Uploaded new database: {save_filename}")
-            st.success(f"System updated: {save_filename} is now live.")
-    
+                f.write(file_bytes)
+            
+            # 2. GITHUB OVERWRITE (Robot Logic)
+            with st.spinner(f"🚀 Syncing {save_filename} with GitHub..."):
+                # This calls your 'upload_notice_to_github' function
+                # It handles checking for the SHA and overwriting automatically
+                status = upload_notice_to_github(file_bytes, save_filename)
+            
+            # 3. LOGGING & SUCCESS FEEDBACK
+            if status in [200, 201]:
+                log_activity("Admin", "Upload", f"Uploaded and Synced: {save_filename}")
+                st.balloons()
+                st.success(f"✅ SUCCESS: {save_filename} is now live on Portal & GitHub!")
+            else:
+                # If GitHub fails, the local file still works, but we warn you
+                log_activity("Admin", "Upload Error", f"GitHub Sync failed for {save_filename}")
+                st.warning(f"⚠️ Local update successful, but GitHub Sync Error: {status}")
+
     # --- 2. DATABASE & LOGS TAB ---
     with tab_db:
         col_db, col_log = st.columns(2)
         with col_db:
             st.subheader("📂 Live Databases")
+            # Refreshing the file list
             live_files = glob.glob("Report *.xlsx")
             st.write(f"Total: {len(live_files)}")
             for file in live_files:
                 st.code(file)
+        
+        with col_log:
+            st.subheader("🕵️ Security Audit")
+            if os.path.exists("system_audit.log"):
+                with open("system_audit.log", "r") as f:
+                    logs = f.readlines()
+                    # Show last 15 actions (including the new GitHub sync logs)
+                    st.text_area("Recent Activity", "".join(logs[-15:]), height=200)
+            else:
+                st.info("No logs generated yet.")
         
         with col_log:
             st.subheader("🕵️ Security Audit")
@@ -1316,6 +1346,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
