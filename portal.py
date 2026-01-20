@@ -28,21 +28,36 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. ADD THE HIDE CODE RIGHT HERE
+# 2. UPDATED HIDE CODE (Brute Force Method)
 st.markdown("""
     <style>
-    /* This removes the 'Manage app' button for everyone */
+    /* 1. Hides the 'Manage app' button specifically */
     .stAppDeployButton {
         display: none !important;
     }
+    
+    /* 2. Hides the small floating 'Made with Streamlit' footer */
+    footer {
+        visibility: hidden !important;
+    }
+
+    /* 3. Hides the entire status bar at the bottom right */
     div[data-testid="stStatusWidget"] {
-        visibility: hidden;
-        height: 0;
-        width: 0;
+        display: none !important;
+    }
+
+    /* 4. Hides the connection/manage app badge (New Streamlit versions) */
+    .viewerBadge_container__1QSob {
+        display: none !important;
+    }
+    
+    /* 5. Final safety: Hide the toolbar decoration */
+    [data-testid="stToolbar"] {
+        right: 2rem;
+        display: none;
     }
     </style>
     """, unsafe_allow_html=True)
-
 # 3. Then continue with the rest of your portal logic...
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
@@ -1356,6 +1371,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
