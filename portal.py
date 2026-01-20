@@ -60,6 +60,18 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+if os.path.exists(storage_path):
+        try:
+            df = pd.read_excel(storage_path, engine='openpyxl')
+            return dict(zip(df['Key'].astype(str), df['Value'].astype(str)))
+        except:
+            return defaults
+    return defaults
+
+# Initialize Storage early in the script
+if 'portal_storage' not in st.session_state:
+    st.session_state.portal_storage = load_portal_data()
+    
 # --- STEP 2: EMAIL NOTIFICATION CORE ---
 def send_email_notification(receiver_email, student_name, class_name):
     """
@@ -1307,6 +1319,7 @@ with col_r:
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
