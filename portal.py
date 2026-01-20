@@ -20,6 +20,9 @@ import ast
 import time
 import requests # Added for the GitHub Robot
 
+import streamlit as st
+import streamlit.components.v1 as components # Required for the JS injection
+
 # --- STEP 1: PAGE CONFIG ---
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
@@ -28,26 +31,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. THE ULTIMATE HIDE CODE
+# --- STEP 2: THE ULTIMATE HIDE CODE (CSS + JAVASCRIPT) ---
+# Part A: CSS for immediate hiding
 st.markdown("""
     <style>
-    /* 1. This targets the container for the 'Manage App' badge */
     [data-testid="stStatusWidget"], .viewerBadge_container__1QSob, .stAppDeployButton {
         display: none !important;
         visibility: hidden !important;
     }
-
-    /* 2. This hides the connection status and the 'Manage App' link at the bottom */
     div[class*="viewerBadge_container"] {
         display: none !important;
     }
-
-    /* 3. This hides the footer and ensures no space is reserved for it */
     footer {
         display: none !important;
     }
-
-    /* 4. This removes the decoration bar at the top as well for a cleaner look */
     header[data-testid="stHeader"] {
         background-color: rgba(0,0,0,0);
         color: rgba(0,0,0,0);
@@ -55,10 +52,26 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Then continue with the rest of your portal logic...
+# Part B: JavaScript to physically delete the button if it appears
+components.html("""
+<script>
+    const removeBadge = () => {
+        // Targets all known Streamlit developer badges and buttons
+        const badges = window.parent.document.querySelectorAll('div[class*="viewerBadge"], .stAppDeployButton, [data-testid="stStatusWidget"]');
+        badges.forEach(badge => {
+            badge.style.display = 'none';
+            badge.remove();
+        });
+    }
+    // Run immediately and then every 1 second to catch it after page load
+    removeBadge();
+    setInterval(removeBadge, 1000);
+</script>
+""", height=0)
+
+# --- STEP 3: LOGIN LOGIC ---
 if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-# --- STEP 2: SECRETS (The Safe Box) ---
+    st.session_state.logged_in = False# --- STEP 2: SECRETS (The Safe Box) ---
 # We pull these now so they are ready for the Admin Console
 try:
     TOKEN = st.secrets["GITHUB_TOKEN"]
@@ -1368,6 +1381,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
