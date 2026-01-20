@@ -1250,15 +1250,21 @@ elif page == "📊 Dashboard":
     """, unsafe_allow_html=True)
 
 # --- LOGIC: SHOW ADMIN CONSOLE OR PUBLIC PORTAL ---
-# Use .get() to avoid NameError. If it doesn't exist, it defaults to an empty string.
 current_input = st.session_state.get("admin_password_input", "")
 
 if current_input == "ADMIN2026":
     st.subheader("🛡️ Administrative Control Center")
     st.write("Welcome, Adam Usman. You are currently in Management Mode.")
-    # ... (rest of your admin code)
     
-    # --- ADMIN TOOLS SECTION ---
+    # --- ADMIN TOOLS: IMAGE UPLOADER ---
+    with st.expander("📸 Update News Image"):
+        uploaded_img = st.file_uploader("Upload new photo (JPG/PNG)", type=['jpg', 'jpeg', 'png'])
+        if uploaded_img:
+            # This saves the image directly to the server folder
+            with open("news_image.jpg", "wb") as f:
+                f.write(uploaded_img.getbuffer())
+            st.success("Main news image updated successfully!")
+
     with st.container(border=True):
         st.info("Direct database edits and result uploads are enabled.")
         # Your result uploading and Excel management code goes here
@@ -1272,19 +1278,28 @@ else:
     with col_l:
         st.markdown("### 🔔 RSC News Feed")
         with st.container(border=True):
-            # Safe data retrieval from the storage engine
             storage = st.session_state.get('portal_storage', {})
             n_title = storage.get('news_title', "Ruby Springfield College News")
             n_desc = storage.get('news_desc', "Welcome to our official portal. Check back for school updates.")
             
             st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
             
-            # This is the image trigger - ensure 'news_image.jpg' is in your GitHub folder
-            if os.path.exists("news_image.jpg"):
-                st.image("news_image.jpg", use_container_width=True)
+            # --- IMPROVED IMAGE LOGIC ---
+            # Checks for different file extensions in case GitHub changed them
+            img_list = ["news_image.jpg", "news_image.jpeg", "news_image.png"]
+            img_found = False
+            
+            for img_path in img_list:
+                if os.path.exists(img_path):
+                    st.image(img_path, use_container_width=True)
+                    img_found = True
+                    break # Stop looking once we find one
+            
+            if not img_found:
+                # If no file exists, show a professional placeholder
+                st.info("📢 New updates coming soon. Stay tuned!")
                 
             st.markdown(f"<div style='margin-top:10px;'>{n_desc}</div>", unsafe_allow_html=True)
-
     with col_r:
         st.markdown("### 🛠️ Official Protocol")
         # Professional styling for the information boxes
@@ -1341,4 +1356,5 @@ st.markdown("""
         Portal Developed by Adam Usman
     </div>
 """, unsafe_allow_html=True)
+
 
