@@ -1260,15 +1260,16 @@ if current_input == "ADMIN2026":
     with st.expander("📸 Update News Image"):
         uploaded_img = st.file_uploader("Upload new photo (JPG/PNG)", type=['jpg', 'jpeg', 'png'])
         if uploaded_img:
+            # We save it with a consistent name
             with open("news_image.jpg", "wb") as f:
                 f.write(uploaded_img.getbuffer())
-            st.success("Main news image updated successfully!")
+            st.success("Main news image updated! Clear your password to see it on the dashboard.")
 
     with st.container(border=True):
         st.info("Direct database edits and result uploads are enabled.")
         # Your result uploading and Excel management code goes here
         
-    st.warning("Note: The Public News Feed and Notice Board are hidden while Admin Mode is active.")
+    st.warning("Note: Public Feed is hidden while Admin Mode is active.")
 
 else:
     # --- PUBLIC VIEW: NEWS FEED & PROTOCOLS ---
@@ -1283,11 +1284,13 @@ else:
             
             st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
             
+            # --- THE BULLETPROOF IMAGE RENDERER ---
             img_path = "news_image.jpg"
             if os.path.exists(img_path):
-                import time
-                timestamp = int(time.time())
-                st.image(f"{img_path}?t={timestamp}", use_container_width=True)
+                # We read the file as bytes to bypass cloud caching issues
+                with open(img_path, "rb") as f:
+                    img_bytes = f.read()
+                st.image(img_bytes, use_container_width=True)
             else:
                 st.info("📢 Stay tuned for new updates and school photos!")
 
@@ -1327,22 +1330,9 @@ else:
                     st.markdown(f"**📄 {notice['title']}**")
                     if os.path.exists(notice['path']):
                         with open(notice['path'], "rb") as f:
-                            st.download_button(
-                                label="📥 View PDF", 
-                                data=f, 
-                                file_name=notice['path'], 
-                                mime="application/pdf", 
-                                key=f"stu_dl_{idx}", 
-                                use_container_width=True
-                            )
+                            st.download_button(label="📥 View PDF", data=f, file_name=notice['path'], mime="application/pdf", key=f"stu_dl_{idx}", use_container_width=True)
     else:
-        st.info("The notice board is currently empty. Check back later for official memos.")
+        st.info("The notice board is currently empty.")
 
 # --- FOOTER ---
-st.markdown("""
-    <hr>
-    <div style="text-align:center; padding:10px; color:#666; font-size: 0.9em;">
-        © 2026 Ruby Springfield College • All Rights Reserved <br>
-        Portal Developed by Adam Usman
-    </div>
-""", unsafe_allow_html=True)
+st.markdown("""<hr><div style="text-align:center; padding:10px; color:#666; font-size: 0.9em;">© 2026 Ruby Springfield College • All Rights Reserved <br> Portal Developed by Adam Usman</div>""", unsafe_allow_html=True)
