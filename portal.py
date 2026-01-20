@@ -1274,10 +1274,10 @@ elif page == "📊 Dashboard":
     # 6. HERITAGE & FOUNDER
     col_hist, col_img = st.columns([2, 1])
     with col_hist:
-        st.markdown('<div class="history-card"><h2 style="color:#fbbf24;">A Heritage of Leadership</h2><p> I give God all the Glory fior Ruby Springfield College. Ruby Springfield started modestly as a standard bearer, introducing Secondary Education in package completely different from what obtains in part of the world..</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="history-card"><h2 style="color:#fbbf24;">A Heritage of Leadership</h2><p> I give God all the Glory fior Ruby Springfield College. Ruby Springfield started modestly as a standard bearer, introducing Secondary Education in package completely different from what obtains in part of the world. The school took off in 1998. Like a child it grew and waxed strong pregressively to the fancy and admiration of all and sundry. Our watch words in this highly esteemed college is SUPREME EXCELLENCE.</p></div>', unsafe_allow_html=True)
     with col_img:
         if os.path.exists(founder_path):
-            st.image(founder_path, use_column_width=True) 
+            st.image(founder_path, use_container_width=True) 
         else:
             st.warning("founder.jpg missing.")
 
@@ -1299,7 +1299,7 @@ elif page == "📊 Dashboard":
             st.markdown(f"<h4 style='color:#fbbf24;'>{st.session_state.news_content['title']}</h4>", unsafe_allow_html=True)
             if os.path.exists(news_path):
                 with open(news_path, "rb") as f:
-                    st.image(io.BytesIO(f.read()), use_column_width=True)
+                    st.image(io.BytesIO(f.read()), use__container_width=True)
             st.markdown(f"<div style='margin-top:10px;'>{st.session_state.news_content['desc']}</div>", unsafe_allow_html=True)
     with col_r:
         st.markdown("### 🛠️ Official Protocol")
@@ -1344,6 +1344,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
