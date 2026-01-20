@@ -1292,6 +1292,7 @@ elif page == "📊 Dashboard":
     """, unsafe_allow_html=True)
 
    # 8. NEWS FEED (Fixed io crash)
+    col_l, col_r = st.columns([2, 1])
     with col_l:
         st.markdown("### 🔔 RSC News Feed")
         with st.container(border=True):
@@ -1344,6 +1345,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
