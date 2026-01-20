@@ -1257,20 +1257,16 @@ if current_input == "ADMIN2026":
     st.write("Welcome, Adam Usman. You are currently in Management Mode.")
     
     # --- ADMIN TOOLS: IMAGE UPLOADER ---
-    with st.expander("📸 Update News Image"):
-        uploaded_img = st.file_uploader("Upload new photo (JPG/PNG)", type=['jpg', 'jpeg', 'png'])
-        if uploaded_img:
-            # We save it with a consistent name
-            with open("news_image.jpg", "wb") as f:
-                f.write(uploaded_img.getbuffer())
-            st.success("Main news image updated! Clear your password to see it on the dashboard.")
-
-    with st.container(border=True):
-        st.info("Direct database edits and result uploads are enabled.")
-        # Your result uploading and Excel management code goes here
-        
-    st.warning("Note: Public Feed is hidden while Admin Mode is active.")
-
+   # 8. NEWS FEED & PROTOCOLS
+    col_l, col_r = st.columns([2, 1])
+    with col_l:
+        st.markdown("### 🔔 RSC News Feed")
+        with st.container(border=True):
+            st.markdown(f"<h4 style='color:#fbbf24;'>{st.session_state.news_content['title']}</h4>", unsafe_allow_html=True)
+            if os.path.exists(news_path):
+                with open(news_path, "rb") as f:
+                    st.image(io.BytesIO(f.read()), use_column_width=True)
+            st.markdown(f"<div style='margin-top:10px;'>{st.session_state.news_content['desc']}</div>", unsafe_allow_html=True)
 else:
     # --- PUBLIC VIEW: NEWS FEED & PROTOCOLS ---
     col_l, col_r = st.columns([2, 1])
@@ -1336,3 +1332,4 @@ else:
 
 # --- FOOTER ---
 st.markdown("""<hr><div style="text-align:center; padding:10px; color:#666; font-size: 0.9em;">© 2026 Ruby Springfield College • All Rights Reserved <br> Portal Developed by Adam Usman</div>""", unsafe_allow_html=True)
+
