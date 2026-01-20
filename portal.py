@@ -909,25 +909,16 @@ elif page == "🛠️ Staff Management":
             for file in live_files:
                 st.code(file)
         
-        with col_log:
+     with col_log:
             st.subheader("🕵️ Security Audit")
             if os.path.exists("system_audit.log"):
                 with open("system_audit.log", "r") as f:
                     logs = f.readlines()
-                    # Show last 15 actions (including the new GitHub sync logs)
-                    st.text_area("Recent Activity", "".join(logs[-15:]), height=200)
+                # Added 'key' to prevent the Duplicate ID error
+                st.text_area("Recent Activity", "".join(logs[-15:]), height=200, key="admin_audit_logs")
             else:
                 st.info("No logs generated yet.")
-        
-        with col_log:
-            st.subheader("🕵️ Security Audit")
-            if os.path.exists("system_audit.log"):
-                with open("system_audit.log", "r") as f:
-                    logs = f.readlines()
-                    st.text_area("Recent Activity", "".join(logs[-15:]), height=200)
-            else:
-                st.info("No logs generated yet.")
-
+                
     # --- 3. ANALYTICS TAB (FULL CLASS INSIGHTS) ---
     with tab_analytics:
         available_classes = get_available_classes()
@@ -1346,6 +1337,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
