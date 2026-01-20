@@ -1249,16 +1249,6 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
- # 7. PRACTICAL GALLERY
-    st.markdown(f"""
-        <div class="practical-gallery" style="background-image: url('data:image/jpeg;base64,{lab_img_base64}');">
-            <div class="overlay-content">
-                <h4>🧪 Advanced Chemical Research Lab</h4>
-                <p>Precision and discovery in every experiment.</p>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
     # 8. NEWS FEED & PROTOCOLS
     col_l, col_r = st.columns([2, 1])
     with col_l:
@@ -1291,22 +1281,44 @@ elif page == "📊 Dashboard":
             contact_data = st.session_state.get('portal_storage', {}).get('contact', 'School Office: Maiduguri, Borno State.')
             st.markdown(f'<div class="protocol-box"><b>📞 OFFICIAL CONTACT:</b><br>{contact_data}</div>', unsafe_allow_html=True)
 
-    # --- DIGITAL NOTICE BOARD ---
-    st.markdown("---")
-    st.markdown("<h3 style='color:#fbbf24;'>📂 Digital Notice Board</h3>", unsafe_allow_html=True)
+# --- DIGITAL NOTICE BOARD (Permanent Version) ---
+st.markdown("---")
+st.markdown("<h3 style='color:#fbbf24;'>📂 Digital Notice Board</h3>", unsafe_allow_html=True)
+
+# 1. Define where your notices are kept on the server
+NOTICE_FOLDER = "notices" 
+
+# 2. Automatically find all PDFs in that folder
+if os.path.exists(NOTICE_FOLDER):
+    notice_files = [f for f in os.listdir(NOTICE_FOLDER) if f.endswith('.pdf')]
     
-    if 'notices' in st.session_state and st.session_state.notices:
+    if notice_files:
         n_cols = st.columns(3)
-        for idx, notice in enumerate(st.session_state.notices):
+        for idx, filename in enumerate(notice_files):
             with n_cols[idx % 3]:
                 with st.container(border=True):
-                    st.markdown(f"**📄 {notice['title']}**")
-                    if os.path.exists(notice['path']):
-                        with open(notice['path'], "rb") as f:
-                            st.download_button(label="📥 View PDF", data=f, file_name=notice['path'], mime="application/pdf", key=f"stu_dl_{idx}", use_container_width=True)
+                    # Display the filename as the title (cleaning up the .pdf part)
+                    clean_title = filename.replace(".pdf", "").replace("_", " ")
+                    st.markdown(f"**📄 {clean_title}**")
+                    
+                    file_path = os.path.join(NOTICE_FOLDER, filename)
+                    with open(file_path, "rb") as f:
+                        st.download_button(
+                            label="📥 View PDF", 
+                            data=f, 
+                            file_name=filename, 
+                            mime="application/pdf", 
+                            key=f"permanent_dl_{idx}", 
+                            use_container_width=True
+                        )
     else:
         st.info("The notice board is currently empty.")
-
+else:
+    # Create the folder if it doesn't exist so it doesn't crash
+    os.makedirs(NOTICE_FOLDER)
+    st.info("Notice folder created. Add PDFs to the 'notices' folder to see them here.")
+    
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
