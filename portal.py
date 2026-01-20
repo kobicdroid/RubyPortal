@@ -18,8 +18,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ast 
 import time
+import ast 
 
-# --- STEP 1: PAGE CONFIG ---
+# --- STEP 1: PAGE CONFIG (Always First) ---
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
     page_icon="🎓", 
@@ -27,18 +28,26 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: GOOGLE SEARCH VERIFICATION ---
+# --- STEP 2: GOOGLE ANALYTICS & SEARCH VERIFICATION ---
+# This makes your site "Searchable" and tracks visitors in real-time.
 st.markdown(
     """
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-02JNLEG9BF"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-02JNLEG9BF');
+    </script>
+    
     <div style="display:none;">
-    <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
+        <meta name="google-site-verification" content="lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg" />
     </div>
-    <p style="font-size:1px; color:white;">Verification Active</p>
     """, 
     unsafe_allow_html=True
 )
 
-# --- STEP 3: VISIBLE SCHOOL BRANDING (TOP OF PAGE) ---
+# --- STEP 3: VISIBLE SCHOOL BRANDING ---
 st.markdown(
     """
     <div style="text-align: center; padding-top: 10px;">
@@ -52,7 +61,7 @@ st.markdown(
 )
 
 st.write("") 
-st.write("")
+
 # --- STEP 2: EMAIL NOTIFICATION CORE ---
 def send_email_notification(receiver_email, student_name, class_name):
     """
@@ -1270,6 +1279,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
