@@ -60,35 +60,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.write("") 
-
-# --- STEP 4: PERMANENT STORAGE ENGINE ---
-def load_portal_data():
-    storage_path = "portal_data.xlsx"
-    defaults = {
-        'news_title': "Ruby Springfield College Portal", 
-        'calendar': "Welcome to the 2026 Academic Session",
-        'notices_data': "[]"
-    }
-    
-    if os.path.exists(storage_path):
-        try:
-            df = pd.read_excel(storage_path, engine='openpyxl')
-            # Ensure we convert the Excel columns to a dictionary correctly
-            return dict(zip(df['Key'].astype(str), df['Value'].astype(str)))
-        except:
-            return defaults
-    return defaults
-
-# IMPORTANT: Actually run the function and save it to session state
-if 'portal_storage' not in st.session_state:
-    st.session_state.portal_storage = load_portal_data()
-
-# --- STEP 5: DISPLAY PERMANENT INFO (Calendar/News) ---
-# This ensures it doesn't disappear
-st.sidebar.header("📅 School Calendar")
-st.sidebar.info(st.session_state.portal_storage.get('calendar', 'No dates set.'))
-
 # --- STEP 2: EMAIL NOTIFICATION CORE ---
 def send_email_notification(receiver_email, student_name, class_name):
     """
@@ -1336,6 +1307,7 @@ with col_r:
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
