@@ -1324,7 +1324,7 @@ elif page == "📊 Dashboard":
     # 6. HERITAGE & FOUNDER
     col_hist, col_img = st.columns([2, 1])
     with col_hist:
-        st.markdown('<div class="history-card"><h2 style="color:#fbbf24;">A Heritage of Leadership</h2><p>Founded in Maiduguri, RSC provides a university-preparatory environment.</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="history-card"><h2 style="color:#fbbf24;">A Heritage of Leadership</h2><p> I give God all the Glory fior Ruby Springfield College. Ruby Springfield started modestly as a standard bearer, introducing Secondary Education in package completely different from what obtains in part of the world..</p></div>', unsafe_allow_html=True)
     with col_img:
         if os.path.exists(founder_path):
             st.image(founder_path, use_column_width=True) 
@@ -1394,6 +1394,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
