@@ -31,56 +31,6 @@ st.set_page_config(
 
 # --- STEP 2: INTERNAL UI LOCK & HIDE CODE ---
 
-# Part A: CSS for immediate internal disabling
-st.markdown("""
-    <style>
-    /* Force disable the 'Manage App' button and status widgets */
-    .stAppDeployButton, [data-testid="stStatusWidget"], .viewerBadge_container__1QSob {
-        display: none !important;
-        visibility: hidden !important;
-        width: 0 !important;
-        height: 0 !important;
-    }
-    
-    /* Clean up the header and footer */
-    footer {display: none !important;}
-    header[data-testid="stHeader"] {
-        background-color: rgba(0,0,0,0);
-        color: rgba(0,0,0,0);
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Part B: JavaScript to physically "delete" the button from the DOM
-components.html("""
-<script>
-    const hideElements = () => {
-        // Find the main window (parent) where Streamlit puts the dev tools
-        const outerDoc = window.parent.document;
-        
-        // Target the deploy button and the 'Manage app' badge
-        const selectors = [
-            '.stAppDeployButton', 
-            'div[class*="viewerBadge_container"]', 
-            '[data-testid="stStatusWidget"]',
-            'footer'
-        ];
-        
-        selectors.forEach(selector => {
-            const elements = outerDoc.querySelectorAll(selector);
-            elements.forEach(el => el.remove());
-        });
-
-        // Hide the toolbar menu completely
-        const toolbar = outerDoc.querySelector('div[data-testid="stToolbar"]');
-        if (toolbar) toolbar.style.display = 'none';
-    }
-
-    // Run every 400ms to catch it if Streamlit tries to re-render it
-    setInterval(hideElements, 400);
-</script>
-""", height=0)
-
 # --- STEP 3: LOGIN LOGIC ---
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
@@ -1394,6 +1344,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
