@@ -1250,14 +1250,17 @@ elif page == "📊 Dashboard":
     """, unsafe_allow_html=True)
 
 # --- LOGIC: SHOW ADMIN CONSOLE OR PUBLIC PORTAL ---
-# (Assumes your secret_key variable is defined in the sidebar)
-
-if secret_key == "SUMI":
+# Using 'admin_key' which we defined in the sidebar earlier
+if admin_key == "ADMIN2026":
     st.subheader("🛡️ Administrative Control Center")
-    st.write("Welcome, Adam Usman. News and Notices are hidden to provide space for Admin tasks.")
+    st.write("Welcome, Adam Usman. You are currently in Management Mode.")
     
-    # --- YOUR ADMIN CODE GOES HERE (Uploading results, managing data, etc.) ---
-    st.info("You are in Admin Mode. Log out (clear the password) to view the public News Feed.")
+    # --- ADMIN TOOLS SECTION ---
+    with st.container(border=True):
+        st.info("Direct database edits and result uploads are enabled.")
+        # Your result uploading and Excel management code goes here
+        
+    st.warning("Note: The Public News Feed and Notice Board are hidden while Admin Mode is active.")
 
 else:
     # --- PUBLIC VIEW: NEWS FEED & PROTOCOLS ---
@@ -1266,12 +1269,14 @@ else:
     with col_l:
         st.markdown("### 🔔 RSC News Feed")
         with st.container(border=True):
+            # Safe data retrieval from the storage engine
             storage = st.session_state.get('portal_storage', {})
-            n_title = storage.get('news_title', "Ruby Springfield College")
-            n_desc = storage.get('news_desc', "Loading school updates...")
+            n_title = storage.get('news_title', "Ruby Springfield College News")
+            n_desc = storage.get('news_desc', "Welcome to our official portal. Check back for school updates.")
             
             st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
             
+            # This is the image trigger - ensure 'news_image.jpg' is in your GitHub folder
             if os.path.exists("news_image.jpg"):
                 st.image("news_image.jpg", use_container_width=True)
                 
@@ -1279,30 +1284,33 @@ else:
 
     with col_r:
         st.markdown("### 🛠️ Official Protocol")
+        # Professional styling for the information boxes
         st.markdown("""<style>.protocol-box {background-color: #1E3A8A; color: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #fbbf24;}</style>""", unsafe_allow_html=True)
 
+        # Interactive Buttons
         if st.button("📅 School Calendar", use_container_width=True): 
             st.session_state.show_cal = not st.session_state.get('show_cal', False)
         if st.session_state.get('show_cal', False):
-            cal_data = st.session_state.portal_storage.get('calendar', 'No calendar data available.')
+            cal_data = st.session_state.get('portal_storage', {}).get('calendar', 'Calendar update pending.')
             st.markdown(f'<div class="protocol-box"><b>🗓️ ACADEMIC CALENDAR:</b><br>{cal_data}</div>', unsafe_allow_html=True)
 
         if st.button("📜 Exam Guidelines", use_container_width=True): 
             st.session_state.show_exam = not st.session_state.get('show_exam', False)
         if st.session_state.get('show_exam', False):
-            exam_data = st.session_state.portal_storage.get('exams', 'Standard uniform and ID required.')
+            exam_data = st.session_state.get('portal_storage', {}).get('exams', 'Proper uniform and ID card required for entry.')
             st.markdown(f'<div class="protocol-box"><b style="color:#fbbf24;">EXAM PROTOCOL:</b><br>{exam_data}</div>', unsafe_allow_html=True)
 
         if st.button("📞 Contact Info", use_container_width=True): 
             st.session_state.show_contact = not st.session_state.get('show_contact', False)
         if st.session_state.get('show_contact', False):
-            contact_data = st.session_state.portal_storage.get('contact', 'Principal: +234 813 103 2577')
+            contact_data = st.session_state.get('portal_storage', {}).get('contact', 'School Office: Maiduguri, Borno State.')
             st.markdown(f'<div class="protocol-box"><b>📞 OFFICIAL CONTACT:</b><br>{contact_data}</div>', unsafe_allow_html=True)
 
-    # --- DIGITAL NOTICE BOARD (Visible only to Students/Public) ---
+    # --- DIGITAL NOTICE BOARD ---
     st.markdown("---")
     st.markdown("<h3 style='color:#fbbf24;'>📂 Digital Notice Board</h3>", unsafe_allow_html=True)
     
+    # Pull notices from session state (populated by your admin upload logic)
     if 'notices' in st.session_state and st.session_state.notices:
         n_cols = st.columns(3)
         for idx, notice in enumerate(st.session_state.notices):
@@ -1311,23 +1319,22 @@ else:
                     st.markdown(f"**📄 {notice['title']}**")
                     if os.path.exists(notice['path']):
                         with open(notice['path'], "rb") as f:
-                            st.download_button(label="📥 View PDF", data=f, file_name=notice['path'], mime="application/pdf", key=f"stu_dl_{idx}", use_container_width=True)
+                            st.download_button(
+                                label="📥 View PDF", 
+                                data=f, 
+                                file_name=notice['path'], 
+                                mime="application/pdf", 
+                                key=f"stu_dl_{idx}", 
+                                use_container_width=True
+                            )
     else:
-        st.info("No active notices pinned at the moment.")
+        st.info("The notice board is currently empty. Check back later for official memos.")
 
-# --- FOOTER (Visible on both Admin and Public) ---
-st.markdown('<div style="text-align:center; padding:20px; color:#888;">© 2026 Ruby Springfield College • Developed by Adam Usman <br> <small>Powered by SumiLogics(NJA)</small></div>', unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# --- FOOTER ---
+st.markdown("""
+    <hr>
+    <div style="text-align:center; padding:10px; color:#666; font-size: 0.9em;">
+        © 2026 Ruby Springfield College • All Rights Reserved <br>
+        Portal Developed by Adam Usman
+    </div>
+""", unsafe_allow_html=True)
