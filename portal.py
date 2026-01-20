@@ -1250,10 +1250,13 @@ elif page == "📊 Dashboard":
     """, unsafe_allow_html=True)
 
 # --- LOGIC: SHOW ADMIN CONSOLE OR PUBLIC PORTAL ---
-# Using 'admin_key' which we defined in the sidebar earlier
-if admin_key == "ADMIN2026":
+# Use .get() to avoid NameError. If it doesn't exist, it defaults to an empty string.
+current_input = st.session_state.get("admin_password_input", "")
+
+if current_input == "ADMIN2026":
     st.subheader("🛡️ Administrative Control Center")
     st.write("Welcome, Adam Usman. You are currently in Management Mode.")
+    # ... (rest of your admin code)
     
     # --- ADMIN TOOLS SECTION ---
     with st.container(border=True):
@@ -1338,3 +1341,4 @@ st.markdown("""
         Portal Developed by Adam Usman
     </div>
 """, unsafe_allow_html=True)
+
