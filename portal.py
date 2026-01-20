@@ -1249,65 +1249,57 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-# --- STEP 8: NEWS FEED (Fixed Error Handling) ---
-col_l, col_r = st.columns([2, 1])
+# --- LOGIC: SHOW ADMIN CONSOLE OR PUBLIC PORTAL ---
+# (Assumes your secret_key variable is defined in the sidebar)
 
-with col_l:
-    st.markdown("### 🔔 RSC News Feed")
-    with st.container(border=True):
-        # Use .get() on the session state safely
-        storage = st.session_state.get('portal_storage', {})
-        
-        n_title = storage.get('news_title', "Ruby Springfield College")
-        n_desc = storage.get('news_desc', "Loading school updates...")
-        
-        st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
-        
-        # Image check
-        if os.path.exists("news_image.jpg"):
-            st.image("news_image.jpg", use_container_width=True)
-            
-        st.markdown(f"<div style='margin-top:10px;'>{n_desc}</div>", unsafe_allow_html=True)
-
-with col_r:
-    st.markdown("### 🛠️ Official Protocol")
+if secret_key == "SUMI":
+    st.subheader("🛡️ Administrative Control Center")
+    st.write("Welcome, Adam Usman. News and Notices are hidden to provide space for Admin tasks.")
     
-    # --- PROTOCOL BOX STYLING ---
-    st.markdown("""
-        <style>
-        .protocol-box {
-            background-color: #1E3A8A;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border-left: 5px solid #fbbf24;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    # --- YOUR ADMIN CODE GOES HERE (Uploading results, managing data, etc.) ---
+    st.info("You are in Admin Mode. Log out (clear the password) to view the public News Feed.")
 
-    # Calendar Button
-    if st.button("📅 School Calendar", use_container_width=True): 
-        st.session_state.show_cal = not st.session_state.get('show_cal', False)
-    if st.session_state.get('show_cal', False):
-        cal_data = st.session_state.portal_storage.get('calendar', 'No calendar data available.')
-        st.markdown(f'<div class="protocol-box"><b>🗓️ ACADEMIC CALENDAR:</b><br>{cal_data}</div>', unsafe_allow_html=True)
+else:
+    # --- PUBLIC VIEW: NEWS FEED & PROTOCOLS ---
+    col_l, col_r = st.columns([2, 1])
 
-    # Exam Guidelines Button
-    if st.button("📜 Exam Guidelines", use_container_width=True): 
-        st.session_state.show_exam = not st.session_state.get('show_exam', False)
-    if st.session_state.get('show_exam', False):
-        exam_data = st.session_state.portal_storage.get('exams', 'Standard uniform and ID required.')
-        st.markdown(f'<div class="protocol-box"><b style="color:#fbbf24;">EXAM PROTOCOL:</b><br>{exam_data}</div>', unsafe_allow_html=True)
+    with col_l:
+        st.markdown("### 🔔 RSC News Feed")
+        with st.container(border=True):
+            storage = st.session_state.get('portal_storage', {})
+            n_title = storage.get('news_title', "Ruby Springfield College")
+            n_desc = storage.get('news_desc', "Loading school updates...")
+            
+            st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
+            
+            if os.path.exists("news_image.jpg"):
+                st.image("news_image.jpg", use_container_width=True)
+                
+            st.markdown(f"<div style='margin-top:10px;'>{n_desc}</div>", unsafe_allow_html=True)
 
-    # Contact Info Button
-    if st.button("📞 Contact Info", use_container_width=True): 
-        st.session_state.show_contact = not st.session_state.get('show_contact', False)
-    if st.session_state.get('show_contact', False):
-        contact_data = st.session_state.portal_storage.get('contact', 'Principal: +234 813 103 2577')
-        st.markdown(f'<div class="protocol-box"><b>📞 OFFICIAL CONTACT:</b><br>{contact_data}</div>', unsafe_allow_html=True)
+    with col_r:
+        st.markdown("### 🛠️ Official Protocol")
+        st.markdown("""<style>.protocol-box {background-color: #1E3A8A; color: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #fbbf24;}</style>""", unsafe_allow_html=True)
 
-    # --- 9. DIGITAL NOTICE BOARD (Student View Only) ---
+        if st.button("📅 School Calendar", use_container_width=True): 
+            st.session_state.show_cal = not st.session_state.get('show_cal', False)
+        if st.session_state.get('show_cal', False):
+            cal_data = st.session_state.portal_storage.get('calendar', 'No calendar data available.')
+            st.markdown(f'<div class="protocol-box"><b>🗓️ ACADEMIC CALENDAR:</b><br>{cal_data}</div>', unsafe_allow_html=True)
+
+        if st.button("📜 Exam Guidelines", use_container_width=True): 
+            st.session_state.show_exam = not st.session_state.get('show_exam', False)
+        if st.session_state.get('show_exam', False):
+            exam_data = st.session_state.portal_storage.get('exams', 'Standard uniform and ID required.')
+            st.markdown(f'<div class="protocol-box"><b style="color:#fbbf24;">EXAM PROTOCOL:</b><br>{exam_data}</div>', unsafe_allow_html=True)
+
+        if st.button("📞 Contact Info", use_container_width=True): 
+            st.session_state.show_contact = not st.session_state.get('show_contact', False)
+        if st.session_state.get('show_contact', False):
+            contact_data = st.session_state.portal_storage.get('contact', 'Principal: +234 813 103 2577')
+            st.markdown(f'<div class="protocol-box"><b>📞 OFFICIAL CONTACT:</b><br>{contact_data}</div>', unsafe_allow_html=True)
+
+    # --- DIGITAL NOTICE BOARD (Visible only to Students/Public) ---
     st.markdown("---")
     st.markdown("<h3 style='color:#fbbf24;'>📂 Digital Notice Board</h3>", unsafe_allow_html=True)
     
@@ -1319,21 +1311,12 @@ with col_r:
                     st.markdown(f"**📄 {notice['title']}**")
                     if os.path.exists(notice['path']):
                         with open(notice['path'], "rb") as f:
-                            st.download_button(
-                                label="📥 View PDF",
-                                data=f,
-                                file_name=notice['path'],
-                                mime="application/pdf",
-                                key=f"stu_dl_{idx}",
-                                use_container_width=True
-                            )
-                    else:
-                        st.error("Document missing.")
+                            st.download_button(label="📥 View PDF", data=f, file_name=notice['path'], mime="application/pdf", key=f"stu_dl_{idx}", use_container_width=True)
     else:
         st.info("No active notices pinned at the moment.")
 
-    # 10. FOOTER
-    st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+# --- FOOTER (Visible on both Admin and Public) ---
+st.markdown('<div style="text-align:center; padding:20px; color:#888;">© 2026 Ruby Springfield College • Developed by Adam Usman <br> <small>Powered by SumiLogics(NJA)</small></div>', unsafe_allow_html=True)
 
 
 
