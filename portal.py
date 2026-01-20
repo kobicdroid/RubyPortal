@@ -1275,32 +1275,29 @@ else:
     # --- PUBLIC VIEW: NEWS FEED & PROTOCOLS ---
     col_l, col_r = st.columns([2, 1])
 
-    with col_l:
-        st.markdown("### 🔔 RSC News Feed")
-        with st.container(border=True):
-            storage = st.session_state.get('portal_storage', {})
-            n_title = storage.get('news_title', "Ruby Springfield College News")
-            n_desc = storage.get('news_desc', "Welcome to our official portal. Check back for school updates.")
-            
-            st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
-            
-            # --- IMPROVED IMAGE LOGIC ---
-            # Checks for different file extensions in case GitHub changed them
-            img_list = ["news_image.jpg", "news_image.jpeg", "news_image.png"]
-            img_found = False
-            
-            for img_path in img_list:
-                if os.path.exists(img_path):
-                    st.image(img_path, use_container_width=True)
-                    img_found = True
-                    break # Stop looking once we find one
-            
-            if not img_found:
-                # If no file exists, show a professional placeholder
-                st.info("📢 New updates coming soon. Stay tuned!")
-                
-            st.markdown(f"<div style='margin-top:10px;'>{n_desc}</div>", unsafe_allow_html=True)
-    with col_r:
+  # --- PUBLIC VIEW: NEWS FEED IMAGE ---
+with col_l:
+    st.markdown("### 🔔 RSC News Feed")
+    with st.container(border=True):
+        storage = st.session_state.get('portal_storage', {})
+        n_title = storage.get('news_title', "Ruby Springfield College News")
+        n_desc = storage.get('news_desc', "Welcome to our official portal.")
+        
+        st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
+        
+        # 1. Define the exact path the Admin uses
+        img_path = "news_image.jpg"
+        
+        # 2. Check if the file exists on the server
+        if os.path.exists(img_path):
+            # We add a random number to the URL to force the browser to refresh the image
+            import time
+            timestamp = int(time.time())
+            st.image(f"{img_path}?t={timestamp}", use_column_width=True)
+        else:
+            st.info("📢 Stay tuned for new updates and school photos!")
+
+        st.markdown(f"<div style='margin-top:10px;'>{n_desc}</div>", unsafe_allow_html=True)  with col_r:
         st.markdown("### 🛠️ Official Protocol")
         # Professional styling for the information boxes
         st.markdown("""<style>.protocol-box {background-color: #1E3A8A; color: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #fbbf24;}</style>""", unsafe_allow_html=True)
@@ -1356,5 +1353,6 @@ st.markdown("""
         Portal Developed by Adam Usman
     </div>
 """, unsafe_allow_html=True)
+
 
 
