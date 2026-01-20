@@ -1249,24 +1249,25 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-# --- STEP 8: NEWS FEED & PROTOCOLS (Permanent Data Version) ---
+# --- STEP 8: NEWS FEED (Fixed Error Handling) ---
 col_l, col_r = st.columns([2, 1])
 
 with col_l:
     st.markdown("### 🔔 RSC News Feed")
     with st.container(border=True):
-        # Pull title from permanent storage
-        news_title = st.session_state.portal_storage.get('news_title', "Ruby Springfield College Portal")
-        st.markdown(f"<h4 style='color:#fbbf24;'>{news_title}</h4>", unsafe_allow_html=True)
+        # Use .get() on the session state safely
+        storage = st.session_state.get('portal_storage', {})
         
-        # News Image handling
-        news_path = "news_image.jpg"
-        if os.path.exists(news_path):
-            st.image(news_path, use_container_width=True)
+        n_title = storage.get('news_title', "Ruby Springfield College")
+        n_desc = storage.get('news_desc', "Loading school updates...")
         
-        # Pull description from permanent storage
-        news_desc = st.session_state.portal_storage.get('news_desc', "Welcome to the official academic management system.")
-        st.markdown(f"<div style='margin-top:10px;'>{news_desc}</div>", unsafe_allow_html=True)
+        st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
+        
+        # Image check
+        if os.path.exists("news_image.jpg"):
+            st.image("news_image.jpg", use_container_width=True)
+            
+        st.markdown(f"<div style='margin-top:10px;'>{n_desc}</div>", unsafe_allow_html=True)
 
 with col_r:
     st.markdown("### 🛠️ Official Protocol")
@@ -1333,6 +1334,7 @@ with col_r:
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
