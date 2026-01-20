@@ -60,15 +60,29 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-if os.path.exists(storage_path):
+# --- STEP 4: PERMANENT STORAGE ENGINE ---
+def load_portal_data():
+    storage_path = "portal_data.xlsx"
+    defaults = {
+        'news_title': "Ruby Springfield College Portal", 
+        'news_desc': "Welcome to the official academic management system.",
+        'calendar': "Welcome to the 2026 Academic Session",
+        'exams': "Valid ID and Uniform required.",
+        'contact': "Principal: +234 813 103 2577",
+        'notices_data': "[]"
+    }
+    
+    if os.path.exists(storage_path):
         try:
             df = pd.read_excel(storage_path, engine='openpyxl')
+            # This line converts your Excel rows into a usable dictionary
             return dict(zip(df['Key'].astype(str), df['Value'].astype(str)))
-        except:
+        except Exception:
             return defaults
+    # This return MUST be perfectly aligned with the "if" above it
     return defaults
 
-# Initialize Storage early in the script
+# Initialize the storage so other parts of the code can see it
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
     
@@ -1319,6 +1333,7 @@ with col_r:
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
