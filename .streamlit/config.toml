@@ -1,0 +1,8 @@
+[client]
+showErrorDetails = "none"
+toolbarMode = "viewer"
+
+[server]
+headless = true
+enableCORS = false
+enableXsrfProtection = false
