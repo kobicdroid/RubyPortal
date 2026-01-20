@@ -1260,7 +1260,6 @@ if current_input == "ADMIN2026":
     with st.expander("📸 Update News Image"):
         uploaded_img = st.file_uploader("Upload new photo (JPG/PNG)", type=['jpg', 'jpeg', 'png'])
         if uploaded_img:
-            # This saves the image directly to the server folder
             with open("news_image.jpg", "wb") as f:
                 f.write(uploaded_img.getbuffer())
             st.success("Main news image updated successfully!")
@@ -1275,34 +1274,29 @@ else:
     # --- PUBLIC VIEW: NEWS FEED & PROTOCOLS ---
     col_l, col_r = st.columns([2, 1])
 
-  # --- PUBLIC VIEW: NEWS FEED IMAGE ---
-with col_l:
-    st.markdown("### 🔔 RSC News Feed")
-    with st.container(border=True):
-        storage = st.session_state.get('portal_storage', {})
-        n_title = storage.get('news_title', "Ruby Springfield College News")
-        n_desc = storage.get('news_desc', "Welcome to our official portal.")
-        
-        st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
-        
-        # 1. Define the exact path the Admin uses
-        img_path = "news_image.jpg"
-        
-        # 2. Check if the file exists on the server
-        if os.path.exists(img_path):
-            # We add a random number to the URL to force the browser to refresh the image
-            import time
-            timestamp = int(time.time())
-            st.image(f"{img_path}?t={timestamp}", use_column_width=True)
-        else:
-            st.info("📢 Stay tuned for new updates and school photos!")
+    with col_l:
+        st.markdown("### 🔔 RSC News Feed")
+        with st.container(border=True):
+            storage = st.session_state.get('portal_storage', {})
+            n_title = storage.get('news_title', "Ruby Springfield College News")
+            n_desc = storage.get('news_desc', "Welcome to our official portal.")
+            
+            st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
+            
+            img_path = "news_image.jpg"
+            if os.path.exists(img_path):
+                import time
+                timestamp = int(time.time())
+                st.image(f"{img_path}?t={timestamp}", use_container_width=True)
+            else:
+                st.info("📢 Stay tuned for new updates and school photos!")
 
-        st.markdown(f"<div style='margin-top:10px;'>{n_desc}</div>", unsafe_allow_html=True)  with col_r:
+            st.markdown(f"<div style='margin-top:10px;'>{n_desc}</div>", unsafe_allow_html=True)
+
+    with col_r:
         st.markdown("### 🛠️ Official Protocol")
-        # Professional styling for the information boxes
         st.markdown("""<style>.protocol-box {background-color: #1E3A8A; color: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #fbbf24;}</style>""", unsafe_allow_html=True)
 
-        # Interactive Buttons
         if st.button("📅 School Calendar", use_container_width=True): 
             st.session_state.show_cal = not st.session_state.get('show_cal', False)
         if st.session_state.get('show_cal', False):
@@ -1325,7 +1319,6 @@ with col_l:
     st.markdown("---")
     st.markdown("<h3 style='color:#fbbf24;'>📂 Digital Notice Board</h3>", unsafe_allow_html=True)
     
-    # Pull notices from session state (populated by your admin upload logic)
     if 'notices' in st.session_state and st.session_state.notices:
         n_cols = st.columns(3)
         for idx, notice in enumerate(st.session_state.notices):
@@ -1353,6 +1346,3 @@ st.markdown("""
         Portal Developed by Adam Usman
     </div>
 """, unsafe_allow_html=True)
-
-
-
