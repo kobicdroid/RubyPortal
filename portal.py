@@ -898,23 +898,24 @@ elif page == "🛠️ Staff Management":
                 log_activity("Admin", "Upload Error", f"GitHub Sync failed for {save_filename}")
                 st.warning(f"⚠️ Local update successful, but GitHub Sync Error: {status}")
 
-    # --- 2. DATABASE & LOGS TAB ---
+   # --- 2. DATABASE & LOGS TAB ---
     with tab_db:
         col_db, col_log = st.columns(2)
+        
         with col_db:
             st.subheader("📂 Live Databases")
-            # Refreshing the file list
             live_files = glob.glob("Report *.xlsx")
             st.write(f"Total: {len(live_files)}")
             for file in live_files:
                 st.code(file)
         
-     with col_log:
+        # FIX: Ensure 'with col_log:' starts at the exact same column as 'with col_db:'
+        with col_log:
             st.subheader("🕵️ Security Audit")
             if os.path.exists("system_audit.log"):
                 with open("system_audit.log", "r") as f:
                     logs = f.readlines()
-                # Added 'key' to prevent the Duplicate ID error
+                # Also using the unique key here to prevent the previous Duplicate ID error
                 st.text_area("Recent Activity", "".join(logs[-15:]), height=200, key="admin_audit_logs")
             else:
                 st.info("No logs generated yet.")
@@ -1337,6 +1338,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
