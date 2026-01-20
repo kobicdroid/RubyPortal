@@ -19,7 +19,7 @@ from email.mime.multipart import MIMEMultipart
 import ast 
 import time
 import requests 
-import streamlit.components.v1 as components # Required for the JS injection
+import streamlit.components.v1 as components 
 
 # --- STEP 1: PAGE CONFIG ---
 st.set_page_config(
@@ -29,20 +29,21 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: THE ULTIMATE HIDE CODE (DEEP SEARCH) ---
-# Part A: CSS for immediate hiding
+# --- STEP 2: INTERNAL UI LOCK & HIDE CODE ---
+
+# Part A: CSS for immediate internal disabling
 st.markdown("""
     <style>
-    /* Immediate hiding of all known Streamlit branding elements */
-    [data-testid="stStatusWidget"], 
-    .viewerBadge_container__1QSob, 
-    .stAppDeployButton, 
-    div[class*="viewerBadge_container"],
-    footer {
+    /* Force disable the 'Manage App' button and status widgets */
+    .stAppDeployButton, [data-testid="stStatusWidget"], .viewerBadge_container__1QSob {
         display: none !important;
         visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
     }
     
+    /* Clean up the header and footer */
+    footer {display: none !important;}
     header[data-testid="stHeader"] {
         background-color: rgba(0,0,0,0);
         color: rgba(0,0,0,0);
@@ -50,27 +51,33 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Part B: Deep-Search JavaScript to break through Shadow DOM
+# Part B: JavaScript to physically "delete" the button from the DOM
 components.html("""
 <script>
-    const removeBadge = () => {
-        // 1. Search in the main document
-        const badges = window.parent.document.querySelectorAll('div[class*="viewerBadge"], .stAppDeployButton, [data-testid="stStatusWidget"], footer');
-        badges.forEach(badge => {
-            badge.style.display = 'none';
-            badge.remove();
+    const hideElements = () => {
+        // Find the main window (parent) where Streamlit puts the dev tools
+        const outerDoc = window.parent.document;
+        
+        // Target the deploy button and the 'Manage app' badge
+        const selectors = [
+            '.stAppDeployButton', 
+            'div[class*="viewerBadge_container"]', 
+            '[data-testid="stStatusWidget"]',
+            'footer'
+        ];
+        
+        selectors.forEach(selector => {
+            const elements = outerDoc.querySelectorAll(selector);
+            elements.forEach(el => el.remove());
         });
 
-        // 2. Deep Search: Target the toolbar specifically
-        const toolbar = window.parent.document.querySelector('div[data-testid="stToolbar"]');
-        if (toolbar) {
-            toolbar.style.display = 'none';
-        }
+        // Hide the toolbar menu completely
+        const toolbar = outerDoc.querySelector('div[data-testid="stToolbar"]');
+        if (toolbar) toolbar.style.display = 'none';
     }
-    
-    // Run frequently (every 500ms) to ensure it stays hidden
-    removeBadge();
-    setInterval(removeBadge, 500);
+
+    // Run every 400ms to catch it if Streamlit tries to re-render it
+    setInterval(hideElements, 400);
 </script>
 """, height=0)
 
@@ -1387,6 +1394,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
