@@ -1249,15 +1249,17 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-# --- LOGIC: SHOW ADMIN CONSOLE OR PUBLIC PORTAL ---
-current_input = st.session_state.get("admin_password_input", "")
+ # 7. PRACTICAL GALLERY
+    st.markdown(f"""
+        <div class="practical-gallery" style="background-image: url('data:image/jpeg;base64,{lab_img_base64}');">
+            <div class="overlay-content">
+                <h4>🧪 Advanced Chemical Research Lab</h4>
+                <p>Precision and discovery in every experiment.</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
-if current_input == "ADMIN2026":
-    st.subheader("🛡️ Administrative Control Center")
-    st.write("Welcome, Adam Usman. You are currently in Management Mode.")
-    
-    # --- ADMIN TOOLS: IMAGE UPLOADER ---
-   # 8. NEWS FEED & PROTOCOLS
+    # 8. NEWS FEED & PROTOCOLS
     col_l, col_r = st.columns([2, 1])
     with col_l:
         st.markdown("### 🔔 RSC News Feed")
@@ -1267,31 +1269,6 @@ if current_input == "ADMIN2026":
                 with open(news_path, "rb") as f:
                     st.image(io.BytesIO(f.read()), use_column_width=True)
             st.markdown(f"<div style='margin-top:10px;'>{st.session_state.news_content['desc']}</div>", unsafe_allow_html=True)
-else:
-    # --- PUBLIC VIEW: NEWS FEED & PROTOCOLS ---
-    col_l, col_r = st.columns([2, 1])
-
-    with col_l:
-        st.markdown("### 🔔 RSC News Feed")
-        with st.container(border=True):
-            storage = st.session_state.get('portal_storage', {})
-            n_title = storage.get('news_title', "Ruby Springfield College News")
-            n_desc = storage.get('news_desc', "Welcome to our official portal.")
-            
-            st.markdown(f"<h4 style='color:#fbbf24;'>{n_title}</h4>", unsafe_allow_html=True)
-            
-            # --- THE BULLETPROOF IMAGE RENDERER ---
-            img_path = "news_image.jpg"
-            if os.path.exists(img_path):
-                # We read the file as bytes to bypass cloud caching issues
-                with open(img_path, "rb") as f:
-                    img_bytes = f.read()
-                st.image(img_bytes, use_container_width=True)
-            else:
-                st.info("📢 Stay tuned for new updates and school photos!")
-
-            st.markdown(f"<div style='margin-top:10px;'>{n_desc}</div>", unsafe_allow_html=True)
-
     with col_r:
         st.markdown("### 🛠️ Official Protocol")
         st.markdown("""<style>.protocol-box {background-color: #1E3A8A; color: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #fbbf24;}</style>""", unsafe_allow_html=True)
@@ -1330,6 +1307,6 @@ else:
     else:
         st.info("The notice board is currently empty.")
 
-# --- FOOTER ---
-st.markdown("""<hr><div style="text-align:center; padding:10px; color:#666; font-size: 0.9em;">© 2026 Ruby Springfield College • All Rights Reserved <br> Portal Developed by Adam Usman</div>""", unsafe_allow_html=True)
+# 10. FOOTER
+    st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
 
