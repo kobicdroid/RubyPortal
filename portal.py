@@ -1282,7 +1282,7 @@ elif page == "📊 Dashboard":
 
     st.markdown("""<h1 style='text-align:center; color:#fbbf24; font-size:3em;'>RUBY SPRINGFIELD COLLEGE</h1>""", unsafe_allow_html=True)
     st.markdown("""<h3 style='text-align:center; color:#f8fafc; font-style:italic; margin-top:-15px;'>Motto: A Citadel of Excellence</h3>""", unsafe_allow_html=True)
-    st.markdown('<div class="school-bio">"Knowledge meets character in the heart of Maiduguri. We are building global leaders with integrity and academic brilliance."</div>', unsafe_allow_html=True)
+    st.markdown('<div class="school-bio">"We are building global leaders with integrity and academic brilliance."</div>', unsafe_allow_html=True)
 
     # 4. VISION & MISSION
     v_col, m_col = st.columns(2)
@@ -1394,6 +1394,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
