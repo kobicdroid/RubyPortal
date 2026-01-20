@@ -1252,32 +1252,62 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-    # 8. NEWS FEED & PROTOCOLS
-    col_l, col_r = st.columns([2, 1])
-    with col_l:
-        st.markdown("### 🔔 RSC News Feed")
-        with st.container(border=True):
-            st.markdown(f"<h4 style='color:#fbbf24;'>{st.session_state.news_content['title']}</h4>", unsafe_allow_html=True)
-            if os.path.exists(news_path):
-                with open(news_path, "rb") as f:
-                    st.image(io.BytesIO(f.read()), use_column_width=True)
-            st.markdown(f"<div style='margin-top:10px;'>{st.session_state.news_content['desc']}</div>", unsafe_allow_html=True)
+# --- STEP 8: NEWS FEED & PROTOCOLS (Permanent Data Version) ---
+col_l, col_r = st.columns([2, 1])
 
-    with col_r:
-        st.markdown("### 🛠️ Official Protocol")
-        if st.button("📅 School Calendar", use_container_width=True): 
-            st.session_state.show_cal = not st.session_state.get('show_cal', False)
-        if st.session_state.get('show_cal', False):
-            st.markdown(f"""<div class="protocol-box"><b>🗓️ ACADEMIC CALENDAR:</b><br>{st.session_state.protocols['calendar']}</div>""", unsafe_allow_html=True)
-        if st.button("📜 Exam Guidelines", use_container_width=True): 
-            st.session_state.show_exam = not st.session_state.get('show_exam', False)
-        if st.session_state.get('show_exam', False):
-            st.markdown(f"""<div class="protocol-box"><b style="color:#fbbf24;">EXAM PROTOCOL:</b><br>{st.session_state.protocols['exams']}</div>""", unsafe_allow_html=True)
+with col_l:
+    st.markdown("### 🔔 RSC News Feed")
+    with st.container(border=True):
+        # Pull title from permanent storage
+        news_title = st.session_state.portal_storage.get('news_title', "Ruby Springfield College Portal")
+        st.markdown(f"<h4 style='color:#fbbf24;'>{news_title}</h4>", unsafe_allow_html=True)
+        
+        # News Image handling
+        news_path = "news_image.jpg"
+        if os.path.exists(news_path):
+            st.image(news_path, use_container_width=True)
+        
+        # Pull description from permanent storage
+        news_desc = st.session_state.portal_storage.get('news_desc', "Welcome to the official academic management system.")
+        st.markdown(f"<div style='margin-top:10px;'>{news_desc}</div>", unsafe_allow_html=True)
 
-        if st.button("📞 Contact Info", use_container_width=True): 
-            st.session_state.show_contact = not st.session_state.get('show_contact', False)
-        if st.session_state.get('show_contact', False):
-            st.markdown(f"""<div class="protocol-box"><b>📞 OFFICIAL CONTACT:</b><br>{st.session_state.protocols['contact']}</div>""", unsafe_allow_html=True)
+with col_r:
+    st.markdown("### 🛠️ Official Protocol")
+    
+    # --- PROTOCOL BOX STYLING ---
+    st.markdown("""
+        <style>
+        .protocol-box {
+            background-color: #1E3A8A;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 5px solid #fbbf24;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Calendar Button
+    if st.button("📅 School Calendar", use_container_width=True): 
+        st.session_state.show_cal = not st.session_state.get('show_cal', False)
+    if st.session_state.get('show_cal', False):
+        cal_data = st.session_state.portal_storage.get('calendar', 'No calendar data available.')
+        st.markdown(f'<div class="protocol-box"><b>🗓️ ACADEMIC CALENDAR:</b><br>{cal_data}</div>', unsafe_allow_html=True)
+
+    # Exam Guidelines Button
+    if st.button("📜 Exam Guidelines", use_container_width=True): 
+        st.session_state.show_exam = not st.session_state.get('show_exam', False)
+    if st.session_state.get('show_exam', False):
+        exam_data = st.session_state.portal_storage.get('exams', 'Standard uniform and ID required.')
+        st.markdown(f'<div class="protocol-box"><b style="color:#fbbf24;">EXAM PROTOCOL:</b><br>{exam_data}</div>', unsafe_allow_html=True)
+
+    # Contact Info Button
+    if st.button("📞 Contact Info", use_container_width=True): 
+        st.session_state.show_contact = not st.session_state.get('show_contact', False)
+    if st.session_state.get('show_contact', False):
+        contact_data = st.session_state.portal_storage.get('contact', 'Principal: +234 813 103 2577')
+        st.markdown(f'<div class="protocol-box"><b>📞 OFFICIAL CONTACT:</b><br>{contact_data}</div>', unsafe_allow_html=True)
 
     # --- 9. DIGITAL NOTICE BOARD (Student View Only) ---
     st.markdown("---")
@@ -1306,6 +1336,7 @@ elif page == "📊 Dashboard":
 
     # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
