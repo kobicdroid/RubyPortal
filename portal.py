@@ -18,9 +18,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import ast 
 import time
-import requests # Added for the GitHub Robot
-
-import streamlit as st
+import requests 
 import streamlit.components.v1 as components # Required for the JS injection
 
 # --- STEP 1: PAGE CONFIG ---
@@ -31,20 +29,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- STEP 2: THE ULTIMATE HIDE CODE (CSS + JAVASCRIPT) ---
+# --- STEP 2: THE ULTIMATE HIDE CODE (DEEP SEARCH) ---
 # Part A: CSS for immediate hiding
 st.markdown("""
     <style>
-    [data-testid="stStatusWidget"], .viewerBadge_container__1QSob, .stAppDeployButton {
+    /* Immediate hiding of all known Streamlit branding elements */
+    [data-testid="stStatusWidget"], 
+    .viewerBadge_container__1QSob, 
+    .stAppDeployButton, 
+    div[class*="viewerBadge_container"],
+    footer {
         display: none !important;
         visibility: hidden !important;
     }
-    div[class*="viewerBadge_container"] {
-        display: none !important;
-    }
-    footer {
-        display: none !important;
-    }
+    
     header[data-testid="stHeader"] {
         background-color: rgba(0,0,0,0);
         color: rgba(0,0,0,0);
@@ -52,26 +50,34 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Part B: JavaScript to physically delete the button if it appears
+# Part B: Deep-Search JavaScript to break through Shadow DOM
 components.html("""
 <script>
     const removeBadge = () => {
-        // Targets all known Streamlit developer badges and buttons
-        const badges = window.parent.document.querySelectorAll('div[class*="viewerBadge"], .stAppDeployButton, [data-testid="stStatusWidget"]');
+        // 1. Search in the main document
+        const badges = window.parent.document.querySelectorAll('div[class*="viewerBadge"], .stAppDeployButton, [data-testid="stStatusWidget"], footer');
         badges.forEach(badge => {
             badge.style.display = 'none';
             badge.remove();
         });
+
+        // 2. Deep Search: Target the toolbar specifically
+        const toolbar = window.parent.document.querySelector('div[data-testid="stToolbar"]');
+        if (toolbar) {
+            toolbar.style.display = 'none';
+        }
     }
-    // Run immediately and then every 1 second to catch it after page load
+    
+    // Run frequently (every 500ms) to ensure it stays hidden
     removeBadge();
-    setInterval(removeBadge, 1000);
+    setInterval(removeBadge, 500);
 </script>
 """, height=0)
 
 # --- STEP 3: LOGIN LOGIC ---
 if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False# --- STEP 2: SECRETS (The Safe Box) ---
+    st.session_state.logged_in = False
+    #--- STEP 2: SECRETS (The Safe Box) ---
 # We pull these now so they are ready for the Admin Console
 try:
     TOKEN = st.secrets["GITHUB_TOKEN"]
@@ -1381,6 +1387,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
