@@ -53,7 +53,27 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
-
+def upload_notice_to_github(file_bytes, file_name):
+    """The 'Shutdown Robot' that pushes PDFs to GitHub notices folder"""
+    url = f"https://api.github.com/repos/{REPO}/contents/notices/{file_name}"
+    headers = {
+        "Authorization": f"token {TOKEN}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    # Prepare the file for the internet
+    encoded_content = base64.b64encode(file_bytes).decode("utf-8")
+    
+    # GitHub data packet
+    data = {
+        "message": f"New Notice: {file_name}",
+        "content": encoded_content,
+        "branch": "main"
+    }
+    
+    response = requests.put(url, headers=headers, json=data)
+    return response.status_code
+    
 # --- STEP 4: PERMANENT STORAGE ENGINE ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
@@ -1275,45 +1295,68 @@ elif page == "📊 Dashboard":
             contact_data = st.session_state.get('portal_storage', {}).get('contact', 'School Office: Maiduguri, Borno State.')
             st.markdown(f'<div class="protocol-box"><b>📞 OFFICIAL CONTACT:</b><br>{contact_data}</div>', unsafe_allow_html=True)
 
-# --- DIGITAL NOTICE BOARD (Permanent Version) ---
-st.markdown("---")
-st.markdown("<h3 style='color:#fbbf24;'>📂 Digital Notice Board</h3>", unsafe_allow_html=True)
-
-# 1. Define where your notices are kept on the server
-NOTICE_FOLDER = "notices" 
-
-# 2. Automatically find all PDFs in that folder
-if os.path.exists(NOTICE_FOLDER):
-    notice_files = [f for f in os.listdir(NOTICE_FOLDER) if f.endswith('.pdf')]
-    
-    if notice_files:
-        n_cols = st.columns(3)
-        for idx, filename in enumerate(notice_files):
-            with n_cols[idx % 3]:
-                with st.container(border=True):
-                    # Display the filename as the title (cleaning up the .pdf part)
-                    clean_title = filename.replace(".pdf", "").replace("_", " ")
-                    st.markdown(f"**📄 {clean_title}**")
+# --- SHUTDOWN: PERSISTENT DIGITAL NOTICE BOARD (WITH GITHUB SYNC) ---
+        st.markdown("---")
+        st.markdown("### 📂 Digital Notice Board Management")
+        
+        with st.form("notice_board_form"):
+            notice_name = st.text_input("Notice Title (e.g., '2026 Exam Timetable')")
+            uploaded_pdf = st.file_uploader("Upload PDF Document", type=['pdf'])
+            
+            if st.form_submit_button("📌 Pin to Notice Board & Sync to GitHub"):
+                if uploaded_pdf and notice_name:
+                    # Create a clean filename
+                    clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
+                    file_bytes = uploaded_pdf.getvalue()
                     
-                    file_path = os.path.join(NOTICE_FOLDER, filename)
-                    with open(file_path, "rb") as f:
-                        st.download_button(
-                            label="📥 View PDF", 
-                            data=f, 
-                            file_name=filename, 
-                            mime="application/pdf", 
-                            key=f"permanent_dl_{idx}", 
-                            use_container_width=True
-                        )
-    else:
-        st.info("The notice board is currently empty.")
-else:
-    # Create the folder if it doesn't exist so it doesn't crash
-    os.makedirs(NOTICE_FOLDER)
-    st.info("Notice folder created. Add PDFs to the 'notices' folder to see them here.")
+                    # 1. LOCAL SAVE (For immediate display)
+                    if not os.path.exists("notices"):
+                        os.makedirs("notices")
+                    local_path = os.path.join("notices", clean_filename)
+                    with open(local_path, "wb") as f:
+                        f.write(file_bytes)
+                    
+                    # 2. GITHUB SYNC (For permanent cloud storage)
+                    with st.spinner("Pushing to GitHub Notices..."):
+                        # This calls the function you have at the top of your Master code
+                        status = upload_notice_to_github(file_bytes, clean_filename)
+                    
+                    # 3. UPDATE SESSION STATE
+                    if 'notices' not in st.session_state:
+                        st.session_state.notices = []
+                    
+                    st.session_state.notices.append({"title": notice_name, "path": local_path})
+                    st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
+                    pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+                    
+                    if status in [200, 201]:
+                        st.success(f"✅ '{notice_name}' pinned and synced to GitHub successfully!")
+                    else:
+                        st.warning(f"⚠️ Local save done, but GitHub returned error: {status}. Check your TOKEN.")
+                    
+                    st.rerun()
+                else:
+                    st.error("Please provide both a title and a PDF file.")
+
+        # 2. Delete Feature (Management UI)
+        if 'notices' in st.session_state and st.session_state.notices:
+            st.write("---")
+            st.write("🗑️ **Manage Active Notices**")
+            for i, notice in enumerate(st.session_state.notices):
+                col_n, col_d = st.columns([3, 1])
+                col_n.write(f"📄 {notice['title']}")
+                if col_d.button("Delete", key=f"admin_del_{i}"):
+                    if os.path.exists(notice['path']):
+                        os.remove(notice['path'])
+                    st.session_state.notices.pop(i)
+                    st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
+                    pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+                    st.warning(f"Deleted: {notice['title']}")
+                    st.rerun()
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
