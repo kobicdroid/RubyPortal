@@ -28,6 +28,24 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# 2. ADD THE HIDE CODE RIGHT HERE
+st.markdown("""
+    <style>
+    /* This removes the 'Manage app' button for everyone */
+    .stAppDeployButton {
+        display: none !important;
+    }
+    div[data-testid="stStatusWidget"] {
+        visibility: hidden;
+        height: 0;
+        width: 0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 3. Then continue with the rest of your portal logic...
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
 # --- STEP 2: SECRETS (The Safe Box) ---
 # We pull these now so they are ready for the Admin Console
 try:
@@ -1338,6 +1356,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
