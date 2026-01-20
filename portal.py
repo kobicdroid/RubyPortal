@@ -1299,7 +1299,7 @@ elif page == "📊 Dashboard":
             st.markdown(f"<h4 style='color:#fbbf24;'>{st.session_state.news_content['title']}</h4>", unsafe_allow_html=True)
             if os.path.exists(news_path):
                 with open(news_path, "rb") as f:
-                    st.image(io.BytesIO(f.read()), use__container_width=True)
+                    st.image(io.BytesIO(f.read()), use_container_width=True)
             st.markdown(f"<div style='margin-top:10px;'>{st.session_state.news_content['desc']}</div>", unsafe_allow_html=True)
     with col_r:
         st.markdown("### 🛠️ Official Protocol")
@@ -1344,6 +1344,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
