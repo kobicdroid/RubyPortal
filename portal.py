@@ -489,7 +489,7 @@ class ResultPDF(FPDF):
             self.text(35, 190, 'RUBY SPRINGFIELD COLLEGE')
             self.rotate(0) # Reset to 0
         except:
-            pass # Safety skip if rotation is not supported
+            pass 
 
     def header(self):
         from datetime import datetime
@@ -526,7 +526,9 @@ class ResultPDF(FPDF):
         self.set_fill_color(200, 210, 230) 
         self.set_font('Arial', 'B', 10)
         self.set_text_color(40, 70, 120)
-        self.cell(0, 8, 'OFFICIAL TERMLY PERFORMANCE RECORD', 1, 1, 'C', 1) 
+        # Dynamic Title based on page
+        title = "OFFICIAL CONTINUOUS ASSESSMENT RECORD" if hasattr(self, 'is_test') else "OFFICIAL TERMLY PERFORMANCE RECORD"
+        self.cell(0, 8, title, 1, 1, 'C', 1) 
         self.ln(2)
 
     def footer(self):
@@ -553,18 +555,39 @@ class ResultPDF(FPDF):
         self.set_font('Arial', '', 9)
         self.cell(80, 5, f" {s_class}   |   Term: {term}", 'B', 1)
 
-        self.set_xy(135, start_y)
-        self.set_fill_color(245, 245, 245)
-        self.set_font('Arial', 'B', 7)
-        self.cell(35, 5, 'Obtained Score:', 1, 0, 'L', 1)
-        self.cell(25, 5, f"{summary['obtained']}", 1, 1, 'C')
-        self.set_x(135)
-        self.cell(35, 5, 'Average / Pos:', 1, 0, 'L', 1)
-        self.cell(25, 5, f"{summary['avg']}% / {summary['pos']}", 1, 1, 'C')
-        self.set_x(135)
-        self.cell(35, 5, 'Total Possible:', 1, 0, 'L', 1)
-        self.cell(25, 5, f"{summary['max']}", 1, 1, 'C')
-        self.ln(3)
+        # Result Summary box (Only if not a test or if summary is valid)
+        if summary.get('avg') != "N/A":
+            self.set_xy(135, start_y)
+            self.set_fill_color(245, 245, 245)
+            self.set_font('Arial', 'B', 7)
+            self.cell(35, 5, 'Obtained Score:', 1, 0, 'L', 1)
+            self.cell(25, 5, f"{summary['obtained']}", 1, 1, 'C')
+            self.set_x(135)
+            self.cell(35, 5, 'Average / Pos:', 1, 0, 'L', 1)
+            self.cell(25, 5, f"{summary['avg']}% / {summary['pos']}", 1, 1, 'C')
+            self.set_x(135)
+            self.cell(35, 5, 'Total Possible:', 1, 0, 'L', 1)
+            self.cell(25, 5, f"{summary['max']}", 1, 1, 'C')
+        self.ln(6)
+
+    def draw_test_table(self, subject_data):
+        """Logic for the professional test result printout"""
+        self.set_fill_color(40, 70, 120) 
+        self.set_text_color(255, 255, 255) 
+        self.set_font('Arial', 'B', 9)
+        w = [70, 25, 25, 25, 25, 25]
+        headers = ['Subject', '1st CA', '2nd CA', '3rd CA', '4th CA', 'Total CA']
+        for i in range(len(headers)):
+            self.cell(w[i], 8, headers[i], 1, 0, 'C', 1)
+        self.ln()
+        self.set_text_color(0, 0, 0)
+        self.set_font('Arial', '', 9)
+        for sub, sc in subject_data.items():
+            self.cell(w[0], 7, sub, 1)
+            for key in ['CA1', 'CA2', 'CA3', 'CA4', 'Total_CA']:
+                val = str(sc.get(key, '-'))
+                self.cell(25, 7, val, 1, 0, 'C')
+            self.ln()
 
     def draw_scores_table(self, subject_data, s_class):
         num_sub = len(subject_data)
@@ -573,15 +596,12 @@ class ResultPDF(FPDF):
         self.set_fill_color(40, 70, 120) 
         self.set_text_color(255, 255, 255) 
         self.set_font('Arial', 'B', f_size)
-        
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         w = [70, 25, 25, 25, 45] if is_ss else [70, 30, 30, 30, 30]
         headers = ['Subject', 'C.A (40%)', 'Exam (60%)', 'Total (100%)', 'Grade & Remark' if is_ss else 'Grade']
-        
         for i in range(len(headers)):
             self.cell(w[i], row_h + 1, headers[i], 1, 0, 'C', 1)
         self.ln()
-        
         self.set_text_color(0, 0, 0) 
         self.set_font('Arial', '', f_size)
         for sub, scores in subject_data.items():
@@ -589,12 +609,10 @@ class ResultPDF(FPDF):
             ca_val = str(scores['CA']) if valid else ""
             ex_val = str(scores['Exam']) if valid else ""
             tot_val = str(scores['Total']) if valid else ""
-            
             self.cell(w[0], row_h, sub, 1)
             self.cell(w[1], row_h, ca_val, 1, 0, 'C')
             self.cell(w[2], row_h, ex_val, 1, 0, 'C')
             self.cell(w[3], row_h, tot_val, 1, 0, 'C')
-            
             g = ""
             if valid:
                 t = scores['Total']
@@ -636,63 +654,41 @@ class ResultPDF(FPDF):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         curr_y = self.get_y()
         if curr_y > 235: self.ln(-8)
-        
-        self.set_fill_color(240, 240, 240)
-        self.set_font('Arial', 'B', 7)
+        self.set_fill_color(240, 240, 240); self.set_font('Arial', 'B', 7)
         self.cell(55, 5, 'AFFECTIVE DOMAIN (A)', 1, 1, 'C', 1)
         self.set_font('Arial', '', 6.5)
         for k, v in list(beh.items())[1:9]: 
             self.cell(40, 4.2, k, 1, 0); self.cell(15, 4.2, str(v), 1, 1, 'C')
-
         self.ln(1)
         self.set_font('Arial', 'B', 7); self.cell(55, 4.5, 'POSITION OF RESPONSIBILITY', 1, 1, 'L', 1)
         self.set_font('Arial', '', 6.5); self.cell(55, 4.5, f" {comm.get('Position', 'None')}", 1, 1, 'L')
-
         self.set_xy(75, curr_y)
         self.set_font('Arial', 'B', 7); self.cell(55, 5, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
         self.set_font('Arial', '', 6.5)
         for k, v in list(sk.items())[1:6]:
             self.set_x(75); self.cell(40, 4.2, k, 1, 0); self.cell(15, 4.2, str(v), 1, 1, 'C')
-
         self.set_xy(140, curr_y)
         self.set_font('Arial', 'B', 7); self.cell(60, 4.5, "HOUSE MASTER'S REPORT", 1, 1, 'L', 1)
-        self.set_x(140); self.set_font('Arial', '', 6.5)
-        self.cell(60, 5, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
-
-        self.ln(1); self.set_x(140); self.set_font('Arial', 'B', 7)
-        self.cell(60, 4.5, "FORM MASTER'S COMMENT", 1, 1, 'L', 1)
-        self.set_x(140); self.set_font('Arial', '', 6.5)
-        self.cell(60, 5, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
-
-        self.ln(1); self.set_x(140); self.set_font('Arial', 'B', 7)
-        self.cell(60, 4.5, "PRINCIPAL'S COMMENT", 1, 1, 'L', 1)
+        self.set_x(140); self.set_font('Arial', '', 6.5); self.cell(60, 5, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
+        self.ln(1); self.set_x(140); self.set_font('Arial', 'B', 7); self.cell(60, 4.5, "FORM MASTER'S COMMENT", 1, 1, 'L', 1)
+        self.set_x(140); self.set_font('Arial', '', 6.5); self.cell(60, 5, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
+        self.ln(1); self.set_x(140); self.set_font('Arial', 'B', 7); self.cell(60, 4.5, "PRINCIPAL'S COMMENT", 1, 1, 'L', 1)
         self.set_x(140)
-        
         avg = summary['avg']
         if is_ss:
-            if avg >= 75: p_remark = "Outstanding performance. Maintain focus."
-            elif avg >= 50: p_remark = "Average performance. Attention needed."
-            else: p_remark = "Poor result. Urgent academic intervention required."
-            self.set_font('Arial', 'I', 6)
+            p_remark = "Outstanding performance." if avg >= 75 else "Average performance." if avg >= 50 else "Poor result."
         else:
-            if avg >= 75: p_remark = "An Impressive performance! Keep it up."
-            elif avg >= 50: p_remark = "A fair performance. Work harder."
-            else: p_remark = "Performance is not up to par. Sit up."
-            self.set_font('Arial', 'I', 6.5)
-            
-        self.multi_cell(60, 4, f" {p_remark}", 1, 'L')
-
+            p_remark = "An Impressive performance!" if avg >= 75 else "A fair performance." if avg >= 50 else "Sit up."
+        self.set_font('Arial', 'I', 6.5); self.multi_cell(60, 4, f" {p_remark}", 1, 'L')
         if "3rd" in str(term):
             self.ln(1.5); self.set_x(10); self.set_font('Arial', 'B', 8)
             status = "PROMOTED TO NEXT CLASS" if avg >= 40 else "HELD BACK"
             self.cell(125, 6, f"PROMOTION STATUS: {status}", 1, 1, 'C')
-        
         self.ln(2.5); sig_y = self.get_y()
         if os.path.exists(STAMP_PATH): self.image(STAMP_PATH, 142, sig_y - 4, 20) 
         if os.path.exists(SIG_PATH): self.image(SIG_PATH, 158, sig_y - 2, 15)
         self.set_x(140); self.cell(60, 0, '', 'T', 1, 'C')
-        self.set_x(140); self.set_font('Arial', 'B', 6)
-        self.cell(60, 3, "Principal's Signature & Stamp", 0, 1, 'C')
+        self.set_x(140); self.set_font('Arial', 'B', 6); self.cell(60, 3, "Principal's Signature & Stamp", 0, 1, 'C')
 #--- SIDEBAR ---#
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
@@ -733,12 +729,6 @@ if page == "🎓 Result Portal":
     login_btn = st.sidebar.button(btn_label)
 
     if login_btn:
-        # Check if it's the Test Portal or Full Results
-        if portal_type == "📝 Test Results (C.A)":
-            st.warning("Test Results Portal is currently being updated. Please check Full Term Results.")
-            st.stop()
-
-        # START OF YOUR ORIGINAL LOGIC
         file_path = f"Report {selected_class}.xlsx"
         if os.path.exists(file_path):
             try:
@@ -767,6 +757,7 @@ if page == "🎓 Result Portal":
                         
                         log_activity("Student", "Login", f"Success: {student_name} ({adm_clean})")
 
+                        # Load data sheets
                         sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
                         data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
 
@@ -775,72 +766,119 @@ if page == "🎓 Result Portal":
                                 if key.lower() in s.lower(): return s
                             return None
 
-                        bs_n, sc_n = find_s('Bsheet'), find_s('Scoresheet')
-                        beh_n, sk_n, com_n = find_s('Behaviour'), find_s('Skill'), find_s('Comment')
-
-                        pos_val = "N/A"
-                        if bs_n:
-                            df_bs = data_sheets[bs_n]
-                            df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
-                            match = df_bs[df_bs.iloc[:,0].astype(str).str.strip() == adm_clean]
-                            if not match.empty: pos_val = match.iloc[0].get('Position', 'N/A')
-
-                        processed_results = {}; total_sum = 0
-                        if sc_n:
-                            df_sc = data_sheets[sc_n]
-                            header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
-                            header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
-                            r1, r2 = df_sc.iloc[header_idx-1], df_sc.iloc[header_idx]
-                            
-                            header_row = df_sc.iloc[header_idx] 
-                            
-                            s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
-                            if not s_row.empty:
-                                s_vals = s_row.iloc[0]
-                                for i, col_val in enumerate(header_row):
-                                    if str(col_val).strip().lower() == 'total':
-                                        sub = "Unknown"
-                                        for j in range(i, -1, -1):
-                                            val = str(r1.iloc[j]).strip()
-                                            if val.lower() != 'nan' and val != '':
-                                                sub = val; break
-                                        try:
-                                            ca = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
-                                            ex = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
-                                            tot = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
-                                            processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
-                                            total_sum += tot
-                                        except: continue
-
-                        def get_row(sn):
-                            if not sn: return {}
-                            df = data_sheets[sn]
-                            df.columns = [str(c).strip() for c in df.iloc[0]]
-                            m = df[df.iloc[:,0].astype(str).str.strip() == adm_clean]
-                            return m.iloc[0].to_dict() if not m.empty else {}
-
-                        beh, sk, comm = get_row(beh_n), get_row(sk_n), get_row(com_n)
-                        active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
-                        summary = {'obtained': total_sum, 'avg': round(total_sum/max(1, len(active_subs)), 2), 'pos': pos_val, 'max': len(processed_results)*100}
+                        sc_n = find_s('Scoresheet')
                         
-                        st.title(f"👋 Welcome, {student_name}")
-                        m1, m2, m3 = st.columns(3)
-                        m1.metric("Average", f"{summary['avg']}%")
-                        m2.metric("Position", summary['pos'])
-                        m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
-                        st.table(pd.DataFrame(processed_results).T)
+                        # --- BRANCH 1: TEST RESULTS (C.A) ---
+                        if portal_type == "📝 Test Results (C.A)":
+                            st.title(f"📝 Test Records: {student_name}")
+                            test_results = {}
+                            if sc_n:
+                                df_sc = data_sheets[sc_n]
+                                header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                                header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
+                                r1 = df_sc.iloc[header_idx-1]
+                                header_row = df_sc.iloc[header_idx] 
+                                s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                
+                                if not s_row.empty:
+                                    s_vals = s_row.iloc[0]
+                                    for i, col_val in enumerate(header_row):
+                                        if str(col_val).strip().lower() == 'total':
+                                            sub = "Unknown"
+                                            for j in range(i, -1, -1):
+                                                val = str(r1.iloc[j]).strip()
+                                                if val.lower() != 'nan' and val != '':
+                                                    sub = val; break
+                                            try:
+                                                test_results[sub] = {
+                                                    "CA1": s_vals.iloc[i-4] if pd.notna(s_vals.iloc[i-4]) else "-",
+                                                    "CA2": s_vals.iloc[i-3] if pd.notna(s_vals.iloc[i-3]) else "-",
+                                                    "CA3": s_vals.iloc[i-2] if pd.notna(s_vals.iloc[i-2]) else "-",
+                                                    "CA4": s_vals.iloc[i-1] if pd.notna(s_vals.iloc[i-1]) else "-",
+                                                    "Total_CA": s_vals.iloc[i] if pd.notna(s_vals.iloc[i]) else 0
+                                                }
+                                            except: continue
+                            
+                            st.table(pd.DataFrame(test_results).T)
+                            
+                            try:
+                                pdf = ResultPDF()
+                                pdf.is_test = True # Custom flag to trigger test header title
+                                pdf.add_page()
+                                pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 'N/A'})
+                                pdf.draw_test_table(test_results)
+                                pdf_output = pdf.output(dest='S')
+                                pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
+                                st.download_button("📥 Download Test Result", data=pdf_bytes, file_name=f"Test_{student_name}.pdf", use_container_width=True)
+                            except Exception as e:
+                                st.error(f"PDF Error: {e}")
 
-                        try:
-                            pdf = ResultPDF()
-                            pdf.add_page()
-                            pdf.student_info_box(student_name, adm_clean, selected_class, term, summary)
-                            pdf.draw_scores_table(processed_results, selected_class)
-                            pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, term)
-                            pdf_output = pdf.output(dest='S')
-                            pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-                            st.download_button("📥 Download PDF", data=pdf_bytes, file_name=f"{student_name}.pdf", use_container_width=True)
-                        except Exception as e:
-                            st.error(f"PDF Error: {e}")
+                        # --- BRANCH 2: FULL TERM RESULTS ---
+                        else:
+                            bs_n = find_s('Bsheet')
+                            beh_n, sk_n, com_n = find_s('Behaviour'), find_s('Skill'), find_s('Comment')
+
+                            pos_val = "N/A"
+                            if bs_n:
+                                df_bs = data_sheets[bs_n]
+                                df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
+                                match = df_bs[df_bs.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                if not match.empty: pos_val = match.iloc[0].get('Position', 'N/A')
+
+                            processed_results = {}; total_sum = 0
+                            if sc_n:
+                                df_sc = data_sheets[sc_n]
+                                header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                                header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
+                                r1 = df_sc.iloc[header_idx-1]
+                                header_row = df_sc.iloc[header_idx] 
+                                s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                if not s_row.empty:
+                                    s_vals = s_row.iloc[0]
+                                    for i, col_val in enumerate(header_row):
+                                        if str(col_val).strip().lower() == 'total':
+                                            sub = "Unknown"
+                                            for j in range(i, -1, -1):
+                                                val = str(r1.iloc[j]).strip()
+                                                if val.lower() != 'nan' and val != '':
+                                                    sub = val; break
+                                            try:
+                                                ca = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
+                                                ex = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
+                                                tot = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
+                                                processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
+                                                total_sum += tot
+                                            except: continue
+
+                            def get_row(sn):
+                                if not sn: return {}
+                                df = data_sheets[sn]
+                                df.columns = [str(c).strip() for c in df.iloc[0]]
+                                m = df[df.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                return m.iloc[0].to_dict() if not m.empty else {}
+
+                            beh, sk, comm = get_row(beh_n), get_row(sk_n), get_row(com_n)
+                            active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
+                            summary = {'obtained': total_sum, 'avg': round(total_sum/max(1, len(active_subs)), 2), 'pos': pos_val, 'max': len(processed_results)*100}
+                            
+                            st.title(f"👋 Welcome, {student_name}")
+                            m1, m2, m3 = st.columns(3)
+                            m1.metric("Average", f"{summary['avg']}%")
+                            m2.metric("Position", summary['pos'])
+                            m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
+                            st.table(pd.DataFrame(processed_results).T)
+
+                            try:
+                                pdf = ResultPDF()
+                                pdf.add_page()
+                                pdf.student_info_box(student_name, adm_clean, selected_class, term, summary)
+                                pdf.draw_scores_table(processed_results, selected_class)
+                                pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, term)
+                                pdf_output = pdf.output(dest='S')
+                                pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
+                                st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"{student_name}.pdf", use_container_width=True)
+                            except Exception as e:
+                                st.error(f"PDF Error: {e}")
 
                     else:
                         st.error("❌ Invalid ID or Key.")
@@ -1353,6 +1391,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
