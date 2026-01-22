@@ -326,33 +326,39 @@ for key in ['show_students', 'show_subjects', 'show_cal', 'show_exam', 'show_con
     if key not in st.session_state:
         st.session_state[key] = False
 
-# --- PROFESSIONAL ROYAL BLUE & CLEAN LIGHT THEME ---
+# --- PROFESSIONAL ROYAL BLUE & CLEAN LIGHT THEME (MOBILE OPTIMIZED) ---
 st.markdown("""
     <style>
-    /* Main Background: Clean White/Soft Gray */
+    /* Force the main app background to white regardless of system theme */
     .stApp { 
-        background: #ffffff; 
-        color: #1e293b; /* Dark slate text for better readability */
+        background-color: #ffffff !important; 
+        color: #1e293b !important; 
     }
     
-    /* Sidebar: Light Gray with Blue Border */
+    /* SIDEBAR: Explicitly force light background and dark text */
     [data-testid="stSidebar"] {
         background-color: #f8fafc !important;
         border-right: 2px solid #2563eb;
     }
 
-    /* Override Sidebar Text Color */
-    [data-testid="stSidebar"] .stText, [data-testid="stSidebar"] label {
+    /* Targeting ALL navigation text, labels, and icons in sidebar */
+    [data-testid="stSidebar"] * {
         color: #1e293b !important;
     }
 
+    /* Specifically target the navigation links (the ones that disappear in dark mode) */
+    [data-testid="stSidebarNav"] span {
+        color: #1e293b !important;
+        font-weight: 600 !important;
+    }
+
+    /* Logo and Header Styling */
     .logo-container {
         display: flex;
         justify-content: center;
         padding: 20px 0;
     }
 
-    /* Logo Border: Clean Blue Glow */
     .school-logo-border {
         width: 130px;
         height: 130px;
@@ -360,136 +366,63 @@ st.markdown("""
         border: 4px double #2563eb;
         padding: 5px;
         background: white;
-        object-fit: cover;
         box-shadow: 0px 4px 15px rgba(37, 99, 235, 0.2);
     }
     
-    /* Quote Box: Professional Soft Blue */
+    /* Boxes and Cards */
     .principal-quote {
-        background: #eff6ff;
-        border-left: 5px solid #2563eb;
+        background: #eff6ff !important;
+        border-left: 5px solid #2563eb !important;
         padding: 20px;
-        margin: 10px 0 25px 0;
         border-radius: 0 15px 15px 0;
-        font-family: 'Georgia', serif;
-        color: #1e3a8a; /* Deep blue text */
+        color: #1e3a8a !important;
     }
 
-    /* Ticker: Light Blue & White Text */
-    .ticker-wrap {
-        width: 100%; overflow: hidden; height: 40px; 
-        background-color: #2563eb; 
-        border-bottom: 2px solid #1e40af;
-        border-top: 2px solid #1e40af;
-        display: flex; align-items: center; margin-bottom: 20px;
-    }
-    .ticker {
-        display: inline-block; white-space: nowrap; padding-right: 100%;
-        animation: ticker 60s linear infinite; font-weight: bold; color: #ffffff;
-    }
-    @keyframes ticker {
-        0% { transform: translate3d(0, 0, 0); }
-        100% { transform: translate3d(-100%, 0, 0); }
-    }
-    .ticker-item { display: inline-block; padding: 0 50px; }
-
-    /* Content Boxes: White with Subtle Shadow and Blue Border */
     .statement-box {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-left: 5px solid #2563eb;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-left: 5px solid #2563eb !important;
         border-radius: 10px; padding: 25px; margin-bottom: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        color: #334155;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        color: #334155 !important;
     }
 
-    /* Value Cards: Soft Light Blue */
     .core-value-card {
-        background: #f1f5f9;
-        border: 1px solid #cbd5e1;
+        background: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
         padding: 10px; border-radius: 10px; text-align: center;
-        font-weight: bold; color: #1e40af; transition: 0.3s;
-    }
-    .core-value-card:hover { 
-        background: #2563eb; 
-        color: #ffffff;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    }
-    
-    .school-bio {
-        text-align: center; max-width: 900px; margin: 0 auto 40px auto;
-        font-style: italic; color: #475569; font-size: 1.1em; line-height: 1.6;
+        font-weight: bold; color: #1e40af !important;
     }
 
-    .history-card {
-        background: #f8fafc;
-        border-radius: 20px; padding: 35px; border: 1px solid #e2e8f0;
-        margin-bottom: 25px; line-height: 1.8; color: #1e293b;
+    /* Metric Cards */
+    .metric-card {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-top: 3px solid #2563eb !important;
+        border-radius: 10px; padding: 15px; text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
+    .metric-value { color: #1e3a8a !important; font-size: 1.4rem; font-weight: 700; }
+    .metric-label { color: #64748b !important; font-size: 0.75rem; text-transform: uppercase; }
 
-    .protocol-box {
-        background: #f1f5f9; border-left: 5px solid #2563eb;
-        padding: 20px; border-radius: 12px; margin-top: 10px; margin-bottom: 10px;
-        color: #1e293b;
-    }
-
-    /* Footer: Soft Professional Blue */
+    /* FOOTER: Kept Formal/Dark as requested */
     .footer-section {
-        margin-top: 60px; padding: 40px; background: #f8fafc;
-        border-radius: 40px 40px 0 0; text-align: center; border-top: 2px solid #e2e8f0;
+        margin-top: 60px; padding: 40px; background: #020617 !important;
+        border-radius: 40px 40px 0 0; text-align: center; border-top: 3px solid #2563eb;
     }
-    
-    .footer-info {
-        color: #64748b; font-size: 0.9em; margin-bottom: 15px; line-height: 1.5;
-    }
+    .footer-section p { color: #f1f5f9 !important; }
+    .watermark-text { color: rgba(37, 99, 235, 0.5) !important; font-weight: bold; }
 
-    .watermark-text {
-        color: rgba(37, 99, 235, 0.3); font-size: 0.8em; letter-spacing: 2px; margin-top: 10px; font-weight: bold;
-    }
-
-    /* Buttons: Strong Blue with White Text */
+    /* Buttons */
     div.stButton > button {
         background-color: #2563eb !important;
         color: white !important;
         border-radius: 8px !important;
-        border: none !important;
-        padding: 10px 24px !important;
     }
 
-    /* METRIC CARDS CSS */
-    .metric-container {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-    .metric-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-top: 3px solid #2563eb;
-        border-radius: 10px;
-        padding: 15px;
-        text-align: center;
-        flex: 1;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    .metric-label {
-        color: #64748b;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-    .metric-value {
-        color: #1e3a8a;
-        font-size: 1.4rem;
-        font-weight: 700;
-    }
-    
-    /* Make Input fields look professional */
-    input {
-        border-radius: 8px !important;
-    }
+    /* Ticker */
+    .ticker-wrap { background-color: #2563eb !important; border-bottom: 2px solid #1e40af; }
+    .ticker { color: #ffffff !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -1425,6 +1358,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
