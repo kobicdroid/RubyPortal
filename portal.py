@@ -1269,11 +1269,11 @@ elif page == "🛠️ Staff Management":
                     pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
                     st.warning(f"Deleted: {notice['title']}")
                     st.rerun()
-# --- DASHBOARD LOGIC (STUDENT) ---
 elif page == "📊 Dashboard":
     import os
     import random
-    import io  
+    import io
+    from io import BytesIO
 
     # 1. Assets
     founder_path, lab_path, news_path = "founder.jpg", "lab.jpg", "news_event.jpg"
@@ -1287,11 +1287,11 @@ elif page == "📊 Dashboard":
         "\"Knowledge is power, but character is respect.\""
     ]
     
-    # 2. TOP SECTION
+    # 2. TOP SECTION (Updated for Light Theme)
     st.markdown(f"""
         <div class="principal-quote">
-            <small style="color:#fbbf24; text-transform:uppercase; letter-spacing:1px;"><b>Principal's Quote of the Day</b></small><br>
-            <span style="font-size:1.3em; color:#f8fafc;">{random.choice(quotes)}</span>
+            <small style="color:#2563eb; text-transform:uppercase; letter-spacing:1px;"><b>Principal's Quote of the Day</b></small><br>
+            <span style="font-size:1.3em; color:#1e293b;">{random.choice(quotes)}</span>
         </div>
     """, unsafe_allow_html=True)
 
@@ -1308,18 +1308,19 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("""<h1 style='text-align:center; color:#fbbf24; font-size:3em;'>RUBY SPRINGFIELD COLLEGE</h1>""", unsafe_allow_html=True)
-    st.markdown("""<h3 style='text-align:center; color:#f8fafc; font-style:italic; margin-top:-15px;'>Motto: A Citadel of Excellence</h3>""", unsafe_allow_html=True)
+    # School Name (Updated Colors for Light Theme)
+    st.markdown("""<h1 style='text-align:center; color:#1e3a8a; font-size:3em;'>RUBY SPRINGFIELD COLLEGE</h1>""", unsafe_allow_html=True)
+    st.markdown("""<h3 style='text-align:center; color:#2563eb; font-style:italic; margin-top:-15px;'>Motto: A Citadel of Excellence</h3>""", unsafe_allow_html=True)
     st.markdown('<div class="school-bio">"We are building global leaders with integrity and academic brilliance."</div>', unsafe_allow_html=True)
 
     # 4. VISION & MISSION
     v_col, m_col = st.columns(2)
     with v_col:
-        st.markdown(f"""<div class="statement-box"><h3 style="color:#fbbf24; text-align:center;">🔭 VISION STATEMENT</h3><p style="text-align:justify; line-height:1.6;">TO PROVIDE QUALITATIVE EDUCATION IN A SERENE AND SAFE LEARNING ENVIRONMENT, ENABLING US TO PRODUCE HIGHLY QUALIFIED AND POTENTIAL LEADERS OF TOMORROW.</p></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="statement-box"><h3 style="color:#2563eb; text-align:center;">🔭 VISION STATEMENT</h3><p style="text-align:justify; line-height:1.6; color:#334155;">TO PROVIDE QUALITATIVE EDUCATION IN A SERENE AND SAFE LEARNING ENVIRONMENT, ENABLING US TO PRODUCE HIGHLY QUALIFIED AND POTENTIAL LEADERS OF TOMORROW.</p></div>""", unsafe_allow_html=True)
     with m_col:
-        st.markdown(f"""<div class="statement-box"><h3 style="color:#fbbf24; text-align:center;">🎯 MISSION STATEMENT</h3><p style="text-align:justify; line-height:1.6;">TO BRIDGE THE GAP BETWEEN THE RICH AND THE POOR. TO DEMONSTRATE ACHIEVEMENTS ACROSS THE RANGE OF STUDENTS, SO THAT OUR GRADUATES ARE WELL NURTURED IN LOVE TO EXCEL AND FIT IN ANY WHERE.</p></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="statement-box"><h3 style="color:#2563eb; text-align:center;">🎯 MISSION STATEMENT</h3><p style="text-align:justify; line-height:1.6; color:#334155;">TO BRIDGE THE GAP BETWEEN THE RICH AND THE POOR. TO DEMONSTRATE ACHIEVEMENTS ACROSS THE RANGE OF STUDENTS, SO THAT OUR GRADUATES ARE WELL NURTURED IN LOVE TO EXCEL AND FIT IN ANY WHERE.</p></div>""", unsafe_allow_html=True)
 
-    st.markdown("<h2 style='text-align:center; color:#fbbf24;'>💎 OUR CORE VALUES</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#1e3a8a;'>💎 OUR CORE VALUES</h2>", unsafe_allow_html=True)
     cv_cols = st.columns(4)
     values = ["Hard work", "Integrity", "High moral standard", "Discipline", "Honesty", "Excellence", "Team spirit"]
     for idx, val in enumerate(values):
@@ -1327,7 +1328,7 @@ elif page == "📊 Dashboard":
     
     st.divider()
 
-   # 5. METRICS SECTION (REDESIGNED)
+   # 5. METRICS SECTION (Redesigned with light theme classes)
     st.markdown("""
         <div class="metric-container">
             <div class="metric-card">
@@ -1349,10 +1350,10 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-   # 6. HERITAGE & FOUNDER (Fixed Typos)
+   # 6. HERITAGE & FOUNDER (Color Updates)
     col_hist, col_img = st.columns([2, 1])
     with col_hist:
-        st.markdown('<div class="history-card"><h2 style="color:#fbbf24;">A Heritage of Leadership</h2><p> I give God all the Glory for Ruby Springfield College. Ruby Springfield started modestly as a standard bearer, introducing Secondary Education in a package completely different from what obtains in this part of the world. The school took off in 1998. Like a child it grew and waxed strong progressively to the fancy and admiration of all and sundry. Our watch words in this highly esteemed college is SUPREME EXCELLENCE.</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="history-card"><h2 style="color:#1e3a8a;">A Heritage of Leadership</h2><p style="color:#334155;"> I give God all the Glory for Ruby Springfield College. Ruby Springfield started modestly as a standard bearer, introducing Secondary Education in a package completely different from what obtains in this part of the world. The school took off in 1998. Like a child it grew and waxed strong progressively to the fancy and admiration of all and sundry. Our watch words in this highly esteemed college is SUPREME EXCELLENCE.</p></div>', unsafe_allow_html=True)
     with col_img:
         if os.path.exists(founder_path):
             st.image(founder_path, use_container_width=True) 
@@ -1361,28 +1362,29 @@ elif page == "📊 Dashboard":
 
     # 7. PRACTICAL GALLERY
     st.markdown(f"""
-        <div class="practical-gallery" style="background-image: url('data:image/jpeg;base64,{lab_img_base64}');">
-            <div class="overlay-content">
-                <h4>🧪 Advanced Chemical Research Lab</h4>
-                <p>Precision and discovery in every experiment.</p>
+        <div class="practical-gallery" style="background-image: url('data:image/jpeg;base64,{lab_img_base64}'); height: 250px; background-size: cover; border-radius: 15px; position: relative;">
+            <div class="overlay-content" style="background: rgba(30, 58, 138, 0.7); position: absolute; bottom: 0; width: 100%; padding: 20px; border-radius: 0 0 15px 15px; color: white;">
+                <h4 style="margin:0;">🧪 Advanced Chemical Research Lab</h4>
+                <p style="margin:0;">Precision and discovery in every experiment.</p>
             </div>
         </div>
     """, unsafe_allow_html=True)
 
-   # 8. NEWS FEED (Fixed io crash)
+   # 8. NEWS FEED & PROTOCOL
     col_l, col_r = st.columns([2, 1])
     with col_l:
-        st.markdown("### 🔔 RSC News Feed")
+        st.markdown("<h3 style='color:#1e3a8a;'>🔔 RSC News Feed</h3>", unsafe_allow_html=True)
         with st.container(border=True):
-            st.markdown(f"<h4 style='color:#fbbf24;'>{st.session_state.news_content['title']}</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='color:#2563eb;'>{st.session_state.news_content['title']}</h4>", unsafe_allow_html=True)
             if os.path.exists(news_path):
                 with open(news_path, "rb") as f:
-                    # Use BytesIO directly as imported at the top of your file
-                    st.image(BytesIO(f.read()), width="stretch")
-            st.markdown(f"<div style='margin-top:10px;'>{st.session_state.news_content['desc']}</div>", unsafe_allow_html=True)
+                    st.image(BytesIO(f.read()), use_container_width=True)
+            st.markdown(f"<div style='margin-top:10px; color:#334155;'>{st.session_state.news_content['desc']}</div>", unsafe_allow_html=True)
+    
     with col_r:
-        st.markdown("### 🛠️ Official Protocol")
-        st.markdown("""<style>.protocol-box {background-color: #1E3A8A; color: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #fbbf24;}</style>""", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#1e3a8a;'>🛠️ Official Protocol</h3>", unsafe_allow_html=True)
+        # Protocol box style updated for light theme
+        st.markdown("""<style>.protocol-box {background-color: #eff6ff; color: #1e3a8a; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #2563eb; border: 1px solid #e2e8f0;}</style>""", unsafe_allow_html=True)
 
         if st.button("📅 School Calendar", use_container_width=True): 
             st.session_state.show_cal = not st.session_state.get('show_cal', False)
@@ -1394,7 +1396,7 @@ elif page == "📊 Dashboard":
             st.session_state.show_exam = not st.session_state.get('show_exam', False)
         if st.session_state.get('show_exam', False):
             exam_data = st.session_state.get('portal_storage', {}).get('exams', 'Proper uniform and ID card required for entry.')
-            st.markdown(f'<div class="protocol-box"><b style="color:#fbbf24;">EXAM PROTOCOL:</b><br>{exam_data}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="protocol-box"><b style="color:#2563eb;">EXAM PROTOCOL:</b><br>{exam_data}</div>', unsafe_allow_html=True)
 
         if st.button("📞 Contact Info", use_container_width=True): 
             st.session_state.show_contact = not st.session_state.get('show_contact', False)
@@ -1402,9 +1404,9 @@ elif page == "📊 Dashboard":
             contact_data = st.session_state.get('portal_storage', {}).get('contact', 'School Office: Maiduguri, Borno State.')
             st.markdown(f'<div class="protocol-box"><b>📞 OFFICIAL CONTACT:</b><br>{contact_data}</div>', unsafe_allow_html=True)
 
-# --- SHUTDOWN: PERSISTENT DIGITAL NOTICE BOARD (WITH GITHUB SYNC) ---
+    # 9. NOTICE BOARD
     st.markdown("---")
-    st.markdown("<h3 style='color:#fbbf24;'>📂 School Notice Board</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#1e3a8a;'>📂 School Notice Board</h3>", unsafe_allow_html=True)
     
     if os.path.exists("notices"):
         notice_files = [f for f in os.listdir("notices") if f.endswith('.pdf')]
@@ -1414,35 +1416,15 @@ elif page == "📊 Dashboard":
                 with n_cols[idx % 3]:
                     with st.container(border=True):
                         clean_title = filename.replace("notice_", "").replace(".pdf", "").replace("_", " ").upper()
-                        st.markdown(f"**📄 {clean_title}**")
+                        st.markdown(f"<b style='color:#1e293b;'>📄 {clean_title}</b>", unsafe_allow_html=True)
                         file_path = os.path.join("notices", filename)
                         with open(file_path, "rb") as f:
                             st.download_button(label="📥 View PDF", data=f, file_name=filename, mime="application/pdf", key=f"pub_dl_{idx}", use_container_width=True)
         else:
             st.info("The notice board is currently empty.")
     
-# 10. FOOTER
+    # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
