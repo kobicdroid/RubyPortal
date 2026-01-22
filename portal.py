@@ -706,31 +706,45 @@ with st.sidebar:
 if page == "🎓 Result Portal":
     st.sidebar.markdown("---")
     st.sidebar.subheader("🎓 Student Login")
+
+    # --- NEW SELECTION LOGIC FOR ANDROID ---
+    portal_type = st.sidebar.radio(
+        "Select Portal Type",
+        ["📊 Full Term Results", "📝 Test Results (C.A)"],
+        index=0
+    )
+
     adm_no = st.sidebar.text_input("Admission Number")
     
     # --- SUMI SECRET ACCESS ---
     if adm_no == "SUMI":
         st.balloons()
         st.title("👸 Queen Maryam's Portal")
-        st.success(f"Access Granted for Shutdown & {Babe}") # Babe/Queen from memory
+        st.success(f"Access Granted for Shutdown & Babe") 
         st.write(f"**Relationship Status:** Planning marriage in 7-8 years.")
         st.info("Keep building the Master Code, Adam.")
         st.stop()
 
     pwd = st.sidebar.text_input("Access Key", type="password")
     selected_class = st.sidebar.selectbox("Class", get_available_classes())
-    login_btn = st.sidebar.button("Generate Report")
+    
+    # Dynamic button label based on selection
+    btn_label = "Generate Full Report" if portal_type == "📊 Full Term Results" else "View Test Scores"
+    login_btn = st.sidebar.button(btn_label)
 
     if login_btn:
+        # Check if it's the Test Portal or Full Results
+        if portal_type == "📝 Test Results (C.A)":
+            st.warning("Test Results Portal is currently being updated. Please check Full Term Results.")
+            st.stop()
+
+        # START OF YOUR ORIGINAL LOGIC
         file_path = f"Report {selected_class}.xlsx"
         if os.path.exists(file_path):
-            # --- MEMORY OPTIMIZATION START ---
             try:
-                # Instead of sheet_name=None (which loads everything), we use ExcelFile
                 xl = pd.ExcelFile(file_path)
                 
                 if 'Data' in xl.sheet_names:
-                    # Only load the Data sheet for login
                     df_data = xl.parse('Data', header=None)
                     df_data.columns = [str(c).strip() for c in df_data.iloc[0]]
                     df_data = df_data[1:]
@@ -753,11 +767,9 @@ if page == "🎓 Result Portal":
                         
                         log_activity("Student", "Login", f"Success: {student_name} ({adm_clean})")
 
-                        # Load other sheets only if login is successful
                         sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
                         data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
 
-                        # Helper to find specific sheets
                         def find_s(key):
                             for s in data_sheets.keys():
                                 if key.lower() in s.lower(): return s
@@ -766,7 +778,6 @@ if page == "🎓 Result Portal":
                         bs_n, sc_n = find_s('Bsheet'), find_s('Scoresheet')
                         beh_n, sk_n, com_n = find_s('Behaviour'), find_s('Skill'), find_s('Comment')
 
-                        # BroadSheet Logic (Position)
                         pos_val = "N/A"
                         if bs_n:
                             df_bs = data_sheets[bs_n]
@@ -781,7 +792,6 @@ if page == "🎓 Result Portal":
                             header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
                             r1, r2 = df_sc.iloc[header_idx-1], df_sc.iloc[header_idx]
                             
-                            # Applied your specific iloc request here:
                             header_row = df_sc.iloc[header_idx] 
                             
                             s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
@@ -820,7 +830,6 @@ if page == "🎓 Result Portal":
                         m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
                         st.table(pd.DataFrame(processed_results).T)
 
-                        # --- PDF LOGIC ---
                         try:
                             pdf = ResultPDF()
                             pdf.add_page()
@@ -829,7 +838,7 @@ if page == "🎓 Result Portal":
                             pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, term)
                             pdf_output = pdf.output(dest='S')
                             pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-                            st.download_button("📥 Download PDF", data=pdf_bytes, file_name=f"{student_name}.pdf")
+                            st.download_button("📥 Download PDF", data=pdf_bytes, file_name=f"{student_name}.pdf", use_container_width=True)
                         except Exception as e:
                             st.error(f"PDF Error: {e}")
 
@@ -839,7 +848,6 @@ if page == "🎓 Result Portal":
                     st.error("Sheet 'Data' not found.")
             except Exception as e:
                 st.error(f"System Error: {e}")
-            # --- MEMORY OPTIMIZATION END ---
 # --- STAFF MANAGEMENT LOGIC ---
 elif page == "🛠️ Staff Management":
     import io  
@@ -1345,6 +1353,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
