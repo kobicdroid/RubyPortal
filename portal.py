@@ -492,10 +492,10 @@ class ResultPDF(FPDF):
             pass 
 
     def header(self):
-        from datetime import datetime
         self.draw_watermark()
         
-        if os.path.exists(LOGO_PATH):
+        # Logo handling (Ensure LOGO_PATH is defined in your main script)
+        if 'LOGO_PATH' in globals() and os.path.exists(LOGO_PATH):
             self.image(LOGO_PATH, 10, 8, 22) 
         
         # School Name & Motto
@@ -506,7 +506,7 @@ class ResultPDF(FPDF):
         self.set_text_color(100, 100, 100)
         self.cell(0, 4, 'Motto: A Citadel of Excellence', 0, 1, 'C') 
         
-        # Right Side Branding & Date
+        # Right Side Branding & Address
         self.set_font('Arial', '', 7)
         self.set_text_color(0, 0, 0)
         self.cell(0, 4, 'Opposite Polo Field, Old GRA, Maiduguri, Borno State', 0, 1, 'R') 
@@ -517,7 +517,7 @@ class ResultPDF(FPDF):
         self.set_font('Arial', 'I', 6)
         self.cell(0, 3, f'Generated on: {curr_date}', 0, 1, 'R')
         
-        # Developer Credit
+        # Developer Credit (Personalized for you, Adam!)
         self.set_font('Arial', 'B', 6)
         self.set_text_color(150, 150, 150)
         self.cell(0, 3, 'Developed by: Adam Usman | Powered by SumiLogics(NJA)', 0, 1, 'R')
@@ -526,8 +526,9 @@ class ResultPDF(FPDF):
         self.set_fill_color(200, 210, 230) 
         self.set_font('Arial', 'B', 10)
         self.set_text_color(40, 70, 120)
-        # Dynamic Title based on page
-        title = "OFFICIAL CONTINUOUS ASSESSMENT RECORD" if hasattr(self, 'is_test') else "OFFICIAL TERMLY PERFORMANCE RECORD"
+        
+        # Dynamic Title logic
+        title = "OFFICIAL CONTINUOUS ASSESSMENT RECORD" if hasattr(self, 'is_test') and self.is_test else "OFFICIAL TERMLY PERFORMANCE RECORD"
         self.cell(0, 8, title, 1, 1, 'C', 1) 
         self.ln(2)
 
@@ -543,79 +544,93 @@ class ResultPDF(FPDF):
         self.set_text_color(0, 0, 0)
         self.set_font('Arial', 'B', 8)
         start_y = self.get_y()
+        
+        # Left side info
         self.cell(30, 5, 'Name of student:', 0, 0) 
         self.set_font('Arial', '', 9)
-        self.cell(80, 5, f" {student_name.upper()}", 'B', 1)
+        self.cell(80, 5, f" {str(student_name).upper()}", 'B', 1)
+        
         self.set_font('Arial', 'B', 8)
         self.cell(30, 5, 'Admission No:', 0, 0) 
         self.set_font('Arial', '', 9)
         self.cell(80, 5, f" {adm}", 'B', 1)
+        
         self.set_font('Arial', 'B', 8)
         self.cell(30, 5, 'Class:', 0, 0) 
         self.set_font('Arial', '', 9)
         self.cell(80, 5, f" {s_class}   |   Term: {term}", 'B', 1)
 
-        # Result Summary box (Only if not a test or if summary is valid)
-        if summary.get('avg') != "N/A":
+        # Right side summary box (Skip if it's a CA-only report or N/A)
+        if summary.get('avg') not in ["N/A", 0, "0", None]:
             self.set_xy(135, start_y)
             self.set_fill_color(245, 245, 245)
             self.set_font('Arial', 'B', 7)
             self.cell(35, 5, 'Obtained Score:', 1, 0, 'L', 1)
-            self.cell(25, 5, f"{summary['obtained']}", 1, 1, 'C')
+            self.cell(25, 5, f"{summary.get('obtained', 0)}", 1, 1, 'C')
             self.set_x(135)
             self.cell(35, 5, 'Average / Pos:', 1, 0, 'L', 1)
-            self.cell(25, 5, f"{summary['avg']}% / {summary['pos']}", 1, 1, 'C')
+            self.cell(25, 5, f"{summary.get('avg', 0)}% / {summary.get('pos', '-')}", 1, 1, 'C')
             self.set_x(135)
             self.cell(35, 5, 'Total Possible:', 1, 0, 'L', 1)
-            self.cell(25, 5, f"{summary['max']}", 1, 1, 'C')
+            self.cell(25, 5, f"{summary.get('max', 0)}", 1, 1, 'C')
         self.ln(6)
 
     def draw_test_table(self, subject_data):
-        """Logic for the professional test result printout"""
+        """Specifically for the 'Test Results (C.A)' Portal"""
         self.set_fill_color(40, 70, 120) 
         self.set_text_color(255, 255, 255) 
         self.set_font('Arial', 'B', 9)
-        w = [70, 25, 25, 25, 25, 25]
+        w = [75, 23, 23, 23, 23, 23]
         headers = ['Subject', '1st CA', '2nd CA', '3rd CA', '4th CA', 'Total CA']
         for i in range(len(headers)):
             self.cell(w[i], 8, headers[i], 1, 0, 'C', 1)
         self.ln()
+        
         self.set_text_color(0, 0, 0)
         self.set_font('Arial', '', 9)
         for sub, sc in subject_data.items():
-            self.cell(w[0], 7, sub, 1)
-            for key in ['CA1', 'CA2', 'CA3', 'CA4', 'Total_CA']:
-                val = str(sc.get(key, '-'))
-                self.cell(25, 7, val, 1, 0, 'C')
-            self.ln()
+            # Check if there is actually any data for the subject
+            if sc.get('Total_CA', 0) > 0:
+                self.cell(w[0], 7, sub, 1)
+                for key in ['CA1', 'CA2', 'CA3', 'CA4', 'Total_CA']:
+                    val = sc.get(key, 0)
+                    display_val = str(val) if val > 0 else "-"
+                    self.cell(23, 7, display_val, 1, 0, 'C')
+                self.ln()
 
     def draw_scores_table(self, subject_data, s_class):
+        """Specifically for the 'Full Term Report' Portal"""
         num_sub = len(subject_data)
         row_h = 5.5 if num_sub < 15 else 4.8
         f_size = 8 if num_sub < 15 else 7
+        
         self.set_fill_color(40, 70, 120) 
         self.set_text_color(255, 255, 255) 
         self.set_font('Arial', 'B', f_size)
+        
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         w = [70, 25, 25, 25, 45] if is_ss else [70, 30, 30, 30, 30]
-        headers = ['Subject', 'C.A (40%)', 'Exam (60%)', 'Total (100%)', 'Grade & Remark' if is_ss else 'Grade']
+        headers = ['Subject', 'C.A (40)', 'Exam (60)', 'Total (100)', 'Grade & Remark' if is_ss else 'Grade']
+        
         for i in range(len(headers)):
             self.cell(w[i], row_h + 1, headers[i], 1, 0, 'C', 1)
         self.ln()
+        
         self.set_text_color(0, 0, 0) 
         self.set_font('Arial', '', f_size)
+        
         for sub, scores in subject_data.items():
-            valid = scores['Total'] > 0 and not pd.isna(scores['Total'])
-            ca_val = str(scores['CA']) if valid else ""
-            ex_val = str(scores['Exam']) if valid else ""
-            tot_val = str(scores['Total']) if valid else ""
-            self.cell(w[0], row_h, sub, 1)
-            self.cell(w[1], row_h, ca_val, 1, 0, 'C')
-            self.cell(w[2], row_h, ex_val, 1, 0, 'C')
-            self.cell(w[3], row_h, tot_val, 1, 0, 'C')
-            g = ""
-            if valid:
-                t = scores['Total']
+            # Ensure we don't print rows for subjects with 0 total
+            total = scores.get('Total', 0)
+            if total > 0:
+                self.cell(w[0], row_h, sub, 1)
+                self.cell(w[1], row_h, str(scores.get('CA', '')), 1, 0, 'C')
+                self.cell(w[2], row_h, str(scores.get('Exam', '')), 1, 0, 'C')
+                self.cell(w[3], row_h, str(total), 1, 0, 'C')
+                
+                # Grading Logic
+                g = ""
+                t = total
                 if is_ss:
                     if t >= 75: g = "A1 (EXCELLENT)"
                     elif t >= 70: g = "B2 (V-GOOD)"
@@ -633,7 +648,8 @@ class ResultPDF(FPDF):
                     elif t >= 45: g = "D (PASS)"
                     elif t >= 40: g = "E (PASS)"
                     else: g = "F (FAIL)"
-            self.cell(w[-1], row_h, g, 1, 1, 'C')
+                
+                self.cell(w[-1], row_h, g, 1, 1, 'C')
         self.ln(2)
 
     def draw_transcript_summary(self, summary, term):
@@ -783,6 +799,7 @@ if page == "🎓 Result Portal":
                                 if not s_row.empty:
                                     s_vals = s_row.iloc[0]
                                     for i, col_val in enumerate(header_row):
+                                        # CORRECTED LOGIC: Offset from the 'Total' column for C.A tests
                                         if str(col_val).strip().lower() == 'total':
                                             sub = "Unknown"
                                             for j in range(i, -1, -1):
@@ -791,11 +808,11 @@ if page == "🎓 Result Portal":
                                                     sub = val; break
                                             try:
                                                 test_results[sub] = {
-                                                    "CA1": s_vals.iloc[i-4] if pd.notna(s_vals.iloc[i-4]) else "-",
-                                                    "CA2": s_vals.iloc[i-3] if pd.notna(s_vals.iloc[i-3]) else "-",
-                                                    "CA3": s_vals.iloc[i-2] if pd.notna(s_vals.iloc[i-2]) else "-",
-                                                    "CA4": s_vals.iloc[i-1] if pd.notna(s_vals.iloc[i-1]) else "-",
-                                                    "Total_CA": s_vals.iloc[i] if pd.notna(s_vals.iloc[i]) else 0
+                                                    "CA1": s_vals.iloc[i-6] if pd.notna(s_vals.iloc[i-6]) else "-",
+                                                    "CA2": s_vals.iloc[i-5] if pd.notna(s_vals.iloc[i-5]) else "-",
+                                                    "CA3": s_vals.iloc[i-4] if pd.notna(s_vals.iloc[i-4]) else "-",
+                                                    "CA4": s_vals.iloc[i-3] if pd.notna(s_vals.iloc[i-3]) else "-",
+                                                    "Total_CA": s_vals.iloc[i-2] if pd.notna(s_vals.iloc[i-2]) else 0
                                                 }
                                             except: continue
                             
@@ -803,7 +820,7 @@ if page == "🎓 Result Portal":
                             
                             try:
                                 pdf = ResultPDF()
-                                pdf.is_test = True # Custom flag to trigger test header title
+                                pdf.is_test = True 
                                 pdf.add_page()
                                 pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 'N/A'})
                                 pdf.draw_test_table(test_results)
@@ -843,6 +860,7 @@ if page == "🎓 Result Portal":
                                                 if val.lower() != 'nan' and val != '':
                                                     sub = val; break
                                             try:
+                                                # KEEPING FULL TERM LOGIC: i-2 (Total CA), i-1 (Exam), i (Total)
                                                 ca = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
                                                 ex = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
                                                 tot = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
@@ -1391,6 +1409,7 @@ elif page == "📊 Dashboard":
     
 # 10. FOOTER
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
