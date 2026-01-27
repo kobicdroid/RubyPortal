@@ -107,11 +107,10 @@ st.markdown(f'<div style="display:none;">google-site-verification: {verify_code}
 # --- STEP 3: VISIBLE SCHOOL BRANDING ---
 st.markdown(
     """
-    <div style="text-align: center; padding-top: 10px;">
-        <h1 style="color: #1E3A8A; font-family: 'Arial'; margin-bottom: 0;">Ruby Springfield College</h1>
-        <h3 style="color: #555; margin-top: 0;">Official Academic Management & Result Portal</h3>
-        <p style="font-weight: bold; color: #1E3A8A;">Maiduguri, Borno State, Nigeria</p>
-        <hr style="border: 1px solid #1E3A8A; width: 60%; margin: auto;">
+    <div class="portal-header">
+        <h1 style="color: #1E3A8A; margin-bottom: 5px; font-weight: 700;">Ruby Springfield College</h1>
+        <h3 style="color: #4B5563; margin-top: 0; font-weight: 400;">Official Academic Management & Result Portal</h3>
+        <p style="font-weight: 600; color: #1E3A8A; letter-spacing: 1px;">MAIDUGURI, BORNO STATE, NIGERIA</p>
     </div>
     """, 
     unsafe_allow_html=True
@@ -1481,6 +1480,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
