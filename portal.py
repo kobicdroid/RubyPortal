@@ -28,7 +28,64 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+# --- NEW: DESIGN & FONT FEATURES (MATCHING THE PORTAL IMAGE) ---
+st.markdown("""
+    <style>
+    /* Import Clean Montserrat Font */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 
+    html, body, [class*="css"] {
+        font-family: 'Montserrat', sans-serif !important;
+        background-color: #F3F4F6 !important; /* Soft gray background like the image */
+    }
+
+    /* Portal-style login box / container */
+    .stApp {
+        background: #F3F4F6;
+    }
+
+    /* Main Card styling for Dashboard features */
+    div.stMarkdown div[data-testid="stMarkdownContainer"] p {
+        font-size: 16px;
+    }
+
+    /* Styling Input Fields to match the Portal style */
+    .stTextInput input, .stSelectbox div[data-baseweb="select"] {
+        border-radius: 8px !important;
+        border: 1px solid #D1D5DB !important;
+        padding: 10px !important;
+    }
+
+    /* Styling the Blue Login Buttons */
+    div.stButton > button {
+        background-color: #1E3A8A !important; /* Deep Royal Blue */
+        color: white !important;
+        border-radius: 25px !important;
+        padding: 10px 25px !important;
+        font-weight: 600 !important;
+        width: 100% !important;
+        border: none !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: 0.3s ease;
+    }
+
+    div.stButton > button:hover {
+        background-color: #2563EB !important;
+        transform: translateY(-2px);
+    }
+
+    /* Header styling */
+    .portal-header {
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        margin-bottom: 30px;
+        border-top: 5px solid #1E3A8A;
+    }
+    </style>
+""", unsafe_allow_html=True)
 # --- STEP 2: INTERNAL UI LOCK & HIDE CODE ---
 
 # --- STEP 3: LOGIN LOGIC ---
@@ -1424,6 +1481,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
