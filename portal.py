@@ -65,7 +65,7 @@ def add_logo_watermark(image_file):
         st.error(f"❌ DATABASE ERROR: File '{image_file}' not found.")
 
 # --- CALL THE LOGO ---
-add_logo_watermark("Logo.jpg")
+add_logo_watermark("logo.jpg")
 # --- NEW: DESIGN & FONT FEATURES (MATCHING THE PORTAL IMAGE) ---
 st.markdown("""
     <style>
@@ -1518,6 +1518,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
