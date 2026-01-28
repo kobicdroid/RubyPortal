@@ -28,6 +28,44 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+# --- STEP 2: LOGO WATERMARK (MODERATE & PROFESSIONAL) ---
+def add_logo_watermark(image_file):
+    if os.path.exists(image_file):
+        with open(image_file, "rb") as f:
+            encoded_string = base64.b64encode(f.read()).decode()
+        
+        st.markdown(
+            f"""
+            <style>
+            [data-testid="stAppViewContainer"] {{
+                background: 
+                    linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), 
+                    url("data:image/jpeg;base64,{encoded_string}") !important;
+                background-attachment: fixed !important;
+                background-size: 350px !important; /* Moderate size for Desktop */
+                background-position: center !important;
+                background-repeat: no-repeat !important;
+            }}
+            
+            /* Mobile adjustment - slightly smaller on Android so it fits the width */
+            @media (max-width: 768px) {{
+                [data-testid="stAppViewContainer"] {{
+                    background-size: 250px !important; 
+                }}
+            }}
+
+            .stApp {{
+                background-color: transparent !important;
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.error(f"❌ DATABASE ERROR: File '{image_file}' not found.")
+
+# --- CALL THE LOGO ---
+add_logo_watermark("Logo.jpg")
 # --- NEW: DESIGN & FONT FEATURES (MATCHING THE PORTAL IMAGE) ---
 st.markdown("""
     <style>
@@ -1480,6 +1518,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
