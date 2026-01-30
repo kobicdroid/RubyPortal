@@ -190,35 +190,46 @@ def load_portal_data():
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
     
-# --- STEP 5: THE UPDATED EMAIL FUNCTION (Keep as is) ---
+# --- STEP 5: THE UPDATED EMAIL FUNCTION (PROFESSIONAL VERSION) ---
 def send_email_notification(receiver_email, student_name, class_name, reg_number, access_key):
     sender_email = "sumilogics247@gmail.com"
     sender_password = "upsw jbon rhoy aiai" 
     portal_link = "https://rubyspringfield-college.streamlit.app/" 
 
     message = MIMEMultipart()
-    message["From"] = f"Ruby Springfield Admin <{sender_email}>"
+    message["From"] = f"Ruby Springfield College Admin <{sender_email}>"
     message["To"] = receiver_email
-    message["Subject"] = f"🎓 {student_name}'s Result Access - Ruby Springfield College"
+    message["Subject"] = f"OFFICIAL: Academic Result Notification - {student_name}"
 
+    # Professional HTML Body
     body = f"""
-    Dear Parent/Guardian,
+    <html>
+    <body>
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2 style="color: #2e7d32;">Ruby Springfield College, Maiduguri</h2>
+            <p>Dear Parent/Guardian,</p>
+            <p>This is an official notification regarding the release of the academic performance report for <strong>{student_name}</strong> in <strong>{class_name}</strong>.</p>
+            
+            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; border-left: 5px solid #2e7d32;">
+                <h3 style="margin-top: 0;">Portal Access Credentials</h3>
+                <p style="margin-bottom: 5px;"><strong>Portal Link:</strong> <a href="{portal_link}">{portal_link}</a></p>
+                <p style="margin-bottom: 5px;"><strong>Admission Number:</strong> {reg_number}</p>
+                <p style="margin-top: 0;"><strong>Access Key/Password:</strong> {access_key}</p>
+            </div>
 
-    The academic results for {student_name} ({class_name}) are ready.
-    
-    🔗 PORTAL LINK: {portal_link}
-
-    ----------------------------------------------
-    🔑 LOGIN CREDENTIALS:
-    Admission Number: {reg_number}
-    Access Key: {access_key}
-    ----------------------------------------------
-
-    Best Regards,
-    School Management
-    Ruby Springfield College, Maiduguri.
+            <p>Please log in to the portal to view the full terminal report and performance analysis. If you encounter any technical difficulties, kindly contact the school's ICT department.</p>
+            
+            <br>
+            <p>Best Regards,</p>
+            <hr style="border: 0; border-top: 1px solid #ccc; width: 200px; margin-left: 0;">
+            <p><strong>School Management</strong><br>
+            Ruby Springfield College<br>
+            <em>Excellence in Learning</em></p>
+        </div>
+    </body>
+    </html>
     """
-    message.attach(MIMEText(body, "plain"))
+    message.attach(MIMEText(body, "html")) # Changed to HTML for professional look
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -229,61 +240,7 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
         return True
     except Exception as e:
         st.error(f"❌ Mail Error: {e}")
-        return False
-
-# --- STEP 6: THE CALLING LOGIC (The Fix for the Critical Error) ---
-# Find the place in your code where you check the credentials and update it:
-
-if st.button("Check Result"):
-    # Assuming 'student_row' is the row you found in your DataFrame
-    # Note the spaces in 'Names ' and 'Class ' which are in your CSV!
-    
-    email_addr = student_row['Email']
-    name_val = student_row['Names ']  
-    class_val = student_row['Class ']
-    reg_val = student_row['Admission_No'] # From your JSS 1A sheet
-    pass_val = student_row['Password']     # From your JSS 1A sheet
-
-    # THE MAGIC LINE: We are now passing all 5 arguments!
-    mail_success = send_email_notification(email_addr, name_val, class_val, reg_val, pass_val)
-
-    if mail_success:
-        st.success(f"✅ Credentials sent to {email_addr}")
-    else:
-        st.error("❌ Failed to send email. Please check your connection.")
-# --- HOW TO CALL IT (To fix the Critical Error) ---
-# Use this exact logic inside your button click:
-def process_result_check(row):
-    # These match your 'Report JSS 1A.xlsx - Data.csv' exactly!
-    # Note: 'Names ' and 'Class ' have a hidden space at the end in your file.
-    email = row['Email']
-    name = row['Names ']  
-    section = row['Class ']
-    adm_no = row['Admission_No']
-    p_word = row['Password']
-
-    # Now we send all 5 items to stop the "Missing Arguments" error
-    status = send_email_notification(email, name, section, adm_no, p_word)
-    return status
-# --- STEP 2: HOW TO CALL IT IN YOUR APP (THE FIX) ---
-# Use this block inside your button logic where you verify the user
-def trigger_mail_process(row_data):
-    # We extract the details from your DataFrame row
-    e_mail = row_data['Email']             # Make sure column name matches your Excel
-    s_name = row_data['Student Name']
-    s_class = row_data['Class']
-    s_reg = row_data['Admission Number']
-    s_key = row_data['Access Key']
-    
-    # NOW WE PASS ALL 5 ARGUMENTS (This stops the error!)
-    with st.spinner("Sending credentials to parent..."):
-        status = send_email_notification(e_mail, s_name, s_class, s_reg, s_key)
-        
-        if status:
-            st.success(f"✅ Credentials successfully sent to {e_mail}")
-        else:
-            st.warning("⚠️ Result found, but email could not be sent. Check internet connection.")        
-        # --- CONFIGURATION ---
+        return False        # --- CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_DIR, "logo.jpg") 
 SIG_PATH = os.path.join(BASE_DIR, "signature.png") 
@@ -1486,6 +1443,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
