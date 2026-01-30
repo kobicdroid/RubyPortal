@@ -1226,86 +1226,91 @@ elif page == "🛠️ Staff Management":
                             log_activity("Admin", "Analysis", f"Ran full stats for {selected_analysis}")
                         else:
                             st.warning("No performance data found.")
-
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-with tab_bulk:
-    st.subheader("📦 Bulk Result Generator & Parent Alerts")
-    
-    bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_target")
-    
-    col_pdf, col_notif = st.columns(2)
-    
-    with col_pdf:
-        st.markdown("#### 📄 Document Export")
-        if st.button("🚀 GENERATE ALL PDFs"):
-            st.info(f"Generating reports for {bulk_class}...")
-            # Your PDF generation logic sits here
-
-    with col_notif:
-        st.markdown("#### 🔔 Parent Notifications")
-        test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
+    with tab_bulk:
+        st.subheader("📦 Bulk Result Generator & Parent Alerts")
         
-        if st.button("🧪 Send Test Email"):
-            # FIX: Passing dummy values for the 2 missing arguments to avoid crash
-            success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-000", "1234")
-            if success: 
-                st.success("Test Email Sent!")
-            else: 
-                st.error("Email Failed. Check SMTP settings.")
-
-        st.markdown("---")
+        # Pull available classes for the dropdown
+        bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_target")
         
-        if st.button("📢 BLAST NOTIFY ALL PARENTS"):
-            f_path = f"Report {bulk_class}.xlsx"
+        col_pdf, col_notif = st.columns(2)
+        
+        with col_pdf:
+            st.markdown("#### 📄 Document Export")
+            if st.button("🚀 GENERATE ALL PDFs"):
+                st.info(f"Generating reports for {bulk_class}...")
+                # (Your existing PDF generation logic goes here)
+
+        with col_notif:
+            st.markdown("#### 🔔 Parent Notifications")
+            test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
             
-            if os.path.exists(f_path):
-                with st.spinner(f"Extracting all contacts for {bulk_class}..."):
-                    try:
-                        xls = pd.ExcelFile(f_path)
-                        target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
-                        
-                        if target_sheet:
-                            df_data = pd.read_excel(f_path, sheet_name=target_sheet)
-                            # Clean column names for easier searching
-                            df_data.columns = [str(c).strip().lower() for c in df_data.columns]
-                            
-                            # Identify ALL 5 required columns from your sheet
-                            name_col = next((c for c in df_data.columns if 'name' in c), None)
-                            email_col = next((c for c in df_data.columns if 'email' in c), None)
-                            reg_col = next((c for c in df_data.columns if 'admission' in c or 'reg' in c), None)
-                            pass_col = next((c for c in df_data.columns if 'pass' in c), None)
-                            
-                            if name_col and email_col and reg_col and pass_col:
-                                # Filter for valid emails
-                                valid_contacts = df_data[df_data[email_col].astype(str).str.contains("@", na=False)]
-                                
-                                if not valid_contacts.empty:
-                                    st.info(f"🚀 Found {len(valid_contacts)} parents. Starting blast...")
-                                    p_bar = st.progress(0)
-                                    
-                                    for i, row in enumerate(valid_contacts.itertuples(index=False)):
-                                        # Map columns to variables
-                                        p_name = getattr(row, name_col)
-                                        p_email = getattr(row, email_col)
-                                        p_reg = getattr(row, reg_col)
-                                        p_pass = getattr(row, pass_col)
-                                        
-                                        # THE FIX: Now sending all 5 arguments!
-                                        send_email_notification(p_email, p_name, bulk_class, p_reg, p_pass)
-                                        p_bar.progress((i + 1) / len(valid_contacts))
-                                    
-                                    st.success(f"✅ Successfully notified all {len(valid_contacts)} parents!")
-                                else:
-                                    st.error("No valid email addresses found.")
-                            else:
-                                st.error(f"Missing columns! Need: Name, Email, Admission_No, Password. Found: {list(df_data.columns)}")
-                        else:
-                            st.error(f"Sheet 'Data' not found in {f_path}")
-                    except Exception as e:
-                        st.error(f"Critical Error: {e}")
-            else:
-                st.error(f"File {f_path} not found.")
+            if st.button("🧪 Send Test Email"):
+                # FIX: Passing 5 arguments so it doesn't crash anymore!
+                success = send_email_notification(
+                    test_email, 
+                    "Test Student", 
+                    bulk_class, 
+                    "RSC-TEST-001", 
+                    "1234"
+                )
+                if success: 
+                    st.success("✅ Test Email Sent!")
+                else: 
+                    st.error("❌ Email Failed. Check SMTP settings.")
 
+            st.markdown("---")
+            
+            if st.button("📢 BLAST NOTIFY ALL PARENTS"):
+                f_path = f"Report {bulk_class}.xlsx"
+                
+                if os.path.exists(f_path):
+                    with st.spinner(f"Reading {bulk_class} Data..."):
+                        try:
+                            # Load the Excel file
+                            xls = pd.ExcelFile(f_path)
+                            # Find the 'Data' sheet
+                            target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
+                            
+                            if target_sheet:
+                                df_bulk = pd.read_excel(f_path, sheet_name=target_sheet)
+                                
+                                # SHUTDOWN: We pull the exact columns from your JSS 1A Sheet
+                                # Note the trailing spaces in 'Names ' and 'Class '
+                                st.info(f"🚀 Found {len(df_bulk)} parents. Starting blast...")
+                                p_bar = st.progress(0)
+                                success_count = 0
+
+                                for i, row in df_bulk.iterrows():
+                                    try:
+                                        # Extract data using the exact column names from your file
+                                        p_email = str(row['Email']).strip()
+                                        p_name = str(row['Names ']).strip()
+                                        p_class = str(row['Class ']).strip()
+                                        p_reg = str(row['Admission_No']).strip()
+                                        p_pass = str(row['Password']).strip()
+
+                                        # Only send if email contains '@'
+                                        if "@" in p_email:
+                                            status = send_email_notification(p_email, p_name, p_class, p_reg, p_pass)
+                                            if status:
+                                                success_count += 1
+                                    except Exception as row_err:
+                                        st.warning(f"⚠️ Skipped row {i+1}: {row_err}")
+                                    
+                                    # Update progress bar
+                                    p_bar.progress((i + 1) / len(df_bulk))
+                                
+                                st.success(f"🏁 Blast complete! {success_count} emails sent successfully.")
+                            else:
+                                st.error("❌ Sheet 'Data' not found in the Excel file.")
+                        except Exception as e:
+                            st.error(f"❌ Critical Blast Error: {e}")
+                else:
+                    st.error(f"❌ File {f_path} not found. Please upload it first.")
+
+# --- END OF TAB_BULK ---
+# Make sure the 'elif' below is aligned with the 'if' that started your page navigation!
     # --- 5. CONTENT MANAGER (Inside Staff Management Tab) ---
     with tab_content:
         st.markdown("### 📰 News & Protocol Control")
@@ -1400,6 +1405,7 @@ with tab_bulk:
                     pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
                     st.warning(f"Deleted: {notice['title']}")
                     st.rerun()
+                    
 elif page == "📊 Dashboard":
     import os
     import random
@@ -1556,6 +1562,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
