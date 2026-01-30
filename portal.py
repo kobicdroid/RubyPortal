@@ -147,6 +147,9 @@ st.markdown(
         <h1 style="color: #1E3A8A; margin-bottom: 5px; font-weight: 700;">Ruby Springfield College</h1>
         <h3 style="color: #4B5563; margin-top: 0; font-weight: 400;">Official Academic Management & Result Portal</h3>
         <p style="font-weight: 600; color: #1E3A8A; letter-spacing: 1px;">MAIDUGURI, BORNO STATE, NIGERIA</p>
+       st.markdown("""<h3 style='text-align:center; color:#2563eb; font-style:italic; margin-top:-15px;'>Motto: A Citadel of Excellence</h3>""", unsafe_allow_html=True)
+    st.markdown('<div class="school-bio">"We are building global leaders with integrity and academic brilliance."</div>', unsafe_allow_html=True)
+
     </div>
     """, 
     unsafe_allow_html=True
@@ -1326,12 +1329,7 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-    # School Name (Updated Colors for Light Theme)
-    st.markdown("""<h1 style='text-align:center; color:#1e3a8a; font-size:3em;'>RUBY SPRINGFIELD COLLEGE</h1>""", unsafe_allow_html=True)
-    st.markdown("""<h3 style='text-align:center; color:#2563eb; font-style:italic; margin-top:-15px;'>Motto: A Citadel of Excellence</h3>""", unsafe_allow_html=True)
-    st.markdown('<div class="school-bio">"We are building global leaders with integrity and academic brilliance."</div>', unsafe_allow_html=True)
-
-    # 4. VISION & MISSION
+      # 4. VISION & MISSION
     v_col, m_col = st.columns(2)
     with v_col:
         st.markdown(f"""<div class="statement-box"><h3 style="color:#2563eb; text-align:center;">🔭 VISION STATEMENT</h3><p style="text-align:justify; line-height:1.6; color:#334155;">TO PROVIDE QUALITATIVE EDUCATION IN A SERENE AND SAFE LEARNING ENVIRONMENT, ENABLING US TO PRODUCE HIGHLY QUALIFIED AND POTENTIAL LEADERS OF TOMORROW.</p></div>""", unsafe_allow_html=True)
@@ -1443,6 +1441,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
