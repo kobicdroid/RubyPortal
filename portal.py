@@ -1057,7 +1057,7 @@ elif page == "🛠️ Staff Management":
 
     st.title("🛠️ Staff Administrative Console")
     
-    # 1. SIDEBAR AUTHENTICATION BARRIER
+# 1. SIDEBAR AUTHENTICATION BARRIER
     st.sidebar.markdown("### 🔐 Admin Access")
     master_auth = st.sidebar.text_input("Enter Master Authentication Key", type="password")
     
@@ -1082,7 +1082,6 @@ elif page == "🛠️ Staff Management":
     ])
     
     # --- 1. UPLOAD TAB ---
-    # --- 1. UPLOAD TAB (WITH GITHUB AUTO-OVERWRITE) ---
     with tab_up:
         st.info("Upload class results here. Format: 'Report ClassName.xlsx'")
         target_class = st.text_input("Target Class Name (e.g., JSS 1A)", key="upload_target")
@@ -1090,29 +1089,23 @@ elif page == "🛠️ Staff Management":
         
         if st.button("Deploy to System") and new_file and target_class:
             save_filename = f"Report {target_class}.xlsx"
-            file_bytes = new_file.getvalue() # Get data for GitHub sync
+            file_bytes = new_file.getvalue() 
             
-            # 1. LOCAL SAVE (For immediate use in the portal)
             with open(save_filename, "wb") as f:
                 f.write(file_bytes)
             
-            # 2. GITHUB OVERWRITE (Robot Logic)
             with st.spinner(f"🚀 Syncing {save_filename} with GitHub..."):
-                # This calls your 'upload_notice_to_github' function
-                # It handles checking for the SHA and overwriting automatically
                 status = upload_notice_to_github(file_bytes, save_filename)
             
-            # 3. LOGGING & SUCCESS FEEDBACK
             if status in [200, 201]:
                 log_activity("Admin", "Upload", f"Uploaded and Synced: {save_filename}")
                 st.balloons()
                 st.success(f"✅ SUCCESS: {save_filename} is now live on Portal & GitHub!")
             else:
-                # If GitHub fails, the local file still works, but we warn you
                 log_activity("Admin", "Upload Error", f"GitHub Sync failed for {save_filename}")
                 st.warning(f"⚠️ Local update successful, but GitHub Sync Error: {status}")
 
-   # --- 2. DATABASE & LOGS TAB ---
+    # --- 2. DATABASE & LOGS TAB ---
     with tab_db:
         col_db, col_log = st.columns(2)
         
@@ -1123,18 +1116,16 @@ elif page == "🛠️ Staff Management":
             for file in live_files:
                 st.code(file)
         
-        # FIX: Ensure 'with col_log:' starts at the exact same column as 'with col_db:'
         with col_log:
             st.subheader("🕵️ Security Audit")
             if os.path.exists("system_audit.log"):
                 with open("system_audit.log", "r") as f:
                     logs = f.readlines()
-                # Also using the unique key here to prevent the previous Duplicate ID error
                 st.text_area("Recent Activity", "".join(logs[-15:]), height=200, key="admin_audit_logs")
             else:
                 st.info("No logs generated yet.")
                 
-    # --- 3. ANALYTICS TAB (FULL CLASS INSIGHTS) ---
+    # --- 3. ANALYTICS TAB ---
     with tab_analytics:
         available_classes = get_available_classes()
         if not available_classes:
@@ -1161,7 +1152,6 @@ elif page == "🛠️ Staff Management":
                             if str(col_val).strip().lower() == 'total':
                                 total_cols.append(i) 
                                 sub_name = str(subject_row.iloc[i]).strip()
-                                # Refined merge-cell detection
                                 if sub_name.lower() == 'nan' or sub_name == '':
                                     for look_back in range(i-1, max(-1, i-10), -1):
                                         val = str(subject_row.iloc[look_back]).strip()
@@ -1175,14 +1165,11 @@ elif page == "🛠️ Staff Management":
                         
                         if subject_stats:
                             df_stats = pd.DataFrame(subject_stats)
-                            
-                            # --- STEP 3: MANAGEMENT SUMMARY ---
                             st.subheader("📋 Management Summary")
                             data_rows = df_sc.iloc[header_idx+1:, :]
                             at_risk_list = []
                             for _, row in data_rows.iterrows():
                                 s_name = row.iloc[1]
-                                # Detect if student is failing 3+ subjects
                                 fails = sum(1 for c in total_cols if pd.to_numeric(row.iloc[c], errors='coerce') < 40)
                                 if fails >= 3:
                                     at_risk_list.append({"Student": s_name, "Failing": fails})
@@ -1196,7 +1183,6 @@ elif page == "🛠️ Staff Management":
                                 with st.expander("⚠️ View At-Risk Students"):
                                     st.table(pd.DataFrame(at_risk_list))
 
-                            # Charts
                             fig_bar = px.bar(df_stats, x='Subject', y='Average Score', 
                                            title=f"Class Subject Performance: {selected_analysis}",
                                            color='Average Score', color_continuous_scale='Viridis', text_auto=True)
@@ -1226,103 +1212,66 @@ elif page == "🛠️ Staff Management":
                             log_activity("Admin", "Analysis", f"Ran full stats for {selected_analysis}")
                         else:
                             st.warning("No performance data found.")
-# --- 4. BULK GENERATOR & NOTIFICATIONS ---
+
+    # --- 4. BULK GENERATOR & NOTIFICATIONS ---
     with tab_bulk:
         st.subheader("📦 Bulk Result Generator & Parent Alerts")
-        
-        # Pull available classes for the dropdown
         bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_target")
-        
         col_pdf, col_notif = st.columns(2)
         
         with col_pdf:
             st.markdown("#### 📄 Document Export")
             if st.button("🚀 GENERATE ALL PDFs"):
                 st.info(f"Generating reports for {bulk_class}...")
-                # (Your existing PDF generation logic goes here)
 
         with col_notif:
             st.markdown("#### 🔔 Parent Notifications")
             test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
             
             if st.button("🧪 Send Test Email"):
-                # FIX: Passing 5 arguments so it doesn't crash anymore!
-                success = send_email_notification(
-                    test_email, 
-                    "Test Student", 
-                    bulk_class, 
-                    "RSC-TEST-001", 
-                    "1234"
-                )
-                if success: 
-                    st.success("✅ Test Email Sent!")
-                else: 
-                    st.error("❌ Email Failed. Check SMTP settings.")
+                success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
+                if success: st.success("✅ Test Email Sent!")
+                else: st.error("❌ Email Failed.")
 
             st.markdown("---")
-            
             if st.button("📢 BLAST NOTIFY ALL PARENTS"):
                 f_path = f"Report {bulk_class}.xlsx"
-                
                 if os.path.exists(f_path):
                     with st.spinner(f"Reading {bulk_class} Data..."):
                         try:
-                            # Load the Excel file
                             xls = pd.ExcelFile(f_path)
-                            # Find the 'Data' sheet
                             target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
-                            
                             if target_sheet:
                                 df_bulk = pd.read_excel(f_path, sheet_name=target_sheet)
-                                
-                                # SHUTDOWN: We pull the exact columns from your JSS 1A Sheet
-                                # Note the trailing spaces in 'Names ' and 'Class '
                                 st.info(f"🚀 Found {len(df_bulk)} parents. Starting blast...")
                                 p_bar = st.progress(0)
                                 success_count = 0
-
                                 for i, row in df_bulk.iterrows():
                                     try:
-                                        # Extract data using the exact column names from your file
                                         p_email = str(row['Email']).strip()
                                         p_name = str(row['Names ']).strip()
                                         p_class = str(row['Class ']).strip()
                                         p_reg = str(row['Admission_No']).strip()
                                         p_pass = str(row['Password']).strip()
-
-                                        # Only send if email contains '@'
                                         if "@" in p_email:
-                                            status = send_email_notification(p_email, p_name, p_class, p_reg, p_pass)
-                                            if status:
+                                            if send_email_notification(p_email, p_name, p_class, p_reg, p_pass):
                                                 success_count += 1
-                                    except Exception as row_err:
-                                        st.warning(f"⚠️ Skipped row {i+1}: {row_err}")
-                                    
-                                    # Update progress bar
+                                    except: pass
                                     p_bar.progress((i + 1) / len(df_bulk))
-                                
-                                st.success(f"🏁 Blast complete! {success_count} emails sent successfully.")
-                            else:
-                                st.error("❌ Sheet 'Data' not found in the Excel file.")
-                        except Exception as e:
-                            st.error(f"❌ Critical Blast Error: {e}")
-                else:
-                    st.error(f"❌ File {f_path} not found. Please upload it first.")
+                                st.success(f"🏁 Blast complete! {success_count} emails sent.")
+                            else: st.error("❌ Sheet 'Data' not found.")
+                        except Exception as e: st.error(f"❌ Error: {e}")
+                else: st.error("❌ File not found.")
 
-# --- END OF TAB_BULK ---
-# Make sure the 'elif' below is aligned with the 'if' that started your page navigation!
-    # --- 5. CONTENT MANAGER (Inside Staff Management Tab) ---
+    # --- 5. CONTENT MANAGER ---
     with tab_content:
         st.markdown("### 📰 News & Protocol Control")
-        
-        # Live Preview for the Admin
         with st.expander("👁️ View Live Dashboard Preview", expanded=False):
             st.markdown(f"#### {st.session_state.news_content['title']}")
             if os.path.exists("news_event.jpg"):
                 st.image("news_event.jpg", width=400)
             st.write(st.session_state.news_content['desc'])
 
-        # News Update Form
         with st.form("news_update_form"):
             st.subheader("✍️ Update Dashboard News")
             new_title = st.text_input("Headline", value=st.session_state.news_content['title'])
@@ -1332,65 +1281,42 @@ elif page == "🛠️ Staff Management":
             if st.form_submit_button("🚀 Publish & Save"):
                 st.session_state.news_content.update({'title': new_title.upper(), 'desc': new_desc})
                 st.session_state.portal_storage.update({'news_title': new_title.upper(), 'news_desc': new_desc})
-                
-                # Save to Master Excel
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                
                 if uploaded_news_img:
                     with open("news_event.jpg", "wb") as f: f.write(uploaded_news_img.getbuffer())
-                st.success("✅ News updated globally!")
+                st.success("✅ News updated!")
                 st.rerun()
 
-        # Protocol Update Form
         with st.form("protocol_form"):
             st.subheader("📜 Edit School Protocols")
             n_cal = st.text_area("Calendar", st.session_state.protocols['calendar'])
             n_exam = st.text_area("Exams", st.session_state.protocols['exams'])
-            
             if st.form_submit_button("💾 Save Protocols"):
                 st.session_state.protocols.update({"calendar": n_cal, "exams": n_exam})
                 st.session_state.portal_storage.update({"calendar": n_cal, "exams": n_exam})
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                st.success("✅ Protocols synced with Dashboard!")
+                st.success("✅ Protocols synced!")
                 st.rerun()
 
-       # --- SHUTDOWN: PERSISTENT DIGITAL NOTICE BOARD (MANAGEMENT ONLY) ---
         st.markdown("---")
         st.markdown("### 📂 Digital Notice Board Management")
-        st.info("Files uploaded here are synced to the public Dashboard and GitHub.")
-        
         with st.form("notice_board_form"):
-            notice_name = st.text_input("Notice Title (e.g., '2026 Exam Timetable')")
+            notice_name = st.text_input("Notice Title")
             uploaded_pdf = st.file_uploader("Upload PDF Document", type=['pdf'])
-            
-            if st.form_submit_button("📌 Pin to Notice Board & Sync to GitHub"):
+            if st.form_submit_button("📌 Pin to Notice Board"):
                 if uploaded_pdf and notice_name:
                     clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
                     file_bytes = uploaded_pdf.getvalue()
-                    
-                    # 1. LOCAL SAVE
                     if not os.path.exists("notices"): os.makedirs("notices")
                     local_path = os.path.join("notices", clean_filename)
-                    with open(local_path, "wb") as f:
-                        f.write(file_bytes)
-                    
-                    # 2. GITHUB SYNC (Robot Function)
-                    with st.spinner("Pushing to GitHub..."):
-                        status = upload_notice_to_github(file_bytes, clean_filename)
-                    
-                    # 3. UPDATE DATA
+                    with open(local_path, "wb") as f: f.write(file_bytes)
+                    status = upload_notice_to_github(file_bytes, clean_filename)
                     if 'notices' not in st.session_state: st.session_state.notices = []
                     st.session_state.notices.append({"title": notice_name, "path": local_path})
                     st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
                     pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                    
-                    if status in [200, 201]:
-                        st.success(f"✅ '{notice_name}' synced successfully!")
-                    else:
-                        st.warning(f"⚠️ Saved locally, but GitHub Sync Error: {status}")
                     st.rerun()
 
-        # 2. DELETE FEATURE (Management UI)
         if 'notices' in st.session_state and st.session_state.notices:
             st.write("---")
             st.write("🗑️ **Manage Active Notices**")
@@ -1398,12 +1324,10 @@ elif page == "🛠️ Staff Management":
                 col_n, col_d = st.columns([3, 1])
                 col_n.write(f"📄 {notice['title']}")
                 if col_d.button("Delete", key=f"admin_del_{i}"):
-                    if os.path.exists(notice['path']):
-                        os.remove(notice['path'])
+                    if os.path.exists(notice['path']): os.remove(notice['path'])
                     st.session_state.notices.pop(i)
                     st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
                     pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                    st.warning(f"Deleted: {notice['title']}")
                     st.rerun()
                     
 elif page == "📊 Dashboard":
@@ -1562,6 +1486,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
