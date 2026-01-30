@@ -200,28 +200,26 @@ def load_portal_data():
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
     
-# --- STEP 2: EMAIL NOTIFICATION CORE (LIVE URL INTEGRATED) ---
+# --- STEP 1: THE UPDATED FUNCTION ---
 def send_email_notification(receiver_email, student_name, class_name, reg_number, access_key):
     """
-    Shutdown, this is the final version using your live URL:
-    https://rubyspringfield-college.streamlit.app/
+    Shutdown, this is the full version that includes the live link 
+    and the login credentials for the parents.
     """
     sender_email = "sumilogics247@gmail.com"
     sender_password = "upsw jbon rhoy aiai" 
-    
-    # Your official live link
     portal_link = "https://rubyspringfield-college.streamlit.app/" 
 
     message = MIMEMultipart()
     message["From"] = f"Ruby Springfield Admin <{sender_email}>"
     message["To"] = receiver_email
-    message["Subject"] = f"🎓 {student_name}'s Result is Ready - Ruby Springfield College"
+    message["Subject"] = f"🎓 {student_name}'s Result Access - Ruby Springfield College"
 
     body = f"""
     Dear Parent/Guardian,
 
-    We are pleased to inform you that the academic results for {student_name} ({class_name}) 
-    have been uploaded to our secure portal.
+    The academic results for {student_name} ({class_name}) have been processed 
+    and are now available for viewing on the school portal.
 
     🔗 QUICK ACCESS LINK:
     {portal_link}
@@ -232,16 +230,14 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
     Access Key: {access_key}
     ----------------------------------------------
 
-    HOW TO CHECK:
+    INSTRUCTIONS:
     1. Click the link above to open the portal.
     2. Enter the Admission Number and Access Key provided.
     3. Select your child's class and click 'Check Result'.
 
-    For support, please contact the Principal's office at +234 813 103 2577.
-    Location: Old GRA, Maiduguri.
-
     Best Regards,
     School Management
+    Ruby Springfield College, Old GRA, Maiduguri.
     """
     message.attach(MIMEText(body, "plain"))
 
@@ -253,16 +249,27 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
         server.quit()
         return True
     except Exception as e:
-        st.error(f"SMTP Error: {e}")
+        st.error(f"❌ Mail Error: {e}")
         return False
-def get_local_img(file_path):
-    try:
-        with open(file_path, "rb") as f:
-            data = f.read()
-        return f"data:image/jpeg;base64,{base64.b64encode(data).decode()}"
-    except FileNotFoundError:
-        return "https://via.placeholder.com/600x400?text=Image+Not+Found"
+
+# --- STEP 2: HOW TO CALL IT IN YOUR APP (THE FIX) ---
+# Use this block inside your button logic where you verify the user
+def trigger_mail_process(row_data):
+    # We extract the details from your DataFrame row
+    e_mail = row_data['Email']             # Make sure column name matches your Excel
+    s_name = row_data['Student Name']
+    s_class = row_data['Class']
+    s_reg = row_data['Admission Number']
+    s_key = row_data['Access Key']
+    
+    # NOW WE PASS ALL 5 ARGUMENTS (This stops the error!)
+    with st.spinner("Sending credentials to parent..."):
+        status = send_email_notification(e_mail, s_name, s_class, s_reg, s_key)
         
+        if status:
+            st.success(f"✅ Credentials successfully sent to {e_mail}")
+        else:
+            st.warning("⚠️ Result found, but email could not be sent. Check internet connection.")        
         # --- CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_DIR, "logo.jpg") 
@@ -1535,6 +1542,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
