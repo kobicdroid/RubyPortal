@@ -190,11 +190,8 @@ def load_portal_data():
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
     
-# --- STEP 5: THE UPDATED EMAIL FUNCTION ---
+# --- STEP 5: THE UPDATED EMAIL FUNCTION (Keep as is) ---
 def send_email_notification(receiver_email, student_name, class_name, reg_number, access_key):
-    """
-    Shutdown, this function is now perfectly synced with your JSS 1A Excel sheet.
-    """
     sender_email = "sumilogics247@gmail.com"
     sender_password = "upsw jbon rhoy aiai" 
     portal_link = "https://rubyspringfield-college.streamlit.app/" 
@@ -209,8 +206,7 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
 
     The academic results for {student_name} ({class_name}) are ready.
     
-    🔗 PORTAL LINK: 
-    {portal_link}
+    🔗 PORTAL LINK: {portal_link}
 
     ----------------------------------------------
     🔑 LOGIN CREDENTIALS:
@@ -218,14 +214,9 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
     Access Key: {access_key}
     ----------------------------------------------
 
-    INSTRUCTIONS:
-    1. Click the portal link above.
-    2. Enter the Admission Number and Access Key.
-    3. Select the class and click 'Check Result'.
-
     Best Regards,
     School Management
-    Ruby Springfield College, Old GRA, Maiduguri.
+    Ruby Springfield College, Maiduguri.
     """
     message.attach(MIMEText(body, "plain"))
 
@@ -240,6 +231,26 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
         st.error(f"❌ Mail Error: {e}")
         return False
 
+# --- STEP 6: THE CALLING LOGIC (The Fix for the Critical Error) ---
+# Find the place in your code where you check the credentials and update it:
+
+if st.button("Check Result"):
+    # Assuming 'student_row' is the row you found in your DataFrame
+    # Note the spaces in 'Names ' and 'Class ' which are in your CSV!
+    
+    email_addr = student_row['Email']
+    name_val = student_row['Names ']  
+    class_val = student_row['Class ']
+    reg_val = student_row['Admission_No'] # From your JSS 1A sheet
+    pass_val = student_row['Password']     # From your JSS 1A sheet
+
+    # THE MAGIC LINE: We are now passing all 5 arguments!
+    mail_success = send_email_notification(email_addr, name_val, class_val, reg_val, pass_val)
+
+    if mail_success:
+        st.success(f"✅ Credentials sent to {email_addr}")
+    else:
+        st.error("❌ Failed to send email. Please check your connection.")
 # --- HOW TO CALL IT (To fix the Critical Error) ---
 # Use this exact logic inside your button click:
 def process_result_check(row):
@@ -1544,6 +1555,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
