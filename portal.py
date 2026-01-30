@@ -21,6 +21,16 @@ import time
 import requests 
 import streamlit.components.v1 as components 
 
+# --- NEW: HELPER FUNCTION TO FIX NAMEERROR ---
+def get_local_img(file_path):
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+        return None
+    except Exception:
+        return None
+
 # --- STEP 1: PAGE CONFIG ---
 st.set_page_config(
     page_title="Ruby Springfield College | Official Portal",
@@ -28,6 +38,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 # --- STEP 2: LOGO WATERMARK (MODERATE & PROFESSIONAL) ---
 def add_logo_watermark(image_file):
     if os.path.exists(image_file):
@@ -42,12 +53,11 @@ def add_logo_watermark(image_file):
                     linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), 
                     url("data:image/jpeg;base64,{encoded_string}") !important;
                 background-attachment: fixed !important;
-                background-size: 350px !important; /* Moderate size for Desktop */
+                background-size: 350px !important; 
                 background-position: center !important;
                 background-repeat: no-repeat !important;
             }}
             
-            /* Mobile adjustment - slightly smaller on Android so it fits the width */
             @media (max-width: 768px) {{
                 [data-testid="stAppViewContainer"] {{
                     background-size: 250px !important; 
@@ -66,44 +76,35 @@ def add_logo_watermark(image_file):
 
 # --- CALL THE LOGO ---
 add_logo_watermark("logo.jpg")
-# --- NEW: DESIGN & FONT FEATURES (MATCHING THE PORTAL IMAGE) ---
+
+# --- NEW: DESIGN & FONT FEATURES ---
 st.markdown("""
     <style>
-    /* Import Clean Montserrat Font */
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Montserrat', sans-serif !important;
-        background-color: #F3F4F6 !important; /* Soft gray background like the image */
+        background-color: #F3F4F6 !important;
     }
 
-    /* Portal-style login box / container */
     .stApp {
         background: #F3F4F6;
     }
 
-    /* Main Card styling for Dashboard features */
-    div.stMarkdown div[data-testid="stMarkdownContainer"] p {
-        font-size: 16px;
-    }
-
-    /* Styling Input Fields to match the Portal style */
     .stTextInput input, .stSelectbox div[data-baseweb="select"] {
         border-radius: 8px !important;
         border: 1px solid #D1D5DB !important;
         padding: 10px !important;
     }
 
-    /* Styling the Blue Login Buttons */
     div.stButton > button {
-        background-color: #1E3A8A !important; /* Deep Royal Blue */
+        background-color: #1E3A8A !important;
         color: white !important;
         border-radius: 25px !important;
         padding: 10px 25px !important;
         font-weight: 600 !important;
         width: 100% !important;
         border: none !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         transition: 0.3s ease;
     }
 
@@ -112,7 +113,6 @@ st.markdown("""
         transform: translateY(-2px);
     }
 
-    /* Header styling */
     .portal-header {
         background-color: white;
         padding: 20px;
@@ -124,25 +124,23 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-# --- STEP 2: INTERNAL UI LOCK & HIDE CODE ---
 
 # --- STEP 3: LOGIN LOGIC ---
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
-    #--- STEP 2: SECRETS (The Safe Box) ---
-# We pull these now so they are ready for the Admin Console
+
+# --- SECRETS ---
 try:
     TOKEN = st.secrets["GITHUB_TOKEN"]
     REPO = st.secrets["REPO_PATH"]
 except Exception as e:
     st.warning("Running in Local Mode: Secrets not detected.")
 
-# --- STEP 3: GOOGLE VERIFICATION ---
+# --- GOOGLE VERIFICATION ---
 verify_code = "lJuiVMz6tsO5tGGxk2wTWmFydMeB7gxsQyuUJger6cg"
-# This puts the code in the body where Google can find it
 st.markdown(f'<div style="display:none;">google-site-verification: {verify_code}</div>', unsafe_allow_html=True)
 
-# --- STEP 3: VISIBLE SCHOOL BRANDING ---
+# --- VISIBLE SCHOOL BRANDING ---
 st.markdown(
     """
     <div class="portal-header">
@@ -153,24 +151,19 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
+
 def upload_notice_to_github(file_bytes, file_name):
-    """The 'Shutdown Robot' that pushes PDFs to GitHub notices folder"""
     url = f"https://api.github.com/repos/{REPO}/contents/notices/{file_name}"
     headers = {
         "Authorization": f"token {TOKEN}",
         "Accept": "application/vnd.github.v3+json"
     }
-    
-    # Prepare the file for the internet
     encoded_content = base64.b64encode(file_bytes).decode("utf-8")
-    
-    # GitHub data packet
     data = {
         "message": f"New Notice: {file_name}",
         "content": encoded_content,
         "branch": "main"
     }
-    
     response = requests.put(url, headers=headers, json=data)
     return response.status_code
     
@@ -189,23 +182,16 @@ def load_portal_data():
     if os.path.exists(storage_path):
         try:
             df = pd.read_excel(storage_path, engine='openpyxl')
-            # This line converts your Excel rows into a usable dictionary
             return dict(zip(df['Key'].astype(str), df['Value'].astype(str)))
         except Exception:
             return defaults
-    # This return MUST be perfectly aligned with the "if" above it
-    return defaults
+    return defaults # Corrected Indentation here
 
-# Initialize the storage so other parts of the code can see it
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
     
-# --- STEP 1: THE UPDATED FUNCTION ---
+# --- STEP 5: THE UPDATED EMAIL FUNCTION ---
 def send_email_notification(receiver_email, student_name, class_name, reg_number, access_key):
-    """
-    Shutdown, this is the full version that includes the live link 
-    and the login credentials for the parents.
-    """
     sender_email = "sumilogics247@gmail.com"
     sender_password = "upsw jbon rhoy aiai" 
     portal_link = "https://rubyspringfield-college.streamlit.app/" 
@@ -218,26 +204,17 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
     body = f"""
     Dear Parent/Guardian,
 
-    The academic results for {student_name} ({class_name}) have been processed 
-    and are now available for viewing on the school portal.
+    The academic results for {student_name} ({class_name}) are ready.
+    
+    🔗 PORTAL LINK: {portal_link}
 
-    🔗 QUICK ACCESS LINK:
-    {portal_link}
-
-    ----------------------------------------------
-    🔑 YOUR LOGIN CREDENTIALS:
+    🔑 CREDENTIALS:
     Admission Number: {reg_number}
     Access Key: {access_key}
-    ----------------------------------------------
-
-    INSTRUCTIONS:
-    1. Click the link above to open the portal.
-    2. Enter the Admission Number and Access Key provided.
-    3. Select your child's class and click 'Check Result'.
 
     Best Regards,
     School Management
-    Ruby Springfield College, Old GRA, Maiduguri.
+    Ruby Springfield College, Maiduguri.
     """
     message.attach(MIMEText(body, "plain"))
 
@@ -251,7 +228,6 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
     except Exception as e:
         st.error(f"❌ Mail Error: {e}")
         return False
-
 # --- STEP 2: HOW TO CALL IT IN YOUR APP (THE FIX) ---
 # Use this block inside your button logic where you verify the user
 def trigger_mail_process(row_data):
@@ -1542,6 +1518,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
