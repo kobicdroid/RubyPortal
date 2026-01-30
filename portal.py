@@ -143,17 +143,18 @@ st.markdown(f'<div style="display:none;">google-site-verification: {verify_code}
 # --- VISIBLE SCHOOL BRANDING ---
 st.markdown(
     """
-    <div class="portal-header">
-        <h1 style="color: #1E3A8A; margin-bottom: 5px; font-weight: 700;">Ruby Springfield College</h1>
+    <div style="text-align: center; padding: 10px;">
+        <h1 style="color: #1E3A8A; margin-bottom: 5px; font-weight: 700; font-size: 3em;">RUBY SPRINGFIELD COLLEGE</h1>
         <h3 style="color: #4B5563; margin-top: 0; font-weight: 400;">Official Academic Management & Result Portal</h3>
         <p style="font-weight: 600; color: #1E3A8A; letter-spacing: 1px;">MAIDUGURI, BORNO STATE, NIGERIA</p>
-       st.markdown("""<h3 style='text-align:center; color:#2563eb; font-style:italic; margin-top:-15px;'>Motto: A Citadel of Excellence</h3>""", unsafe_allow_html=True)
-    st.markdown('<div class="school-bio">"We are building global leaders with integrity and academic brilliance."</div>', unsafe_allow_html=True)
-
     </div>
     """, 
     unsafe_allow_html=True
 )
+
+# Motto and Bio (Correctly placed outside the previous string)
+st.markdown("""<h3 style='text-align:center; color:#2563eb; font-style:italic; margin-top:-15px;'>Motto: A Citadel of Excellence</h3>""", unsafe_allow_html=True)
+st.markdown('<div style="text-align:center; color: #374151; font-weight: 500; margin-bottom: 20px;">"We are building global leaders with integrity and academic brilliance."</div>', unsafe_allow_html=True)
 
 def upload_notice_to_github(file_bytes, file_name):
     url = f"https://api.github.com/repos/{REPO}/contents/notices/{file_name}"
@@ -1441,6 +1442,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
