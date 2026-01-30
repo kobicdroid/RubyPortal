@@ -192,6 +192,9 @@ if 'portal_storage' not in st.session_state:
     
 # --- STEP 5: THE UPDATED EMAIL FUNCTION ---
 def send_email_notification(receiver_email, student_name, class_name, reg_number, access_key):
+    """
+    Shutdown, this function is now perfectly synced with your JSS 1A Excel sheet.
+    """
     sender_email = "sumilogics247@gmail.com"
     sender_password = "upsw jbon rhoy aiai" 
     portal_link = "https://rubyspringfield-college.streamlit.app/" 
@@ -206,15 +209,23 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
 
     The academic results for {student_name} ({class_name}) are ready.
     
-    🔗 PORTAL LINK: {portal_link}
+    🔗 PORTAL LINK: 
+    {portal_link}
 
-    🔑 CREDENTIALS:
+    ----------------------------------------------
+    🔑 LOGIN CREDENTIALS:
     Admission Number: {reg_number}
     Access Key: {access_key}
+    ----------------------------------------------
+
+    INSTRUCTIONS:
+    1. Click the portal link above.
+    2. Enter the Admission Number and Access Key.
+    3. Select the class and click 'Check Result'.
 
     Best Regards,
     School Management
-    Ruby Springfield College, Maiduguri.
+    Ruby Springfield College, Old GRA, Maiduguri.
     """
     message.attach(MIMEText(body, "plain"))
 
@@ -228,6 +239,21 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
     except Exception as e:
         st.error(f"❌ Mail Error: {e}")
         return False
+
+# --- HOW TO CALL IT (To fix the Critical Error) ---
+# Use this exact logic inside your button click:
+def process_result_check(row):
+    # These match your 'Report JSS 1A.xlsx - Data.csv' exactly!
+    # Note: 'Names ' and 'Class ' have a hidden space at the end in your file.
+    email = row['Email']
+    name = row['Names ']  
+    section = row['Class ']
+    adm_no = row['Admission_No']
+    p_word = row['Password']
+
+    # Now we send all 5 items to stop the "Missing Arguments" error
+    status = send_email_notification(email, name, section, adm_no, p_word)
+    return status
 # --- STEP 2: HOW TO CALL IT IN YOUR APP (THE FIX) ---
 # Use this block inside your button logic where you verify the user
 def trigger_mail_process(row_data):
@@ -1518,6 +1544,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
