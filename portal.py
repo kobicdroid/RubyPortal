@@ -200,27 +200,45 @@ def load_portal_data():
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
     
-# --- STEP 2: EMAIL NOTIFICATION CORE ---
-def send_email_notification(receiver_email, student_name, class_name):
+# --- STEP 2: EMAIL NOTIFICATION CORE (LIVE URL INTEGRATED) ---
+def send_email_notification(receiver_email, student_name, class_name, reg_number, access_key):
     """
-    Shutdown, this handles the actual mailing process.
-    Ensure you use a Google 'App Password' for security.
+    Shutdown, this is the final version using your live URL:
+    https://rubyspringfield-college.streamlit.app/
     """
     sender_email = "sumilogics247@gmail.com"
     sender_password = "upsw jbon rhoy aiai" 
     
+    # Your official live link
+    portal_link = "https://rubyspringfield-college.streamlit.app/" 
+
     message = MIMEMultipart()
-    message["From"] = f"School Portal Admin <{sender_email}>"
+    message["From"] = f"Ruby Springfield Admin <{sender_email}>"
     message["To"] = receiver_email
-    message["Subject"] = f"🔔 Results Published: {student_name}"
+    message["Subject"] = f"🎓 {student_name}'s Result is Ready - Ruby Springfield College"
 
     body = f"""
     Dear Parent/Guardian,
 
-    The academic results for {student_name} ({class_name}) have been processed 
-    and are now available for viewing on the school portal.
+    We are pleased to inform you that the academic results for {student_name} ({class_name}) 
+    have been uploaded to our secure portal.
 
-    Please log in with the student's ID to download the result.
+    🔗 QUICK ACCESS LINK:
+    {portal_link}
+
+    ----------------------------------------------
+    🔑 YOUR LOGIN CREDENTIALS:
+    Admission Number: {reg_number}
+    Access Key: {access_key}
+    ----------------------------------------------
+
+    HOW TO CHECK:
+    1. Click the link above to open the portal.
+    2. Enter the Admission Number and Access Key provided.
+    3. Select your child's class and click 'Check Result'.
+
+    For support, please contact the Principal's office at +234 813 103 2577.
+    Location: Old GRA, Maiduguri.
 
     Best Regards,
     School Management
@@ -235,9 +253,8 @@ def send_email_notification(receiver_email, student_name, class_name):
         server.quit()
         return True
     except Exception as e:
-        print(f"SMTP Error: {e}")
+        st.error(f"SMTP Error: {e}")
         return False
-
 def get_local_img(file_path):
     try:
         with open(file_path, "rb") as f:
@@ -1518,6 +1535,7 @@ elif page == "📊 Dashboard":
     
     # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
+
 
 
 
