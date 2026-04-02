@@ -609,7 +609,7 @@ class ResultPDF(FPDF):
         self.cell(0, 8, 'RUBY SPRINGFIELD COLLEGE', 0, 1, 'C') 
         self.set_font('Arial', 'I', 9)
         self.set_text_color(100, 100, 100)
-        self.cell(0, 4, 'Motto: A Citadel of Excellence', 0, 1, 'C') 
+        self.cell(0, 4, 'Motto: A Citadel of Supreme Excellence', 0, 1, 'C') 
         
         # Right Side Branding & Address
         self.set_font('Arial', '', 7)
