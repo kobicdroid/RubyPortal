@@ -957,9 +957,16 @@ if page == "🎓 Result Portal":
                                 if key.lower() in s.lower(): return s
                             return None
 
+                        # --- HELPER: Score Cleaning to prevent '>' comparison errors ---
+                        def clean_score(val):
+                            try:
+                                if pd.isna(val) or str(val).strip() in ["-", "None", ""]: return 0.0
+                                return float(val)
+                            except: return 0.0
+
                         sc_n = find_s('Scoresheet')
                         
-                        # --- BRANCH 1: TEST RESULTS ---
+                        # --- BRANCH 1: TEST RESULTS (C.A) ---
                         if portal_type == "📝 Test Results (C.A)":
                             st.title(f"📝 Test Records: {student_name}")
                             test_results = {}
@@ -980,11 +987,11 @@ if page == "🎓 Result Portal":
                                                 if val.lower() != 'nan' and val != '': sub = val; break
                                             try:
                                                 test_results[sub] = {
-                                                    "CA1": s_vals.iloc[i-6] if pd.notna(s_vals.iloc[i-6]) else "-",
-                                                    "CA2": s_vals.iloc[i-5] if pd.notna(s_vals.iloc[i-5]) else "-",
-                                                    "CA3": s_vals.iloc[i-4] if pd.notna(s_vals.iloc[i-4]) else "-",
-                                                    "CA4": s_vals.iloc[i-3] if pd.notna(s_vals.iloc[i-3]) else "-",
-                                                    "Total_CA": s_vals.iloc[i-2] if pd.notna(s_vals.iloc[i-2]) else 0
+                                                    "CA1": clean_score(s_vals.iloc[i-6]),
+                                                    "CA2": clean_score(s_vals.iloc[i-5]),
+                                                    "CA3": clean_score(s_vals.iloc[i-4]),
+                                                    "CA4": clean_score(s_vals.iloc[i-3]),
+                                                    "Total_CA": clean_score(s_vals.iloc[i-2])
                                                 }
                                             except: continue
                             
@@ -995,12 +1002,14 @@ if page == "🎓 Result Portal":
                                 pdf.is_test = True 
                                 pdf.set_margins(left=10, top=10, right=10)
                                 pdf.add_page()
-                                # Catching None values here
-                                _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 'N/A'})
+                                # The underscore '_' hides the return value 'None' from the UI
+                                _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0})
                                 _ = pdf.draw_test_table(test_results)
                                 
                                 pdf_output = pdf.output(dest='S')
                                 pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
+                                
+                                st.markdown("---")
                                 st.download_button("📥 Download Test Result", data=pdf_bytes, file_name=f"Test_{student_name}.pdf", use_container_width=True)
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
@@ -1034,7 +1043,9 @@ if page == "🎓 Result Portal":
                                                 val = str(r1.iloc[j]).strip()
                                                 if val.lower() != 'nan' and val != '': sub = val; break
                                             try:
-                                                ca, ex, tot = float(s_vals.iloc[i-2]), float(s_vals.iloc[i-1]), float(s_vals.iloc[i])
+                                                ca = clean_score(s_vals.iloc[i-2])
+                                                ex = clean_score(s_vals.iloc[i-1])
+                                                tot = clean_score(s_vals.iloc[i])
                                                 processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
                                                 total_sum += tot
                                             except: continue
@@ -1062,7 +1073,7 @@ if page == "🎓 Result Portal":
                                 pdf.set_margins(left=10, top=10, right=10)
                                 pdf.set_auto_page_break(auto=True, margin=10)
                                 pdf.add_page()
-                                # Catching None values here
+                                # The underscore '_' prevents "None" strings from appearing
                                 _ = pdf.student_info_box(student_name, adm_clean, selected_class, display_term, summary)
                                 _ = pdf.draw_scores_table(processed_results, selected_class)
                                 if "3rd" in sc_n.lower(): _ = pdf.draw_transcript_summary(summary, display_term)
@@ -1070,6 +1081,8 @@ if page == "🎓 Result Portal":
                                 
                                 pdf_output = pdf.output(dest='S')
                                 pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
+                                
+                                st.markdown("---")
                                 st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"{student_name}.pdf", use_container_width=True)
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
