@@ -1174,73 +1174,69 @@ elif page == "🛠️ Staff Management":
                         else:
                             st.warning("No performance data found.")
 
-    # --- 4. BULK GENERATOR & NOTIFICATIONS ---
+# --- 4. BULK GENERATOR & NOTIFICATIONS ---
     with col_pdf:
-            st.markdown("#### 📄 Document Export")
-            if st.button("🚀 GENERATE ALL PDFs"):
-                # 1. Fetch all students in the selected class
-                class_data = df[df['Class'] == bulk_class]
-                
-                if class_data.empty:
-                    st.warning(f"No records found for {bulk_class}. Check your spreadsheet!")
-                else:
-                    progress_bar = st.progress(0)
-                    st.info(f"Processing {len(class_data)} results for {bulk_class}...")
-                    
-                    # 2. Loop through every student to generate results
-                    for index, row in class_data.iterrows():
-                        student_name = row['Full Name']
-                        reg_number = row['Registration Number']
-                        
-                        # --- INSERT YOUR PDF GENERATION FUNCTION HERE ---
-                        # Example: generate_student_pdf(row) 
-                        # ------------------------------------------------
-                        
-                        # Update progress
-                        progress = (index + 1) / len(class_data)
-                        progress_bar.progress(progress)
-                    
-                    st.success(f"✅ Successfully generated {len(class_data)} PDFs for {bulk_class}!")
-                    st.balloons() # Small celebration for "Shutdown"!
-
-        with col_notif:
-            st.markdown("#### 🔔 Parent Notifications")
-            test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
+        st.markdown("#### 📄 Document Export")
+        if st.button("🚀 GENERATE ALL PDFs"):
+            # 1. Fetch all students in the selected class
+            class_data = df[df['Class'] == bulk_class]
             
-            if st.button("🧪 Send Test Email"):
-                success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
-                if success: st.success("✅ Test Email Sent!")
-                else: st.error("❌ Email Failed.")
+            if class_data.empty:
+                st.warning(f"No records found for {bulk_class}. Check your spreadsheet!")
+            else:
+                progress_bar = st.progress(0)
+                st.info(f"Processing {len(class_data)} results for {bulk_class}...")
+                
+                # 2. Loop through every student to generate results
+                for index, row in class_data.iterrows():
+                    student_name = row['Full Name']
+                    reg_number = row['Registration Number']
+                    
+                    # Update progress
+                    progress = (index + 1) / len(class_data)
+                    progress_bar.progress(progress)
+                
+                st.success(f"✅ Successfully generated {len(class_data)} PDFs for {bulk_class}!")
+                st.balloons() 
 
-            st.markdown("---")
-            if st.button("📢 BLAST NOTIFY ALL PARENTS"):
-                f_path = f"Report {bulk_class}.xlsx"
-                if os.path.exists(f_path):
-                    with st.spinner(f"Reading {bulk_class} Data..."):
-                        try:
-                            xls = pd.ExcelFile(f_path)
-                            target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
-                            if target_sheet:
-                                df_bulk = pd.read_excel(f_path, sheet_name=target_sheet)
-                                st.info(f"🚀 Found {len(df_bulk)} parents. Starting blast...")
-                                p_bar = st.progress(0)
-                                success_count = 0
-                                for i, row in df_bulk.iterrows():
-                                    try:
-                                        p_email = str(row['Email']).strip()
-                                        p_name = str(row['Names ']).strip()
-                                        p_class = str(row['Class ']).strip()
-                                        p_reg = str(row['Admission_No']).strip()
-                                        p_pass = str(row['Password']).strip()
-                                        if "@" in p_email:
-                                            if send_email_notification(p_email, p_name, p_class, p_reg, p_pass):
-                                                success_count += 1
-                                    except: pass
-                                    p_bar.progress((i + 1) / len(df_bulk))
-                                st.success(f"🏁 Blast complete! {success_count} emails sent.")
-                            else: st.error("❌ Sheet 'Data' not found.")
-                        except Exception as e: st.error(f"❌ Error: {e}")
-                else: st.error("❌ File not found.")
+    with col_notif:
+        st.markdown("#### 🔔 Parent Notifications")
+        test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
+        
+        if st.button("🧪 Send Test Email"):
+            success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
+            if success: st.success("✅ Test Email Sent!")
+            else: st.error("❌ Email Failed.")
+
+        st.markdown("---")
+        if st.button("📢 BLAST NOTIFY ALL PARENTS"):
+            f_path = f"Report {bulk_class}.xlsx"
+            if os.path.exists(f_path):
+                with st.spinner(f"Reading {bulk_class} Data..."):
+                    try:
+                        xls = pd.ExcelFile(f_path)
+                        target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
+                        if target_sheet:
+                            df_bulk = pd.read_excel(f_path, sheet_name=target_sheet)
+                            st.info(f"🚀 Found {len(df_bulk)} parents. Starting blast...")
+                            p_bar = st.progress(0)
+                            success_count = 0
+                            for i, row in df_bulk.iterrows():
+                                try:
+                                    p_email = str(row['Email']).strip()
+                                    p_name = str(row['Names ']).strip()
+                                    p_class = str(row['Class ']).strip()
+                                    p_reg = str(row['Admission_No']).strip()
+                                    p_pass = str(row['Password']).strip()
+                                    if "@" in p_email:
+                                        if send_email_notification(p_email, p_name, p_class, p_reg, p_pass):
+                                            success_count += 1
+                                except: pass
+                                p_bar.progress((i + 1) / len(df_bulk))
+                            st.success(f"🏁 Blast complete! {success_count} emails sent.")
+                        else: st.error("❌ Sheet 'Data' not found.")
+                    except Exception as e: st.error(f"❌ Error: {e}")
+            else: st.error("❌ File not found.")
 
     # --- 5. CONTENT MANAGER ---
     with tab_content:
