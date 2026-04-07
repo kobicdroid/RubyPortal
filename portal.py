@@ -902,7 +902,6 @@ if page == "🎓 Result Portal":
     st.sidebar.markdown("---")
     st.sidebar.subheader("🎓 Student Login")
 
-    # --- NEW SELECTION LOGIC FOR ANDROID ---
     portal_type = st.sidebar.radio(
         "Select Portal Type",
         ["📊 Full Term Results", "📝 Test Results (C.A)"],
@@ -911,7 +910,6 @@ if page == "🎓 Result Portal":
 
     adm_no = st.sidebar.text_input("Admission Number")
     
-    # --- SUMI SECRET ACCESS ---
     if adm_no == "SUMI":
         st.balloons()
         st.title("👸 Queen Maryam's Portal")
@@ -923,7 +921,6 @@ if page == "🎓 Result Portal":
     pwd = st.sidebar.text_input("Access Key", type="password")
     selected_class = st.sidebar.selectbox("Class", get_available_classes())
     
-    # Dynamic button label based on selection
     btn_label = "Generate Full Report" if portal_type == "📊 Full Term Results" else "View Test Scores"
     login_btn = st.sidebar.button(btn_label)
 
@@ -932,19 +929,16 @@ if page == "🎓 Result Portal":
         if os.path.exists(file_path):
             try:
                 xl = pd.ExcelFile(file_path)
-                
                 if 'Data' in xl.sheet_names:
                     df_data = xl.parse('Data', header=None)
                     df_data.columns = [str(c).strip() for c in df_data.iloc[0]]
                     df_data = df_data[1:]
                     
+                    adm_clean, pwd_clean = str(adm_no).strip(), str(pwd).strip()
                     cols = df_data.columns.tolist()
                     adm_col = next((c for c in cols if "admission" in c.lower()), "Admission_No")
                     pwd_col = next((c for c in cols if "pass" in c.lower() or "key" in c.lower()), "Password")
                     name_col = next((c for c in cols if "name" in c.lower()), "Name")
-                    
-                    adm_clean = str(adm_no).strip()
-                    pwd_clean = str(pwd).strip()
 
                     user = df_data[(df_data[adm_col].astype(str).str.strip() == adm_clean) & 
                                    (df_data[pwd_col].astype(str).str.strip() == pwd_clean)]
@@ -955,8 +949,6 @@ if page == "🎓 Result Portal":
                         term = student.get('Term', 'N/A')
                         
                         log_activity("Student", "Login", f"Success: {student_name} ({adm_clean})")
-
-                        # Load data sheets
                         sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
                         data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
 
@@ -967,7 +959,7 @@ if page == "🎓 Result Portal":
 
                         sc_n = find_s('Scoresheet')
                         
-                        # --- BRANCH 1: TEST RESULTS (C.A) ---
+                        # --- BRANCH 1: TEST RESULTS ---
                         if portal_type == "📝 Test Results (C.A)":
                             st.title(f"📝 Test Records: {student_name}")
                             test_results = {}
@@ -975,8 +967,7 @@ if page == "🎓 Result Portal":
                                 df_sc = data_sheets[sc_n]
                                 header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
                                 header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
-                                r1 = df_sc.iloc[header_idx-1]
-                                header_row = df_sc.iloc[header_idx] 
+                                r1, header_row = df_sc.iloc[header_idx-1], df_sc.iloc[header_idx]
                                 s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
                                 
                                 if not s_row.empty:
@@ -986,8 +977,7 @@ if page == "🎓 Result Portal":
                                             sub = "Unknown"
                                             for j in range(i, -1, -1):
                                                 val = str(r1.iloc[j]).strip()
-                                                if val.lower() != 'nan' and val != '':
-                                                    sub = val; break
+                                                if val.lower() != 'nan' and val != '': sub = val; break
                                             try:
                                                 test_results[sub] = {
                                                     "CA1": s_vals.iloc[i-6] if pd.notna(s_vals.iloc[i-6]) else "-",
@@ -998,15 +988,14 @@ if page == "🎓 Result Portal":
                                                 }
                                             except: continue
                             
-                            # SHOW PREVIEW FIRST
                             st.table(pd.DataFrame(test_results).T)
                             
-                            # THEN GENERATE PDF & DOWNLOAD BUTTON
                             try:
                                 pdf = ResultPDF()
                                 pdf.is_test = True 
                                 pdf.set_margins(left=10, top=10, right=10)
                                 pdf.add_page()
+                                # Catching None values here
                                 _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 'N/A'})
                                 _ = pdf.draw_test_table(test_results)
                                 
@@ -1020,7 +1009,6 @@ if page == "🎓 Result Portal":
                         else:
                             bs_n = find_s('Bsheet')
                             beh_n, sk_n, com_n = find_s('Behaviour'), find_s('Skill'), find_s('Comment')
-
                             pos_val = "N/A"
                             if bs_n:
                                 df_bs = data_sheets[bs_n]
@@ -1028,16 +1016,14 @@ if page == "🎓 Result Portal":
                                 match = df_bs[df_bs.iloc[:,0].astype(str).str.strip() == adm_clean]
                                 if not match.empty: pos_val = match.iloc[0].get('Position', 'N/A')
 
-                            processed_results = {}; total_sum = 0
+                            processed_results, total_sum = {}, 0
                             if sc_n:
                                 is_third_term = "3rd" in sc_n.lower()
                                 display_term = "3RD TERM" if is_third_term else "2ND TERM"
-
                                 df_sc = data_sheets[sc_n]
                                 header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
                                 header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
-                                r1 = df_sc.iloc[header_idx-1]
-                                header_row = df_sc.iloc[header_idx] 
+                                r1, header_row = df_sc.iloc[header_idx-1], df_sc.iloc[header_idx]
                                 s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
                                 if not s_row.empty:
                                     s_vals = s_row.iloc[0]
@@ -1046,12 +1032,9 @@ if page == "🎓 Result Portal":
                                             sub = "Unknown"
                                             for j in range(i, -1, -1):
                                                 val = str(r1.iloc[j]).strip()
-                                                if val.lower() != 'nan' and val != '':
-                                                    sub = val; break
+                                                if val.lower() != 'nan' and val != '': sub = val; break
                                             try:
-                                                ca = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
-                                                ex = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
-                                                tot = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
+                                                ca, ex, tot = float(s_vals.iloc[i-2]), float(s_vals.iloc[i-1]), float(s_vals.iloc[i])
                                                 processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
                                                 total_sum += tot
                                             except: continue
@@ -1067,7 +1050,6 @@ if page == "🎓 Result Portal":
                             active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
                             summary = {'obtained': total_sum, 'avg': round(total_sum/max(1, len(active_subs)), 2), 'pos': pos_val, 'max': len(processed_results)*100}
                             
-                            # SHOW PREVIEW FIRST
                             st.title(f"👋 Welcome, {student_name}")
                             m1, m2, m3 = st.columns(3)
                             m1.metric("Average", f"{summary['avg']}%")
@@ -1075,19 +1057,15 @@ if page == "🎓 Result Portal":
                             m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
                             st.table(pd.DataFrame(processed_results).T)
 
-                            # THEN GENERATE PDF & DOWNLOAD BUTTON AT BOTTOM
                             try:
                                 pdf = ResultPDF()
                                 pdf.set_margins(left=10, top=10, right=10)
                                 pdf.set_auto_page_break(auto=True, margin=10)
                                 pdf.add_page()
-                                
+                                # Catching None values here
                                 _ = pdf.student_info_box(student_name, adm_clean, selected_class, display_term, summary)
                                 _ = pdf.draw_scores_table(processed_results, selected_class)
-                                
-                                if "3rd" in sc_n.lower():
-                                    _ = pdf.draw_transcript_summary(summary, display_term)
-                                    
+                                if "3rd" in sc_n.lower(): _ = pdf.draw_transcript_summary(summary, display_term)
                                 _ = pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, display_term)
                                 
                                 pdf_output = pdf.output(dest='S')
