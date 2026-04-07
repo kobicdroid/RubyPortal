@@ -1115,138 +1115,132 @@ elif page == "🛠️ Staff Management":
         with col_pdf:
             st.markdown("#### 📄 Document Export")
             if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
-                target_file = f"Report {bulk_class}.xlsx"
+            target_file = f"Report {bulk_class}.xlsx"
+            
+            if os.path.exists(target_file):
+                data_sheets = pd.read_excel(target_file, sheet_name=None)
                 
-                if os.path.exists(target_file):
-                    data_sheets = pd.read_excel(target_file, sheet_name=None)
-                    
-                    def find_s(key): 
-                        return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
+                def find_s(key): 
+                    return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
 
-                    sc_n = find_s('Scoresheet')
-                    if not sc_n:
-                        st.error("❌ 'Scoresheet' sheet not found in the Excel file.")
-                    else:
-                        df_sc_raw = data_sheets[sc_n]
-                        # Get Admission List from Column A
-                        adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
-
-                        zip_buffer = BytesIO()
-                        with zipfile.ZipFile(zip_buffer, "w") as zf:
-                            progress_bar = st.progress(0)
-                            status_text = st.empty()
-                            
-                            for index, adm_val in enumerate(adm_list):
-                                adm_clean = str(adm_val).strip()
-                                
-                                try:
-                                    # PDF Initialization
-                                    pdf = ResultPDF()
-                                    pdf.set_auto_page_break(auto=True, margin=15)
-                                    is_test_mode = "test" in sc_n.lower()
-                                    pdf.is_test = is_test_mode
-                                    pdf.add_page()
-
-                                    # Header Logic
-                                    header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
-                                    h_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
-                                    r1 = df_sc_raw.iloc[h_idx-1]
-                                    h_row = df_sc_raw.iloc[h_idx]
-                                    
-                                    # Student Row
-                                    s_row = df_sc_raw[df_sc_raw.iloc[:,0].astype(str).str.strip() == adm_clean]
-                                    if s_row.empty: continue
-                                    
-                                    s_vals = s_row.iloc[0]
-                                    student_name = str(s_vals.iloc[1]).upper()
-                                    
-                                    # Score Processing
-                                    processed_results = {}
-                                    total_sum = 0
-                                    
-                                    for i, col_val in enumerate(h_row):
-                                        if str(col_val).strip().lower() == 'total':
-                                            sub = "Unknown"
-                                            for j in range(i, -1, -1):
-                                                val = str(r1.iloc[j]).strip()
-                                                if val.lower() != 'nan' and val != '':
-                                                    sub = val
-                                                    break
-                                            try:
-                                                ca = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
-                                                ex = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
-                                                tot = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
-                                                processed_results[sub] = {
-                                                    "CA": ca, "Exam": ex, "Total": tot, 
-                                                    "CA1": ca, "CA2": 0, "CA3": 0, "CA4": 0, "Total_CA": ca 
-                                                }
-                                                total_sum += tot
-                                            except: continue
-
-                                    # Metadata retrieval
-                                    def get_meta_row(key):
-                                        sheet = find_s(key)
-                                        if not sheet: return {}
-                                        df_m = data_sheets[sheet]
-                                        df_m.columns = [str(c).strip() for c in df_m.iloc[0]]
-                                        m = df_m[df_m.iloc[:,0].astype(str).str.strip() == adm_clean]
-                                        return m.iloc[0].to_dict() if not m.empty else {}
-
-                                    beh = get_meta_row('Behaviour')
-                                    sk = get_meta_row('Skill')
-                                    comm = get_meta_row('Comment')
-                                    
-                                    # Position from Bsheet
-                                    pos_val = "-"
-                                    bs_n = find_s('Bsheet')
-                                    if bs_n:
-                                        df_bs = data_sheets[bs_n]
-                                        df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
-                                        m_bs = df_bs[df_bs.iloc[:,0].astype(str).str.strip() == adm_clean]
-                                        if not m_bs.empty: pos_val = m_bs.iloc[0].get('Position', '-')
-
-                                    summary = {
-                                        'avg': round(total_sum/len(processed_results), 2) if processed_results else 0,
-                                        'obtained': total_sum,
-                                        'max': len(processed_results) * 100,
-                                        'pos': pos_val,
-                                        't1_avg': 0, 't2_avg': 0
-                                    }
-
-                                    term = "3rd Term" 
-                                    pdf.student_info_box(student_name, adm_clean, bulk_class, term, summary)
-                                    
-                                    if is_test_mode:
-                                        pdf.draw_test_table(processed_results)
-                                    else:
-                                        pdf.draw_scores_table(processed_results, bulk_class)
-                                        pdf.draw_transcript_summary(summary, term)
-                                        pdf.draw_footer_sections(beh, sk, comm, summary, bulk_class, term)
-
-                                    pdf_output = pdf.output(dest='S')
-                                    pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-                                    clean_name = student_name.replace(' ', '_').replace('/', '-')
-                                    zf.writestr(f"{clean_name}_Result.pdf", pdf_bytes)
-
-                                except Exception as e:
-                                    st.error(f"Failed to process {adm_clean}: {e}")
-
-                                progress = (index + 1) / len(adm_list)
-                                progress_bar.progress(progress)
-                                status_text.text(f"🔥 Processing: {student_name}")
-
-                        st.success(f"🏁 Successfully Zipped {len(adm_list)} Professional Reports!")
-                        st.download_button(
-                            label=f"📥 DOWNLOAD {bulk_class} COMPLETE PACKAGE",
-                            data=zip_buffer.getvalue(),
-                            file_name=f"Ruby_Springfield_{bulk_class}_Full_Reports.zip",
-                            mime="application/zip",
-                            use_container_width=True
-                        )
-                        st.balloons()
+                sc_n = find_s('Scoresheet')
+                if not sc_n:
+                    st.error("❌ 'Scoresheet' sheet not found.")
                 else:
-                    st.error(f"❌ Excel file 'Report {bulk_class}.xlsx' not found in system.")
+                    df_sc_raw = data_sheets[sc_n]
+                    adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
 
+                    zip_buffer = BytesIO()
+                    with zipfile.ZipFile(zip_buffer, "w") as zf:
+                        progress_bar = st.progress(0)
+                        status_text = st.empty()
+                        
+                        for index, adm_val in enumerate(adm_list):
+                            adm_clean = str(adm_val).strip()
+                            
+                            try:
+                                pdf = ResultPDF()
+                                pdf.set_auto_page_break(auto=True, margin=15)
+                                # Detect if this is a CA Report or Full Report
+                                is_test_mode = "test" in sc_n.lower()
+                                pdf.is_test = is_test_mode
+                                pdf.add_page()
+
+                                # --- DATA EXTRACTION ---
+                                header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                                h_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
+                                r1 = df_sc_raw.iloc[h_idx-1]
+                                h_row = df_sc_raw.iloc[h_idx]
+                                
+                                s_row = df_sc_raw[df_sc_raw.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                if s_row.empty: continue
+                                
+                                s_vals = s_row.iloc[0]
+                                student_name = str(s_vals.iloc[1]).upper()
+                                
+                                processed_results = {}
+                                total_sum = 0
+                                
+                                # Loop through headers to find 'Total' columns
+                                for i, col_val in enumerate(h_row):
+                                    if str(col_val).strip().lower() == 'total':
+                                        # Find Subject Name from row above
+                                        sub = "Unknown"
+                                        for j in range(i, -1, -1):
+                                            val = str(r1.iloc[j]).strip()
+                                            if val.lower() != 'nan' and val != '':
+                                                sub = val
+                                                break
+                                        
+                                        try:
+                                            # Mapping keys to match your draw_scores_table logic
+                                            ca_val = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
+                                            ex_val = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
+                                            tot_val = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
+                                            
+                                            processed_results[sub] = {
+                                                "CA": ca_val,       # Used in draw_scores_table
+                                                "Exam": ex_val,     # Used in draw_scores_table
+                                                "Total": tot_val,   # Used in draw_scores_table
+                                                "CA1": ca_val,      # Used in draw_test_table
+                                                "CA2": 0,           # Placeholder
+                                                "CA3": 0,           # Placeholder
+                                                "CA4": 0,           # Placeholder
+                                                "Total_CA": ca_val  # Used in draw_test_table
+                                            }
+                                            total_sum += tot_val
+                                        except: continue
+
+                                # --- METADATA & COMMENTS ---
+                                def get_meta_row(key):
+                                    sheet = find_s(key)
+                                    if not sheet: return {}
+                                    df_m = data_sheets[sheet]
+                                    df_m.columns = [str(c).strip() for c in df_m.iloc[0]]
+                                    m = df_m[df_m.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                    return m.iloc[0].to_dict() if not m.empty else {}
+
+                                beh = get_meta_row('Behaviour')
+                                sk = get_meta_row('Skill')
+                                comm = get_meta_row('Comment')
+                                
+                                summary = {
+                                    'avg': round(total_sum/len(processed_results), 2) if processed_results else 0,
+                                    'obtained': total_sum,
+                                    'max': len(processed_results) * 100,
+                                    'pos': get_meta_row('Bsheet').get('Position', '-'),
+                                    't1_avg': 0, 't2_avg': 0
+                                }
+
+                                term = "3rd Term" # Or detect dynamically
+                                
+                                # --- DRAWING PDF ---
+                                pdf.student_info_box(student_name, adm_clean, bulk_class, term, summary)
+                                
+                                if is_test_mode:
+                                    pdf.draw_test_table(processed_results)
+                                else:
+                                    pdf.draw_scores_table(processed_results, bulk_class)
+                                    pdf.draw_transcript_summary(summary, term)
+                                    pdf.draw_footer_sections(beh, sk, comm, summary, bulk_class, term)
+
+                                pdf_output = pdf.output(dest='S')
+                                pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
+                                zf.writestr(f"{student_name.replace(' ', '_')}_Result.pdf", pdf_bytes)
+
+                            except Exception as e:
+                                st.error(f"Error on {adm_clean}: {e}")
+
+                            progress_bar.progress((index + 1) / len(adm_list))
+                            status_text.text(f"🔥 Processing: {student_name}")
+
+                    st.download_button(
+                        label=f"📥 DOWNLOAD {bulk_class} PACKAGE",
+                        data=zip_buffer.getvalue(),
+                        file_name=f"Ruby_Springfield_{bulk_class}_Reports.zip",
+                        mime="application/zip",
+                        use_container_width=True
+                    )
         with col_notif:
             st.markdown("#### 🔔 Parent Notifications")
             test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
