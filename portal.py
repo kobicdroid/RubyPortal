@@ -1365,72 +1365,72 @@ with tab_bulk:
                     except Exception as e: st.error(f"❌ Error: {e}")
             else: st.error("❌ File not found.")
 
-# --- 5. CONTENT MANAGER ---
-    with tab_content:
-        st.markdown("### 📰 News & Protocol Control")
-        with st.expander("👁️ View Live Dashboard Preview", expanded=False):
-            st.markdown(f"#### {st.session_state.news_content['title']}")
-            if os.path.exists("news_event.jpg"):
-                st.image("news_event.jpg", width=400)
-            st.write(st.session_state.news_content['desc'])
+# --- 5. CONTENT MANAGER (MOVED OUTSIDE TAB_BULK) ---
+with tab_content:
+    st.markdown("### 📰 News & Protocol Control")
+    with st.expander("👁️ View Live Dashboard Preview", expanded=False):
+        st.markdown(f"#### {st.session_state.news_content['title']}")
+        if os.path.exists("news_event.jpg"):
+            st.image("news_event.jpg", width=400)
+        st.write(st.session_state.news_content['desc'])
 
-        with st.form("news_update_form"):
-            st.subheader("✍️ Update Dashboard News")
-            new_title = st.text_input("Headline", value=st.session_state.news_content['title'])
-            new_desc = st.text_area("Content", value=st.session_state.news_content['desc'])
-            uploaded_news_img = st.file_uploader("Change Image", type=['jpg', 'png', 'jpeg'])
-            
-            if st.form_submit_button("🚀 Publish & Save"):
-                st.session_state.news_content.update({'title': new_title.upper(), 'desc': new_desc})
-                st.session_state.portal_storage.update({'news_title': new_title.upper(), 'news_desc': new_desc})
+    with st.form("news_update_form"):
+        st.subheader("✍️ Update Dashboard News")
+        new_title = st.text_input("Headline", value=st.session_state.news_content['title'])
+        new_desc = st.text_area("Content", value=st.session_state.news_content['desc'])
+        uploaded_news_img = st.file_uploader("Change Image", type=['jpg', 'png', 'jpeg'])
+        
+        if st.form_submit_button("🚀 Publish & Save"):
+            st.session_state.news_content.update({'title': new_title.upper(), 'desc': new_desc})
+            st.session_state.portal_storage.update({'news_title': new_title.upper(), 'news_desc': new_desc})
+            pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+            if uploaded_news_img:
+                with open("news_event.jpg", "wb") as f: f.write(uploaded_news_img.getbuffer())
+            st.success("✅ News updated!")
+            st.rerun()
+
+    with st.form("protocol_form"):
+        st.subheader("📜 Edit School Protocols")
+        n_cal = st.text_area("Calendar", st.session_state.protocols['calendar'])
+        n_exam = st.text_area("Exams", st.session_state.protocols['exams'])
+        if st.form_submit_button("💾 Save Protocols"):
+            st.session_state.protocols.update({"calendar": n_cal, "exams": n_exam})
+            st.session_state.portal_storage.update({"calendar": n_cal, "exams": n_exam})
+            pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+            st.success("✅ Protocols synced!")
+            st.rerun()
+
+    st.markdown("---")
+    st.markdown("### 📂 Digital Notice Board Management")
+    with st.form("notice_board_form"):
+        notice_name = st.text_input("Notice Title")
+        uploaded_pdf = st.file_uploader("Upload PDF Document", type=['pdf'])
+        if st.form_submit_button("📌 Pin to Notice Board"):
+            if uploaded_pdf and notice_name:
+                clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
+                file_bytes = uploaded_pdf.getvalue()
+                if not os.path.exists("notices"): os.makedirs("notices")
+                local_path = os.path.join("notices", clean_filename)
+                with open(local_path, "wb") as f: f.write(file_bytes)
+                status = upload_notice_to_github(file_bytes, clean_filename)
+                if 'notices' not in st.session_state: st.session_state.notices = []
+                st.session_state.notices.append({"title": notice_name, "path": local_path})
+                st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                if uploaded_news_img:
-                    with open("news_event.jpg", "wb") as f: f.write(uploaded_news_img.getbuffer())
-                st.success("✅ News updated!")
                 st.rerun()
 
-        with st.form("protocol_form"):
-            st.subheader("📜 Edit School Protocols")
-            n_cal = st.text_area("Calendar", st.session_state.protocols['calendar'])
-            n_exam = st.text_area("Exams", st.session_state.protocols['exams'])
-            if st.form_submit_button("💾 Save Protocols"):
-                st.session_state.protocols.update({"calendar": n_cal, "exams": n_exam})
-                st.session_state.portal_storage.update({"calendar": n_cal, "exams": n_exam})
+    if 'notices' in st.session_state and st.session_state.notices:
+        st.write("---")
+        st.write("🗑️ **Manage Active Notices**")
+        for i, notice in enumerate(st.session_state.notices):
+            col_n, col_d = st.columns([3, 1])
+            col_n.write(f"📄 {notice['title']}")
+            if col_d.button("Delete", key=f"admin_del_{i}"):
+                if os.path.exists(notice['path']): os.remove(notice['path'])
+                st.session_state.notices.pop(i)
+                st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                st.success("✅ Protocols synced!")
                 st.rerun()
-
-        st.markdown("---")
-        st.markdown("### 📂 Digital Notice Board Management")
-        with st.form("notice_board_form"):
-            notice_name = st.text_input("Notice Title")
-            uploaded_pdf = st.file_uploader("Upload PDF Document", type=['pdf'])
-            if st.form_submit_button("📌 Pin to Notice Board"):
-                if uploaded_pdf and notice_name:
-                    clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
-                    file_bytes = uploaded_pdf.getvalue()
-                    if not os.path.exists("notices"): os.makedirs("notices")
-                    local_path = os.path.join("notices", clean_filename)
-                    with open(local_path, "wb") as f: f.write(file_bytes)
-                    status = upload_notice_to_github(file_bytes, clean_filename)
-                    if 'notices' not in st.session_state: st.session_state.notices = []
-                    st.session_state.notices.append({"title": notice_name, "path": local_path})
-                    st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
-                    pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                    st.rerun()
-
-        if 'notices' in st.session_state and st.session_state.notices:
-            st.write("---")
-            st.write("🗑️ **Manage Active Notices**")
-            for i, notice in enumerate(st.session_state.notices):
-                col_n, col_d = st.columns([3, 1])
-                col_n.write(f"📄 {notice['title']}")
-                if col_d.button("Delete", key=f"admin_del_{i}"):
-                    if os.path.exists(notice['path']): os.remove(notice['path'])
-                    st.session_state.notices.pop(i)
-                    st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
-                    pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                    st.rerun()
 
 # --- THE BIG FIX: ALIGNED TO FAR LEFT MARGIN ---
 elif page == "📊 Dashboard":
@@ -1439,6 +1439,7 @@ elif page == "📊 Dashboard":
     import io
     from io import BytesIO
 
+    # Dashboard logic continues...
     # 1. Assets & Initialization
     founder_path, lab_path, news_path = "founder.jpg", "lab.jpg", "news_event.jpg"
     lab_img_base64 = get_local_img(lab_path) 
