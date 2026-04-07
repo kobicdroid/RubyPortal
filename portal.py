@@ -1193,94 +1193,27 @@ with tab_analytics:
                         st.warning("No performance data found.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-if page == "🖨️ Bulk Printing": 
+if page == "🖨️ Bulk Printing":
     bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
     col_pdf, col_notif = st.columns(2)
 
     with col_pdf:
         st.markdown("#### 📄 Document Export")
-        if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
-            target_file = f"Report {bulk_class}.xlsx"
-            
-            if os.path.exists(target_file):
-                data_sheets = pd.read_excel(target_file, sheet_name=None)
-                
-                def find_s(key): 
-                    return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
-
-                sc_n = find_s('Scoresheet')
-                if not sc_n:
-                    st.error("❌ 'Scoresheet' sheet not found in the Excel file.")
-                else:
-                    df_sc_raw = data_sheets[sc_n]
-                    adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
-
-                    zip_buffer = BytesIO()
-                    with zipfile.ZipFile(zip_buffer, "w") as zf:
-                        progress_bar = st.progress(0)
-                        status_text = st.empty()
-                        
-                        for index, adm_val in enumerate(adm_list):
-                            adm_clean = str(adm_val).strip()
-                            try:
-                                pdf = ResultPDF()
-                                pdf.set_auto_page_break(auto=True, margin=15)
-                                is_test_mode = "test" in sc_n.lower()
-                                pdf.is_test = is_test_mode
-                                pdf.add_page()
-
-                                header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
-                                h_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
-                                r1 = df_sc_raw.iloc[h_idx-1]
-                                h_row = df_sc_raw.iloc[h_idx]
-                                
-                                s_row = df_sc_raw[df_sc_raw.iloc[:,0].astype(str).str.strip() == adm_clean]
-                                if s_row.empty: continue
-                                
-                                s_vals = s_row.iloc[0]
-                                student_name = str(s_vals.iloc[1]).upper()
-                                
-                                processed_results = {}
-                                total_sum = 0
-                                
-                                for i, col_val in enumerate(h_row):
-                                    if str(col_val).strip().lower() == 'total':
-                                        sub = "Unknown"
-                                        for j in range(i, -1, -1):
-                                            val = str(r1.iloc[j]).strip()
-                                            if val.lower() != 'nan' and val != '':
-                                                sub = val
-                                                break
-                                        try:
-                                            ca = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
-                                            ex = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
-                                            tot = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
-                                            processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
-                                            total_sum += tot
-                                        except: continue
-
-                                term = "3rd Term" 
-                                pdf.student_info_box(student_name, adm_clean, bulk_class, term, {"avg": 0}) # Simplified for fix
-                                pdf_output = pdf.output(dest='S')
-                                pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-                                zf.writestr(f"{student_name}_Result.pdf", pdf_bytes)
-
-                            except Exception as e:
-                                st.error(f"Failed to process {adm_clean}: {e}")
-
-                        st.success("🏁 Successfully Zipped Reports!")
-                        st.download_button(label="📥 DOWNLOAD PACKAGE", data=zip_buffer.getvalue(), file_name="Reports.zip", mime="application/zip")
-            else:
-                st.error(f"❌ Excel file 'Report {bulk_class}.xlsx' not found.")
+        st.info("💡 Bulk PDF Printing logic has been removed. Individual reports can still be generated from the Result Portal.")
+        # We use 'pass' here to keep the column block valid in Python
+        pass
 
     with col_notif:
         st.markdown("#### 🔔 Parent Notifications")
         test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
         
         if st.button("🧪 Send Test Email"):
+            # Ensure send_email_notification is defined in your helper functions
             success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
-            if success: st.success("✅ Test Email Sent!")
-            else: st.error("❌ Email Failed.")
+            if success: 
+                st.success("✅ Test Email Sent!")
+            else: 
+                st.error("❌ Email Failed. Check SMTP settings.")
 
         st.markdown("---")
         if st.button("📢 BLAST NOTIFY ALL PARENTS"):
@@ -1305,13 +1238,17 @@ if page == "🖨️ Bulk Printing":
                                     if "@" in p_email:
                                         if send_email_notification(p_email, p_name, p_class, p_reg, p_pass):
                                             success_count += 1
-                                except: pass
+                                except: 
+                                    pass
                                 p_bar.progress((i + 1) / len(df_bulk))
                             st.success(f"🏁 Blast complete! {success_count} emails sent.")
-                        else: st.error("❌ Sheet 'Data' not found.")
-                    except Exception as e: st.error(f"❌ Error: {e}")
-            else: st.error("❌ File not found.")
-
+                        else: 
+                            st.error("❌ Sheet 'Data' not found.")
+                    except Exception as e: 
+                        st.error(f"❌ Error: {e}")
+            else: 
+                st.error("❌ File not found.")
+    
 # --- 5. CONTENT MANAGER ---
 with tab_content:
     st.markdown("### 📰 News & Protocol Control")
