@@ -1055,145 +1055,145 @@ elif page == "🛠️ Staff Management":
 
     st.success("✅ Authentication Successful. Welcome, Management.")
     
-    tab_up, tab_db, tab_analytics, tab_bulk, tab_content = st.tabs([
-        "📤 Upload/Update", "📂 Database & Logs", "📈 Class Insights", "📦 Bulk & Notifications", "📢 Content Manager"
-    ])
+   # --- ADMIN PORTAL TABS ---
+tab_up, tab_db, tab_analytics, tab_bulk, tab_content = st.tabs([
+    "📤 Upload/Update", "📂 Database & Logs", "📈 Class Insights", "📦 Bulk & Notifications", "📢 Content Manager"
+])
+
+# --- 1. UPLOAD TAB ---
+with tab_up:
+    st.info("Upload class results here. Format: 'Report ClassName.xlsx'")
+    target_class = st.text_input("Target Class Name (e.g., JSS 1A)", key="upload_target")
+    new_file = st.file_uploader("Select Excel Spreadsheet", type=['xlsx'])
     
-    # --- 1. UPLOAD TAB ---
-    with tab_up:
-        st.info("Upload class results here. Format: 'Report ClassName.xlsx'")
-        target_class = st.text_input("Target Class Name (e.g., JSS 1A)", key="upload_target")
-        new_file = st.file_uploader("Select Excel Spreadsheet", type=['xlsx'])
+    if st.button("Deploy to System") and new_file and target_class:
+        save_filename = f"Report {target_class}.xlsx"
+        file_bytes = new_file.getvalue() 
         
-        if st.button("Deploy to System") and new_file and target_class:
-            save_filename = f"Report {target_class}.xlsx"
-            file_bytes = new_file.getvalue() 
-            
-            with open(save_filename, "wb") as f:
-                f.write(file_bytes)
-            
-            with st.spinner(f"🚀 Syncing {save_filename} with GitHub..."):
-                status = upload_notice_to_github(file_bytes, save_filename)
-            
-            if status in [200, 201]:
-                log_activity("Admin", "Upload", f"Uploaded and Synced: {save_filename}")
-                st.balloons()
-                st.success(f"✅ SUCCESS: {save_filename} is now live on Portal & GitHub!")
-            else:
-                log_activity("Admin", "Upload Error", f"GitHub Sync failed for {save_filename}")
-                st.warning(f"⚠️ Local update successful, but GitHub Sync Error: {status}")
-
-    # --- 2. DATABASE & LOGS TAB ---
-    with tab_db:
-        col_db, col_log = st.columns(2)
+        with open(save_filename, "wb") as f:
+            f.write(file_bytes)
         
-        with col_db:
-            st.subheader("📂 Live Databases")
-            live_files = glob.glob("Report *.xlsx")
-            st.write(f"Total: {len(live_files)}")
-            for file in live_files:
-                st.code(file)
+        with st.spinner(f"🚀 Syncing {save_filename} with GitHub..."):
+            status = upload_notice_to_github(file_bytes, save_filename)
         
-        with col_log:
-            st.subheader("🕵️ Security Audit")
-            if os.path.exists("system_audit.log"):
-                with open("system_audit.log", "r") as f:
-                    logs = f.readlines()
-                st.text_area("Recent Activity", "".join(logs[-15:]), height=200, key="admin_audit_logs")
-            else:
-                st.info("No logs generated yet.")
-                
-    # --- 3. ANALYTICS TAB ---
-    with tab_analytics:
-        available_classes = get_available_classes()
-        if not available_classes:
-            st.warning("No databases found to analyze.")
+        if status in [200, 201]:
+            log_activity("Admin", "Upload", f"Uploaded and Synced: {save_filename}")
+            st.balloons()
+            st.success(f"✅ SUCCESS: {save_filename} is now live on Portal & GitHub!")
         else:
-            selected_analysis = st.selectbox("Analyze Class Performance", available_classes, key="analysis_select")
-            if st.button("Run Analysis"):
-                f_path = f"Report {selected_analysis}.xlsx"
-                if os.path.exists(f_path):
-                    d_sheets = pd.read_excel(f_path, sheet_name=None, header=None)
-                    sc_key = next((k for k in d_sheets.keys() if k.lower() == 'scoresheet'), None)
+            log_activity("Admin", "Upload Error", f"GitHub Sync failed for {save_filename}")
+            st.warning(f"⚠️ Local update successful, but GitHub Sync Error: {status}")
+
+# --- 2. DATABASE & LOGS TAB ---
+with tab_db:
+    col_db, col_log = st.columns(2)
+    
+    with col_db:
+        st.subheader("📂 Live Databases")
+        live_files = glob.glob("Report *.xlsx")
+        st.write(f"Total: {len(live_files)}")
+        for file in live_files:
+            st.code(file)
+    
+    with col_log:
+        st.subheader("🕵️ Security Audit")
+        if os.path.exists("system_audit.log"):
+            with open("system_audit.log", "r") as f:
+                logs = f.readlines()
+            st.text_area("Recent Activity", "".join(logs[-15:]), height=200, key="admin_audit_logs")
+        else:
+            st.info("No logs generated yet.")
+            
+# --- 3. ANALYTICS TAB ---
+with tab_analytics:
+    available_classes = get_available_classes()
+    if not available_classes:
+        st.warning("No databases found to analyze.")
+    else:
+        selected_analysis = st.selectbox("Analyze Class Performance", available_classes, key="analysis_select")
+        if st.button("Run Analysis"):
+            f_path = f"Report {selected_analysis}.xlsx"
+            if os.path.exists(f_path):
+                d_sheets = pd.read_excel(f_path, sheet_name=None, header=None)
+                sc_key = next((k for k in d_sheets.keys() if k.lower() == 'scoresheet'), None)
+                
+                if sc_key:
+                    df_sc = d_sheets[sc_key]
+                    header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                    header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
+                    header_row = df_sc.iloc[header_idx] 
+                    subject_row = df_sc.iloc[header_idx - 1]
                     
-                    if sc_key:
-                        df_sc = d_sheets[sc_key]
-                        header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
-                        header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
-                        header_row = df_sc.iloc[header_idx] 
-                        subject_row = df_sc.iloc[header_idx - 1]
+                    subject_stats = []
+                    total_cols = []
+                    
+                    for i, col_val in enumerate(header_row): 
+                        if str(col_val).strip().lower() == 'total':
+                            total_cols.append(i) 
+                            sub_name = str(subject_row.iloc[i]).strip()
+                            if sub_name.lower() == 'nan' or sub_name == '':
+                                for look_back in range(i-1, max(-1, i-10), -1):
+                                    val = str(subject_row.iloc[look_back]).strip()
+                                    if val.lower() != 'nan' and val != '':
+                                        sub_name = val
+                                        break
+                            if sub_name.lower() == 'nan': sub_name = f"Subject {i}"
+                            scores = pd.to_numeric(df_sc.iloc[header_idx+1:, i], errors='coerce').dropna()
+                            if not scores.empty:
+                                subject_stats.append({"Subject": sub_name, "Average Score": round(scores.mean(), 2)})
+                    
+                    if subject_stats:
+                        df_stats = pd.DataFrame(subject_stats)
+                        st.subheader("📋 Management Summary")
+                        data_rows = df_sc.iloc[header_idx+1:, :]
+                        at_risk_list = []
+                        for _, row in data_rows.iterrows():
+                            s_name = row.iloc[1]
+                            fails = sum(1 for c in total_cols if pd.to_numeric(row.iloc[c], errors='coerce') < 40)
+                            if fails >= 3:
+                                at_risk_list.append({"Student": s_name, "Failing": fails})
+
+                        m1, m2, m3 = st.columns(3)
+                        m1.metric("Class Average", f"{round(df_stats['Average Score'].mean(), 1)}%")
+                        m2.metric("Total Students", len(data_rows))
+                        m3.metric("At-Risk", len(at_risk_list))
+
+                        if at_risk_list:
+                            with st.expander("⚠️ View At-Risk Students"):
+                                st.table(pd.DataFrame(at_risk_list))
+
+                        fig_bar = px.bar(df_stats, x='Subject', y='Average Score', 
+                                       title=f"Class Subject Performance: {selected_analysis}",
+                                       color='Average Score', color_continuous_scale='Viridis', text_auto=True)
+                        st.plotly_chart(fig_bar, use_container_width=True)
+
+                        st.markdown("---")
+                        col_lead, col_pie = st.columns([1, 1])
+                        with col_lead:
+                            st.subheader("🏆 Class Leaderboard")
+                            grand_idx = total_cols[-1]
+                            df_lead = df_sc.iloc[header_idx+1:, [0, 1, grand_idx]].copy()
+                            df_lead.columns = ['ID', 'Name', 'TotalScore']
+                            df_lead['TotalScore'] = pd.to_numeric(df_lead['TotalScore'], errors='coerce')
+                            top_3 = df_lead.nlargest(3, 'TotalScore')
+                            for rank, (idx, row) in enumerate(top_3.iterrows(), 1):
+                                st.success(f"{rank}. **{row['Name']}** - {row['TotalScore']} pts")
                         
-                        subject_stats = []
-                        total_cols = []
+                        with col_pie:
+                            st.subheader("📈 Grade Spread")
+                            all_totals = pd.to_numeric(df_sc.iloc[header_idx+1:, total_cols].values.flatten(), errors='coerce')
+                            all_totals = all_totals[~np.isnan(all_totals)]
+                            grades = {"A (75+)": sum(all_totals >= 75), "B (65-74)": sum((all_totals >= 65) & (all_totals < 75)), 
+                                      "C (50-64)": sum((all_totals >= 50) & (all_totals < 65)), "Fail (<50)": sum(all_totals < 50)}
+                            fig_pie = px.pie(names=list(grades.keys()), values=list(grades.values()), color_discrete_sequence=px.colors.qualitative.Pastel)
+                            st.plotly_chart(fig_pie, use_container_width=True)
                         
-                        for i, col_val in enumerate(header_row): 
-                            if str(col_val).strip().lower() == 'total':
-                                total_cols.append(i) 
-                                sub_name = str(subject_row.iloc[i]).strip()
-                                if sub_name.lower() == 'nan' or sub_name == '':
-                                    for look_back in range(i-1, max(-1, i-10), -1):
-                                        val = str(subject_row.iloc[look_back]).strip()
-                                        if val.lower() != 'nan' and val != '':
-                                            sub_name = val
-                                            break
-                                if sub_name.lower() == 'nan': sub_name = f"Subject {i}"
-                                scores = pd.to_numeric(df_sc.iloc[header_idx+1:, i], errors='coerce').dropna()
-                                if not scores.empty:
-                                    subject_stats.append({"Subject": sub_name, "Average Score": round(scores.mean(), 2)})
-                        
-                        if subject_stats:
-                            df_stats = pd.DataFrame(subject_stats)
-                            st.subheader("📋 Management Summary")
-                            data_rows = df_sc.iloc[header_idx+1:, :]
-                            at_risk_list = []
-                            for _, row in data_rows.iterrows():
-                                s_name = row.iloc[1]
-                                fails = sum(1 for c in total_cols if pd.to_numeric(row.iloc[c], errors='coerce') < 40)
-                                if fails >= 3:
-                                    at_risk_list.append({"Student": s_name, "Failing": fails})
-
-                            m1, m2, m3 = st.columns(3)
-                            m1.metric("Class Average", f"{round(df_stats['Average Score'].mean(), 1)}%")
-                            m2.metric("Total Students", len(data_rows))
-                            m3.metric("At-Risk", len(at_risk_list))
-
-                            if at_risk_list:
-                                with st.expander("⚠️ View At-Risk Students"):
-                                    st.table(pd.DataFrame(at_risk_list))
-
-                            fig_bar = px.bar(df_stats, x='Subject', y='Average Score', 
-                                           title=f"Class Subject Performance: {selected_analysis}",
-                                           color='Average Score', color_continuous_scale='Viridis', text_auto=True)
-                            st.plotly_chart(fig_bar, use_container_width=True)
-
-                            st.markdown("---")
-                            col_lead, col_pie = st.columns([1, 1])
-                            with col_lead:
-                                st.subheader("🏆 Class Leaderboard")
-                                grand_idx = total_cols[-1]
-                                df_lead = df_sc.iloc[header_idx+1:, [0, 1, grand_idx]].copy()
-                                df_lead.columns = ['ID', 'Name', 'TotalScore']
-                                df_lead['TotalScore'] = pd.to_numeric(df_lead['TotalScore'], errors='coerce')
-                                top_3 = df_lead.nlargest(3, 'TotalScore')
-                                for rank, (idx, row) in enumerate(top_3.iterrows(), 1):
-                                    st.success(f"{rank}. **{row['Name']}** - {row['TotalScore']} pts")
-                            
-                            with col_pie:
-                                st.subheader("📈 Grade Spread")
-                                all_totals = pd.to_numeric(df_sc.iloc[header_idx+1:, total_cols].values.flatten(), errors='coerce')
-                                all_totals = all_totals[~np.isnan(all_totals)]
-                                grades = {"A (75+)": sum(all_totals >= 75), "B (65-74)": sum((all_totals >= 65) & (all_totals < 75)), 
-                                          "C (50-64)": sum((all_totals >= 50) & (all_totals < 65)), "Fail (<50)": sum(all_totals < 50)}
-                                fig_pie = px.pie(names=list(grades.keys()), values=list(grades.values()), color_discrete_sequence=px.colors.qualitative.Pastel)
-                                st.plotly_chart(fig_pie, use_container_width=True)
-                            
-                            log_activity("Admin", "Analysis", f"Ran full stats for {selected_analysis}")
-                        else:
-                            st.warning("No performance data found.")
+                        log_activity("Admin", "Analysis", f"Ran full stats for {selected_analysis}")
+                    else:
+                        st.warning("No performance data found.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-# ADDED THIS LINE BELOW TO FIX YOUR SYNTAX ERROR
-if page == "🖨️ Bulk Printing": 
+with tab_bulk:
     bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
     col_pdf, col_notif = st.columns(2)
 
@@ -1203,7 +1203,6 @@ if page == "🖨️ Bulk Printing":
             target_file = f"Report {bulk_class}.xlsx"
             
             if os.path.exists(target_file):
-                # Load all data sheets to ensure we have behavior, skills, and comments
                 data_sheets = pd.read_excel(target_file, sheet_name=None)
                 
                 def find_s(key): 
@@ -1214,10 +1213,8 @@ if page == "🖨️ Bulk Printing":
                     st.error("❌ 'Scoresheet' sheet not found in the Excel file.")
                 else:
                     df_sc_raw = data_sheets[sc_n]
-                    # Identify students (Assuming Admission Nos start from Row 3, Column 0)
                     adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
 
-                    # --- THE FULL-LOGIC PDF & ZIP ENGINE ---
                     zip_buffer = BytesIO()
                     with zipfile.ZipFile(zip_buffer, "w") as zf:
                         progress_bar = st.progress(0)
@@ -1227,16 +1224,12 @@ if page == "🖨️ Bulk Printing":
                             adm_clean = str(adm_val).strip()
                             
                             try:
-                                # 1. INITIALIZE YOUR FULL ResultPDF CLASS
                                 pdf = ResultPDF()
                                 pdf.set_auto_page_break(auto=True, margin=15)
-                                
-                                # Detect Portal Mode
                                 is_test_mode = "test" in sc_n.lower()
                                 pdf.is_test = is_test_mode
                                 pdf.add_page()
 
-                                # 2. EXTRACT SCORES & SUBJECTS
                                 header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
                                 h_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
                                 r1 = df_sc_raw.iloc[h_idx-1]
@@ -1270,7 +1263,6 @@ if page == "🖨️ Bulk Printing":
                                             total_sum += tot
                                         except: continue
 
-                                # 3. EXTRACT METADATA
                                 def get_meta_row(key):
                                     sheet = find_s(key)
                                     if not sheet: return {}
@@ -1299,7 +1291,6 @@ if page == "🖨️ Bulk Printing":
                                     't1_avg': 0, 't2_avg': 0
                                 }
 
-                                # 4. EXECUTE LOGICS
                                 term = "3rd Term" 
                                 pdf.student_info_box(student_name, adm_clean, bulk_class, term, summary)
                                 
@@ -1311,7 +1302,6 @@ if page == "🖨️ Bulk Printing":
                                         pdf.draw_transcript_summary(summary, term)
                                     pdf.draw_footer_sections(beh, sk, comm, summary, bulk_class, term)
 
-                                # 5. GENERATE & ZIP
                                 pdf_output = pdf.output(dest='S')
                                 pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
                                 clean_name = student_name.replace(' ', '_').replace('/', '-')
@@ -1375,72 +1365,72 @@ if page == "🖨️ Bulk Printing":
                     except Exception as e: st.error(f"❌ Error: {e}")
             else: st.error("❌ File not found.")
 
-    # --- 5. CONTENT MANAGER ---
-    with tab_content:
-        st.markdown("### 📰 News & Protocol Control")
-        with st.expander("👁️ View Live Dashboard Preview", expanded=False):
-            st.markdown(f"#### {st.session_state.news_content['title']}")
-            if os.path.exists("news_event.jpg"):
-                st.image("news_event.jpg", width=400)
-            st.write(st.session_state.news_content['desc'])
+# --- 5. CONTENT MANAGER ---
+with tab_content:
+    st.markdown("### 📰 News & Protocol Control")
+    with st.expander("👁️ View Live Dashboard Preview", expanded=False):
+        st.markdown(f"#### {st.session_state.news_content['title']}")
+        if os.path.exists("news_event.jpg"):
+            st.image("news_event.jpg", width=400)
+        st.write(st.session_state.news_content['desc'])
 
-        with st.form("news_update_form"):
-            st.subheader("✍️ Update Dashboard News")
-            new_title = st.text_input("Headline", value=st.session_state.news_content['title'])
-            new_desc = st.text_area("Content", value=st.session_state.news_content['desc'])
-            uploaded_news_img = st.file_uploader("Change Image", type=['jpg', 'png', 'jpeg'])
-            
-            if st.form_submit_button("🚀 Publish & Save"):
-                st.session_state.news_content.update({'title': new_title.upper(), 'desc': new_desc})
-                st.session_state.portal_storage.update({'news_title': new_title.upper(), 'news_desc': new_desc})
+    with st.form("news_update_form"):
+        st.subheader("✍️ Update Dashboard News")
+        new_title = st.text_input("Headline", value=st.session_state.news_content['title'])
+        new_desc = st.text_area("Content", value=st.session_state.news_content['desc'])
+        uploaded_news_img = st.file_uploader("Change Image", type=['jpg', 'png', 'jpeg'])
+        
+        if st.form_submit_button("🚀 Publish & Save"):
+            st.session_state.news_content.update({'title': new_title.upper(), 'desc': new_desc})
+            st.session_state.portal_storage.update({'news_title': new_title.upper(), 'news_desc': new_desc})
+            pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+            if uploaded_news_img:
+                with open("news_event.jpg", "wb") as f: f.write(uploaded_news_img.getbuffer())
+            st.success("✅ News updated!")
+            st.rerun()
+
+    with st.form("protocol_form"):
+        st.subheader("📜 Edit School Protocols")
+        n_cal = st.text_area("Calendar", st.session_state.protocols['calendar'])
+        n_exam = st.text_area("Exams", st.session_state.protocols['exams'])
+        if st.form_submit_button("💾 Save Protocols"):
+            st.session_state.protocols.update({"calendar": n_cal, "exams": n_exam})
+            st.session_state.portal_storage.update({"calendar": n_cal, "exams": n_exam})
+            pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+            st.success("✅ Protocols synced!")
+            st.rerun()
+
+    st.markdown("---")
+    st.markdown("### 📂 Digital Notice Board Management")
+    with st.form("notice_board_form"):
+        notice_name = st.text_input("Notice Title")
+        uploaded_pdf = st.file_uploader("Upload PDF Document", type=['pdf'])
+        if st.form_submit_button("📌 Pin to Notice Board"):
+            if uploaded_pdf and notice_name:
+                clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
+                file_bytes = uploaded_pdf.getvalue()
+                if not os.path.exists("notices"): os.makedirs("notices")
+                local_path = os.path.join("notices", clean_filename)
+                with open(local_path, "wb") as f: f.write(file_bytes)
+                status = upload_notice_to_github(file_bytes, clean_filename)
+                if 'notices' not in st.session_state: st.session_state.notices = []
+                st.session_state.notices.append({"title": notice_name, "path": local_path})
+                st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                if uploaded_news_img:
-                    with open("news_event.jpg", "wb") as f: f.write(uploaded_news_img.getbuffer())
-                st.success("✅ News updated!")
                 st.rerun()
 
-        with st.form("protocol_form"):
-            st.subheader("📜 Edit School Protocols")
-            n_cal = st.text_area("Calendar", st.session_state.protocols['calendar'])
-            n_exam = st.text_area("Exams", st.session_state.protocols['exams'])
-            if st.form_submit_button("💾 Save Protocols"):
-                st.session_state.protocols.update({"calendar": n_cal, "exams": n_exam})
-                st.session_state.portal_storage.update({"calendar": n_cal, "exams": n_exam})
+    if 'notices' in st.session_state and st.session_state.notices:
+        st.write("---")
+        st.write("🗑️ **Manage Active Notices**")
+        for i, notice in enumerate(st.session_state.notices):
+            col_n, col_d = st.columns([3, 1])
+            col_n.write(f"📄 {notice['title']}")
+            if col_d.button("Delete", key=f"admin_del_{i}"):
+                if os.path.exists(notice['path']): os.remove(notice['path'])
+                st.session_state.notices.pop(i)
+                st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                st.success("✅ Protocols synced!")
                 st.rerun()
-
-        st.markdown("---")
-        st.markdown("### 📂 Digital Notice Board Management")
-        with st.form("notice_board_form"):
-            notice_name = st.text_input("Notice Title")
-            uploaded_pdf = st.file_uploader("Upload PDF Document", type=['pdf'])
-            if st.form_submit_button("📌 Pin to Notice Board"):
-                if uploaded_pdf and notice_name:
-                    clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
-                    file_bytes = uploaded_pdf.getvalue()
-                    if not os.path.exists("notices"): os.makedirs("notices")
-                    local_path = os.path.join("notices", clean_filename)
-                    with open(local_path, "wb") as f: f.write(file_bytes)
-                    status = upload_notice_to_github(file_bytes, clean_filename)
-                    if 'notices' not in st.session_state: st.session_state.notices = []
-                    st.session_state.notices.append({"title": notice_name, "path": local_path})
-                    st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
-                    pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                    st.rerun()
-
-        if 'notices' in st.session_state and st.session_state.notices:
-            st.write("---")
-            st.write("🗑️ **Manage Active Notices**")
-            for i, notice in enumerate(st.session_state.notices):
-                col_n, col_d = st.columns([3, 1])
-                col_n.write(f"📄 {notice['title']}")
-                if col_d.button("Delete", key=f"admin_del_{i}"):
-                    if os.path.exists(notice['path']): os.remove(notice['path'])
-                    st.session_state.notices.pop(i)
-                    st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
-                    pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                    st.rerun()
                     
 elif page == "📊 Dashboard":
     import os
