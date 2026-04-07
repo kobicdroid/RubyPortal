@@ -1190,10 +1190,101 @@ elif page == "🛠️ Staff Management":
                 st.info("No audit log found.")
                 
 
-    # --- 3. ANALYTICS TAB ---
+    # # --- 3. ANALYTICS TAB ---
     with tab_analytics:
-        st.subheader("📈 Performance Analytics")
-        # ... (Your existing analytics logic goes here) ...
+        st.subheader("📈 Professional Performance Analytics")
+        
+        # Select Database to Analyze
+        analysis_target = st.selectbox("Select Database for Analysis", glob.glob("Report *.xlsx"), key="analysis_selector")
+        
+        if analysis_target and os.path.exists(analysis_target):
+            xl = pd.ExcelFile(analysis_target)
+            sc_sheet = next((s for s in xl.sheet_names if 'scoresheet' in s.lower()), None)
+            
+            if sc_sheet:
+                # Load data (Header is usually row 1 or 2 based on your Excel structure)
+                df_analysis = xl.parse(sc_sheet, header=None)
+                
+                # Find the 'Total' columns to identify subjects
+                header_mask = df_analysis.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                header_idx = df_analysis[header_mask].index[0] if any(header_mask) else 1
+                
+                # Extract Student Names and Totals
+                subject_labels = df_analysis.iloc[header_idx - 1]
+                data_rows = df_analysis.iloc[header_idx + 1:]
+                
+                # 1. TOP METRICS ROW
+                col1, col2, col3 = st.columns(3)
+                total_students = len(data_rows.iloc[:, 0].dropna())
+                
+                # Calculate Grand Average
+                all_totals = []
+                for i, label in enumerate(df_analysis.iloc[header_idx]):
+                    if str(label).strip().lower() == 'total':
+                        all_totals.extend(pd.to_numeric(data_rows.iloc[:, i], errors='coerce').dropna().tolist())
+                
+                class_avg = round(sum(all_totals)/len(all_totals), 2) if all_totals else 0
+                
+                with col1:
+                    st.metric("Total Enrollment", f"{total_students} Students", border=True)
+                with col2:
+                    st.metric("Class Mean Score", f"{class_avg}%", delta=f"{round(class_avg - 50, 1)}% vs Pass", border=True)
+                with col3:
+                    st.metric("Current Term", "2ND TERM", border=True)
+
+                st.divider()
+
+                # 2. VISUAL ANALYSIS SECTION
+                chart_col, list_col = st.columns([2, 1])
+                
+                with chart_col:
+                    st.markdown("#### 📊 Grade Distribution")
+                    # Grading Logic for Chart
+                    grades = {"A (75+)": 0, "B (65-74)": 0, "C (50-64)": 0, "P (40-49)": 0, "F (<40)": 0}
+                    for score in all_totals:
+                        if score >= 75: grades["A (75+)"] += 1
+                        elif score >= 65: grades["B (65-74)"] += 1
+                        elif score >= 50: grades["C (50-64)"] += 1
+                        elif score >= 40: grades["P (40-49)"] += 1
+                        else: grades["F (<40)"] += 1
+                    
+                    # Display as a Professional Bar Chart
+                    st.bar_chart(pd.Series(grades), color="#1E3A8A")
+
+                with list_col:
+                    st.markdown("#### 🏆 Subject Ranking")
+                    # Calculate Average per Subject
+                    subject_performance = {}
+                    for i, label in enumerate(df_analysis.iloc[header_idx]):
+                        if str(label).strip().lower() == 'total':
+                            sub_name = str(subject_labels.iloc[i-1]).strip()
+                            if sub_name == 'nan' or sub_name == '': 
+                                sub_name = str(subject_labels.iloc[i]).strip()
+                            
+                            sub_scores = pd.to_numeric(data_rows.iloc[:, i], errors='coerce').dropna()
+                            if not sub_scores.empty:
+                                subject_performance[sub_name] = round(sub_scores.mean(), 1)
+                    
+                    # Show as a clean table
+                    perf_df = pd.DataFrame(list(subject_performance.items()), columns=['Subject', 'Avg %'])
+                    st.dataframe(perf_df.sort_values(by='Avg %', ascending=False), hide_index=True, use_container_width=True)
+
+                st.divider()
+                
+                # 3. INDIVIDUAL SEARCH FEATURE
+                st.markdown("#### 🔍 Quick Student Insight")
+                search_name = st.text_input("Enter Student Name to see Trend")
+                if search_name:
+                    student_match = data_rows[data_rows.iloc[:, 1].astype(str).str.contains(search_name, case=False)]
+                    if not student_match.empty:
+                        st.success(f"Student Found: {student_match.iloc[0, 1]}")
+                        # You could add a radar chart or line chart here for individual progress
+                    else:
+                        st.warning("No student matches that name.")
+            else:
+                st.error("No Scoresheet detected in this file.")
+        else:
+            st.info("Please select a database file from the dropdown above to begin analysis.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
     with tab_bulk:
