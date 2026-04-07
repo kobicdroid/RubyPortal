@@ -1170,11 +1170,10 @@ elif page == "🛠️ Staff Management":
         bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
         col_pdf, col_notif = st.columns(2)
 
-       with col_pdf:
+        with col_pdf:
             st.markdown("#### 📄 Document Export")
             # --- PDF BULK PRINTING SECTION ---
             
-            # This line must be indented exactly 4 spaces from the 'with' statement
             if st.button("🚀 GENERATE & PACKAGE ALL PDFs", use_container_width=True):
                 target_file = f"Report {bulk_class}.xlsx"
                 
@@ -1216,7 +1215,8 @@ elif page == "🛠️ Staff Management":
 
                                     # --- DATA EXTRACTION ---
                                     s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip() == adm_clean]
-                                    if s_row_data.empty: continue
+                                    if s_row_data.empty: 
+                                        continue
                                     
                                     student_vals = s_row_data.iloc[0]
                                     student_name = str(student_vals.iloc[1]).upper()
@@ -1242,7 +1242,8 @@ elif page == "🛠️ Staff Management":
                                                 if subject_name != "Unknown":
                                                     processed_results[subject_name] = {"CA": ca, "Exam": ex, "Total": tot}
                                                     total_marks += tot
-                                            except: continue
+                                            except: 
+                                                continue
 
                                     def get_meta(key):
                                         sh = find_s(key)
