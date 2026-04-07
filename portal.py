@@ -617,15 +617,19 @@ class ResultPDF(FPDF):
             pass 
 
     def header(self):
+        # --- NEW: PROFESSIONAL BACKGROUND COLOR ---
+        self.set_fill_color(252, 252, 254) # Very faint professional blue-grey tint
+        self.rect(0, 0, 210, 297, 'F')
+        
         self.draw_watermark()
         
-        # Logo handling (Ensure LOGO_PATH is defined in your main script)
+        # Logo handling
         if 'LOGO_PATH' in globals() and os.path.exists(LOGO_PATH):
             self.image(LOGO_PATH, 10, 8, 22) 
         
         # School Name & Motto
         self.set_font('Arial', 'B', 16)
-        self.set_text_color(40, 70, 120) 
+        self.set_text_color(40, 70, 120) # Deep Navy Blue
         self.cell(0, 8, 'RUBY SPRINGFIELD COLLEGE', 0, 1, 'C') 
         self.set_font('Arial', 'I', 9)
         self.set_text_color(100, 100, 100)
@@ -642,19 +646,19 @@ class ResultPDF(FPDF):
         self.set_font('Arial', 'I', 6)
         self.cell(0, 3, f'Generated on: {curr_date}', 0, 1, 'R')
         
-        # Developer Credit (Personalized for you, Adam!)
+        # Developer Credit
         self.set_font('Arial', 'B', 6)
         self.set_text_color(150, 150, 150)
         self.cell(0, 3, 'Developed by: Adam Usman | Powered by SumiLogics(NJA)', 0, 1, 'R')
         
         self.ln(2)
-        self.set_fill_color(200, 210, 230) 
+        # --- NEW: STYLED HEADER BOX ---
+        self.set_fill_color(40, 70, 120) # Match school blue
         self.set_font('Arial', 'B', 10)
-        self.set_text_color(40, 70, 120)
+        self.set_text_color(255, 255, 255) # White text for header
         
-        # Dynamic Title logic
         title = "OFFICIAL CONTINUOUS ASSESSMENT RECORD" if hasattr(self, 'is_test') and self.is_test else "OFFICIAL TERMLY PERFORMANCE RECORD"
-        self.cell(0, 8, title, 1, 1, 'C', 1) 
+        self.cell(0, 8, title, 0, 1, 'C', 1) 
         self.ln(2)
 
     def footer(self):
@@ -666,42 +670,52 @@ class ResultPDF(FPDF):
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'R')
 
     def student_info_box(self, student_name, adm, s_class, term, summary):
-        self.set_text_color(0, 0, 0)
+        self.set_text_color(40, 70, 120)
         self.set_font('Arial', 'B', 8)
         start_y = self.get_y()
         
         # Left side info
         self.cell(30, 5, 'Name of student:', 0, 0) 
-        self.set_font('Arial', '', 9)
+        self.set_font('Arial', 'B', 10)
+        self.set_text_color(0, 0, 0)
         self.cell(80, 5, f" {str(student_name).upper()}", 'B', 1)
         
+        self.set_text_color(40, 70, 120)
         self.set_font('Arial', 'B', 8)
         self.cell(30, 5, 'Admission No:', 0, 0) 
         self.set_font('Arial', '', 9)
+        self.set_text_color(0, 0, 0)
         self.cell(80, 5, f" {adm}", 'B', 1)
         
+        self.set_text_color(40, 70, 120)
         self.set_font('Arial', 'B', 8)
         self.cell(30, 5, 'Class:', 0, 0) 
         self.set_font('Arial', '', 9)
+        self.set_text_color(0, 0, 0)
         self.cell(80, 5, f" {s_class}   |   Term: {term}", 'B', 1)
 
-        # Right side summary box (Skip if it's a CA-only report or N/A)
+        # Right side summary box (Updated with colors)
         if summary.get('avg') not in ["N/A", 0, "0", None]:
             self.set_xy(135, start_y)
-            self.set_fill_color(245, 245, 245)
+            self.set_fill_color(240, 242, 248) # Professional Blue-Grey box
             self.set_font('Arial', 'B', 7)
+            self.set_text_color(40, 70, 120)
             self.cell(35, 5, 'Obtained Score:', 1, 0, 'L', 1)
+            self.set_text_color(0, 0, 0)
             self.cell(25, 5, f"{summary.get('obtained', 0)}", 1, 1, 'C')
             self.set_x(135)
+            self.set_text_color(40, 70, 120)
             self.cell(35, 5, 'Average / Pos:', 1, 0, 'L', 1)
+            self.set_text_color(0, 0, 0)
             self.cell(25, 5, f"{summary.get('avg', 0)}% / {summary.get('pos', '-')}", 1, 1, 'C')
             self.set_x(135)
+            self.set_text_color(40, 70, 120)
             self.cell(35, 5, 'Total Possible:', 1, 0, 'L', 1)
+            self.set_text_color(0, 0, 0)
             self.cell(25, 5, f"{summary.get('max', 0)}", 1, 1, 'C')
         self.ln(6)
 
     def draw_test_table(self, subject_data):
-        """Specifically for the 'Test Results (C.A)' Portal"""
         self.set_fill_color(40, 70, 120) 
         self.set_text_color(255, 255, 255) 
         self.set_font('Arial', 'B', 9)
@@ -713,18 +727,19 @@ class ResultPDF(FPDF):
         
         self.set_text_color(0, 0, 0)
         self.set_font('Arial', '', 9)
+        fill = False # Zebra striping
         for sub, sc in subject_data.items():
-            # Check if there is actually any data for the subject
             if sc.get('Total_CA', 0) > 0:
-                self.cell(w[0], 7, sub, 1)
+                self.set_fill_color(245, 247, 250) if fill else self.set_fill_color(255, 255, 255)
+                self.cell(w[0], 7, sub, 1, 0, 'L', 1)
                 for key in ['CA1', 'CA2', 'CA3', 'CA4', 'Total_CA']:
                     val = sc.get(key, 0)
                     display_val = str(val) if val > 0 else "-"
-                    self.cell(23, 7, display_val, 1, 0, 'C')
+                    self.cell(23, 7, display_val, 1, 0, 'C', 1)
                 self.ln()
+                fill = not fill
 
     def draw_scores_table(self, subject_data, s_class):
-        """Specifically for the 'Full Term Report' Portal"""
         num_sub = len(subject_data)
         row_h = 5.5 if num_sub < 15 else 4.8
         f_size = 8 if num_sub < 15 else 7
@@ -744,16 +759,23 @@ class ResultPDF(FPDF):
         self.set_text_color(0, 0, 0) 
         self.set_font('Arial', '', f_size)
         
+        # --- NEW: ZEBRA STRIPING LOGIC ---
+        fill = False
         for sub, scores in subject_data.items():
-            # Ensure we don't print rows for subjects with 0 total
             total = scores.get('Total', 0)
             if total > 0:
-                self.cell(w[0], row_h, sub, 1)
-                self.cell(w[1], row_h, str(scores.get('CA', '')), 1, 0, 'C')
-                self.cell(w[2], row_h, str(scores.get('Exam', '')), 1, 0, 'C')
-                self.cell(w[3], row_h, str(total), 1, 0, 'C')
+                self.set_fill_color(242, 244, 248) if fill else self.set_fill_color(255, 255, 255)
                 
-                # Grading Logic
+                self.cell(w[0], row_h, f" {sub}", 1, 0, 'L', 1)
+                self.cell(w[1], row_h, str(scores.get('CA', '')), 1, 0, 'C', 1)
+                self.cell(w[2], row_h, str(scores.get('Exam', '')), 1, 0, 'C', 1)
+                
+                # Bold the Total
+                self.set_font('Arial', 'B', f_size)
+                self.cell(w[3], row_h, str(total), 1, 0, 'C', 1)
+                self.set_font('Arial', '', f_size)
+                
+                # Grading Logic (remains same)
                 g = ""
                 t = total
                 if is_ss:
@@ -774,62 +796,98 @@ class ResultPDF(FPDF):
                     elif t >= 40: g = "E (PASS)"
                     else: g = "F (FAIL)"
                 
-                self.cell(w[-1], row_h, g, 1, 1, 'C')
+                self.cell(w[-1], row_h, g, 1, 1, 'C', 1)
+                fill = not fill
         self.ln(2)
 
     def draw_transcript_summary(self, summary, term):
         if "3rd" in str(term):
-            self.set_fill_color(220, 230, 245)
+            self.set_fill_color(40, 70, 120)
+            self.set_text_color(255, 255, 255)
             self.set_font('Arial', 'B', 7)
             self.cell(0, 5, 'ANNUAL CUMULATIVE TRANSCRIPT', 1, 1, 'C', 1)
+            
+            self.set_fill_color(230, 235, 245)
+            self.set_text_color(0, 0, 0)
             t1, t2, t3 = summary.get('t1_avg', 0), summary.get('t2_avg', 0), summary.get('avg', 0)
             cum = round((t1 + t2 + t3) / 3, 2) if t1 > 0 else t3
-            self.cell(47, 4, '1st Term Avg', 1, 0, 'C'); self.cell(47, 4, '2nd Term Avg', 1, 0, 'C')
-            self.cell(47, 4, '3rd Term Avg', 1, 0, 'C'); self.cell(49, 4, 'CUMULATIVE AVG (%)', 1, 1, 'C')
+            
+            self.cell(47, 4, '1st Term Avg', 1, 0, 'C', 1)
+            self.cell(47, 4, '2nd Term Avg', 1, 0, 'C', 1)
+            self.cell(47, 4, '3rd Term Avg', 1, 0, 'C', 1)
+            self.cell(49, 4, 'CUMULATIVE AVG (%)', 1, 1, 'C', 1)
+            
             self.set_font('Arial', '', 7)
-            self.cell(47, 5, f"{t1}%", 1, 0, 'C'); self.cell(47, 5, f"{t2}%", 1, 0, 'C')
-            self.cell(47, 5, f"{t3}%", 1, 0, 'C'); self.cell(49, 5, f"{cum}%", 1, 1, 'C')
+            self.cell(47, 5, f"{t1}%", 1, 0, 'C')
+            self.cell(47, 5, f"{t2}%", 1, 0, 'C')
+            self.cell(47, 5, f"{t3}%", 1, 0, 'C')
+            self.set_font('Arial', 'B', 7)
+            self.cell(49, 5, f"{cum}%", 1, 1, 'C')
             self.ln(1)
 
     def draw_footer_sections(self, beh, sk, comm, summary, s_class, term):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         curr_y = self.get_y()
         if curr_y > 235: self.ln(-8)
-        self.set_fill_color(240, 240, 240); self.set_font('Arial', 'B', 7)
+        
+        # Section Titles with Blue Fill
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
         self.cell(55, 5, 'AFFECTIVE DOMAIN (A)', 1, 1, 'C', 1)
-        self.set_font('Arial', '', 6.5)
+        
+        self.set_text_color(0, 0, 0); self.set_font('Arial', '', 6.5)
+        fill = False
         for k, v in list(beh.items())[1:9]: 
-            self.cell(40, 4.2, k, 1, 0); self.cell(15, 4.2, str(v), 1, 1, 'C')
+            self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
+            self.cell(40, 4.2, k, 1, 0, 'L', 1); self.cell(15, 4.2, str(v), 1, 1, 'C', 1)
+            fill = not fill
+            
         self.ln(1)
-        self.set_font('Arial', 'B', 7); self.cell(55, 4.5, 'POSITION OF RESPONSIBILITY', 1, 1, 'L', 1)
-        self.set_font('Arial', '', 6.5); self.cell(55, 4.5, f" {comm.get('Position', 'None')}", 1, 1, 'L')
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.cell(55, 4.5, 'POSITION OF RESPONSIBILITY', 1, 1, 'L', 1)
+        self.set_text_color(0,0,0); self.set_font('Arial', '', 6.5); self.cell(55, 4.5, f" {comm.get('Position', 'None')}", 1, 1, 'L')
+        
+        # Psychomotor Skills (Middle Column)
         self.set_xy(75, curr_y)
-        self.set_font('Arial', 'B', 7); self.cell(55, 5, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
-        self.set_font('Arial', '', 6.5)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.cell(55, 5, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
+        self.set_text_color(0,0,0); self.set_font('Arial', '', 6.5)
+        fill = False
         for k, v in list(sk.items())[1:6]:
-            self.set_x(75); self.cell(40, 4.2, k, 1, 0); self.cell(15, 4.2, str(v), 1, 1, 'C')
+            self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
+            self.set_x(75); self.cell(40, 4.2, k, 1, 0, 'L', 1); self.cell(15, 4.2, str(v), 1, 1, 'C', 1)
+            fill = not fill
+            
+        # Comments Section (Right Column)
         self.set_xy(140, curr_y)
-        self.set_font('Arial', 'B', 7); self.cell(60, 4.5, "HOUSE MASTER'S REPORT", 1, 1, 'L', 1)
-        self.set_x(140); self.set_font('Arial', '', 6.5); self.cell(60, 5, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
-        self.ln(1); self.set_x(140); self.set_font('Arial', 'B', 7); self.cell(60, 4.5, "FORM MASTER'S COMMENT", 1, 1, 'L', 1)
-        self.set_x(140); self.set_font('Arial', '', 6.5); self.cell(60, 5, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
-        self.ln(1); self.set_x(140); self.set_font('Arial', 'B', 7); self.cell(60, 4.5, "PRINCIPAL'S COMMENT", 1, 1, 'L', 1)
-        self.set_x(140)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.cell(60, 4.5, "HOUSE MASTER'S REPORT", 1, 1, 'L', 1)
+        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 6.5); self.cell(60, 5, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
+        
+        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.cell(60, 4.5, "FORM MASTER'S COMMENT", 1, 1, 'L', 1)
+        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 6.5); self.cell(60, 5, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
+        
+        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.cell(60, 4.5, "PRINCIPAL'S COMMENT", 1, 1, 'L', 1)
+        self.set_text_color(0,0,0); self.set_x(140)
         avg = summary['avg']
         if is_ss:
             p_remark = "Outstanding performance." if avg >= 75 else "Average performance." if avg >= 50 else "Poor result."
         else:
             p_remark = "An Impressive performance!" if avg >= 75 else "A fair performance." if avg >= 50 else "Sit up."
         self.set_font('Arial', 'I', 6.5); self.multi_cell(60, 4, f" {p_remark}", 1, 'L')
+        
         if "3rd" in str(term):
             self.ln(1.5); self.set_x(10); self.set_font('Arial', 'B', 8)
             status = "PROMOTED TO NEXT CLASS" if avg >= 40 else "HELD BACK"
-            self.cell(125, 6, f"PROMOTION STATUS: {status}", 1, 1, 'C')
+            self.set_fill_color(230, 245, 230) if avg >= 40 else self.set_fill_color(255, 230, 230)
+            self.cell(125, 6, f"PROMOTION STATUS: {status}", 1, 1, 'C', 1)
+            
         self.ln(2.5); sig_y = self.get_y()
         if os.path.exists(STAMP_PATH): self.image(STAMP_PATH, 142, sig_y - 4, 20) 
         if os.path.exists(SIG_PATH): self.image(SIG_PATH, 158, sig_y - 2, 15)
         self.set_x(140); self.cell(60, 0, '', 'T', 1, 'C')
-        self.set_x(140); self.set_font('Arial', 'B', 6); self.cell(60, 3, "Principal's Signature & Stamp", 0, 1, 'C')
+        self.set_x(140); self.set_font('Arial', 'B', 6); self.set_text_color(40,70,120); self.cell(60, 3, "Principal's Signature & Stamp", 0, 1, 'C')
 #--- SIDEBAR ---#
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
@@ -1115,11 +1173,10 @@ elif page == "🛠️ Staff Management":
         with col_pdf:
             st.markdown("#### 📄 Document Export")
             # --- PDF BULK PRINTING SECTION ---
-        if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
+       if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
             target_file = f"Report {bulk_class}.xlsx"
             
             if os.path.exists(target_file):
-                # Using header=None so we can manually find the subject/header rows
                 xl = pd.ExcelFile(target_file)
                 sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
                 data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
@@ -1132,21 +1189,15 @@ elif page == "🛠️ Staff Management":
                     st.error("❌ 'Scoresheet' not found.")
                 else:
                     df_sc_raw = data_sheets[sc_n]
-                    # Get Admission numbers (skipping top meta rows)
                     adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
 
                     zip_buffer = BytesIO()
                     with zipfile.ZipFile(zip_buffer, "w") as zf:
                         progress_bar = st.progress(0)
                         
-                        # --- KEY STEP: FIND THE HEADER INDEX ---
-                        # We look for the row that contains the word "Total"
                         header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
                         header_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
-                        
-                        # The row IMMEDIATELY above 'Total' usually holds the Subject Names
                         subject_row = df_sc_raw.iloc[header_idx - 1]
-                        # The row with 'CA', 'Exam', 'Total' labels
                         label_row = df_sc_raw.iloc[header_idx] 
 
                         for index, adm_val in enumerate(adm_list):
@@ -1154,11 +1205,11 @@ elif page == "🛠️ Staff Management":
                             
                             try:
                                 pdf = ResultPDF()
+                                # --- PROFESSIONAL THEME SETUP ---
                                 pdf.set_auto_page_break(auto=True, margin=15)
                                 pdf.is_test = "test" in sc_n.lower()
-                                pdf.add_page()
+                                pdf.add_page() # This will trigger your professional header/background
 
-                                # --- DATA EXTRACTION ---
                                 s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip() == adm_clean]
                                 if s_row_data.empty: continue
                                 
@@ -1168,30 +1219,24 @@ elif page == "🛠️ Staff Management":
                                 processed_results = {}
                                 total_marks = 0
 
-                                # --- SUBJECT MAPPING LOOP ---
                                 for i, label in enumerate(label_row):
                                     if str(label).strip().lower() == 'total':
-                                        # Find Subject Name by looking left from this 'Total' column in the subject_row
                                         subject_name = "Unknown"
                                         for j in range(i, -1, -1):
                                             val = str(subject_row.iloc[j]).strip()
                                             if val.lower() != 'nan' and val != '':
                                                 subject_name = val
                                                 break
-                                        
                                         try:
-                                            # Mapping relative to 'Total' (i)
                                             ca = float(student_vals.iloc[i-2]) if pd.notna(student_vals.iloc[i-2]) else 0
                                             ex = float(student_vals.iloc[i-1]) if pd.notna(student_vals.iloc[i-1]) else 0
                                             tot = float(student_vals.iloc[i]) if pd.notna(student_vals.iloc[i]) else 0
                                             
-                                            # Only add if it's a real subject entry
                                             if subject_name != "Unknown":
                                                 processed_results[subject_name] = {"CA": ca, "Exam": ex, "Total": tot}
                                                 total_marks += tot
                                         except: continue
 
-                                # --- METADATA (POSITION/BEHAVIOUR) ---
                                 def get_meta(key):
                                     sh = find_s(key)
                                     if not sh: return {}
@@ -1200,15 +1245,18 @@ elif page == "🛠️ Staff Management":
                                     m = df[df.iloc[:,0].astype(str).str.strip() == adm_clean]
                                     return m.iloc[0].to_dict() if not m.empty else {}
 
+                                # Package summary with 'out_of' for professional positioning
                                 summary = {
                                     'obtained': total_marks,
                                     'avg': round(total_marks/max(1, len(processed_results)), 2),
                                     'pos': get_meta('Bsheet').get('Position', 'N/A'),
-                                    'max': len(processed_results) * 100
+                                    'max': len(processed_results) * 100,
+                                    'out_of': len(adm_list)
                                 }
 
-                                # --- DRAW ---
+                                # --- DRAWING WITH BEAUTIFUL COLOR LOGIC ---
                                 pdf.student_info_box(student_name, adm_clean, bulk_class, "3rd Term", summary)
+                                # The draw_scores_table handles the Zebra striping internally
                                 pdf.draw_scores_table(processed_results, bulk_class)
                                 pdf.draw_transcript_summary(summary, "3rd Term")
                                 pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, bulk_class, "3rd Term")
@@ -1222,11 +1270,16 @@ elif page == "🛠️ Staff Management":
 
                             progress_bar.progress((index + 1) / len(adm_list))
 
+                    st.balloons()
+                    st.success(f"✅ {len(adm_list)} Professional Reports Ready!")
+                    
+                    # --- FIT TO SCREEN DOWNLOAD BUTTON ---
                     st.download_button(
-                        label="📥 DOWNLOAD ALL REPORTS",
+                        label="📥 DOWNLOAD ALL REPORTS (ZIP)",
                         data=zip_buffer.getvalue(),
                         file_name=f"Reports_{bulk_class}.zip",
-                        mime="application/zip"
+                        mime="application/zip",
+                        use_container_width=True # Professional wide-screen button
                     )
         with col_notif:
             st.markdown("#### 🔔 Parent Notifications")
