@@ -1445,6 +1445,7 @@ with tab_content:
 
 # --- THE FIX: THIS NOW ALIGNS PERFECTLY ---
 elif page == "📊 Dashboard":
+    st.title("📊 School Analytics Dashboard")
     import os
     import random
     import io
