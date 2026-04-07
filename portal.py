@@ -1144,20 +1144,51 @@ elif page == "🛠️ Staff Management":
             else:
                 st.warning(f"⚠️ Sync Error: {status}")
 
-    # --- 2. DATABASE TAB ---
+   # --- 2. DATABASE TAB ---
     with tab_db:
         col_db, col_log = st.columns(2)
+        
         with col_db:
             st.subheader("📂 Live Databases")
             live_files = glob.glob("Report *.xlsx")
+            
+            if not live_files:
+                st.info("No active databases found.")
+            
             for file in live_files:
-                st.code(file)
+                # Use columns to put the file name and delete button side-by-side
+                db_col1, db_col2 = st.columns([3, 1])
+                with db_col1:
+                    st.code(file)
+                with db_col2:
+                    # Unique key for each button based on filename
+                    if st.button(f"🗑️ Delete", key=f"del_{file}", use_container_width=True):
+                        try:
+                            os.remove(file)
+                            st.toast(f"🔥 {file} removed successfully!")
+                            st.rerun() # Refresh to update the list
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+
         with col_log:
             st.subheader("🕵️ Security Audit")
-            if os.path.exists("system_audit.log"):
-                with open("system_audit.log", "r") as f:
+            log_file = "system_audit.log"
+            
+            if os.path.exists(log_file):
+                with open(log_file, "r") as f:
                     logs = f.readlines()
+                
                 st.text_area("Recent Activity", "".join(logs[-15:]), height=200)
+                
+                # Button to clear the log file
+                if st.button("🧨 Clear Audit Log", use_container_width=True):
+                    with open(log_file, "w") as f:
+                        f.write(f"[{datetime.now()}] LOG CLEARED BY ADMIN\n")
+                    st.success("Audit log wiped clean.")
+                    st.rerun()
+            else:
+                st.info("No audit log found.")
+                
 
     # --- 3. ANALYTICS TAB ---
     with tab_analytics:
