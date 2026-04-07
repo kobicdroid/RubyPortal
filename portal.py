@@ -1201,22 +1201,21 @@ with col_pdf:
         target_file = f"Report {bulk_class}.xlsx"
         
         if os.path.exists(target_file):
-            # Load all sheets to handle metadata (Behaviour, Skills, Comments)
+            # Load all data sheets to ensure we have behavior, skills, and comments
             data_sheets = pd.read_excel(target_file, sheet_name=None)
             
-            # Helper to find sheets flexibly
             def find_s(key): 
                 return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
 
             sc_n = find_s('Scoresheet')
             if not sc_n:
-                st.error("❌ 'Scoresheet' not found in Excel.")
+                st.error("❌ 'Scoresheet' sheet not found in the Excel file.")
             else:
                 df_sc_raw = data_sheets[sc_n]
-                # Assuming admission numbers start from row 3 (index 2) in column 0
+                # Identify students (Assuming Admission Nos start from Row 3, Column 0)
                 adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
 
-                # --- THE PDF & ZIP ENGINE ---
+                # --- THE FULL-LOGIC PDF & ZIP ENGINE ---
                 zip_buffer = BytesIO()
                 with zipfile.ZipFile(zip_buffer, "w") as zf:
                     progress_bar = st.progress(0)
@@ -1226,96 +1225,122 @@ with col_pdf:
                         adm_clean = str(adm_val).strip()
                         
                         try:
-                            # 1. INITIALIZE YOUR MASTER PDF CLASS
+                            # 1. INITIALIZE YOUR FULL ResultPDF CLASS
+                            # This automatically triggers your Header (Watermark, Logo, Branding)
                             pdf = ResultPDF()
                             pdf.set_auto_page_break(auto=True, margin=15)
                             
-                            # Determine if this is a Test or Full Term based on sheet name
+                            # Detect Portal Mode
                             is_test_mode = "test" in sc_n.lower()
                             pdf.is_test = is_test_mode
                             pdf.add_page()
 
-                            # 2. DATA EXTRACTION LOGIC
+                            # 2. EXTRACT SCORES & SUBJECTS
                             header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
                             h_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
-                            r1, h_row = df_sc_raw.iloc[h_idx-1], df_sc_raw.iloc[h_idx]
+                            r1 = df_sc_raw.iloc[h_idx-1]
+                            h_row = df_sc_raw.iloc[h_idx]
                             
                             s_row = df_sc_raw[df_sc_raw.iloc[:,0].astype(str).str.strip() == adm_clean]
                             if s_row.empty: continue
                             
                             s_vals = s_row.iloc[0]
-                            student_name = str(s_vals.iloc[1]).upper() # 2nd column for Name
+                            student_name = str(s_vals.iloc[1]).upper()
                             
                             processed_results = {}
                             total_sum = 0
                             
-                            # Build Subject Dictionary
+                            # Subject Score Mapping
                             for i, col_val in enumerate(h_row):
                                 if str(col_val).strip().lower() == 'total':
-                                    sub = next((str(r1.iloc[j]).strip() for j in range(i, -1, -1) if str(r1.iloc[j]).lower() != 'nan'), "Unknown")
+                                    # Find subject name by looking back from the 'Total' column
+                                    sub = "Unknown"
+                                    for j in range(i, -1, -1):
+                                        val = str(r1.iloc[j]).strip()
+                                        if val.lower() != 'nan' and val != '':
+                                            sub = val
+                                            break
                                     try:
                                         ca = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
                                         ex = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
                                         tot = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
-                                        processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot, "CA1": ca, "Total_CA": ca}
+                                        processed_results[sub] = {
+                                            "CA": ca, "Exam": ex, "Total": tot, 
+                                            "CA1": ca, "CA2": 0, "CA3": 0, "CA4": 0, "Total_CA": ca # CA Mode support
+                                        }
                                         total_sum += tot
                                     except: continue
 
-                            # 3. GET METADATA (Behaviour, Skill, Comment)
-                            def get_meta(k):
-                                sheet = find_s(k)
+                            # 3. EXTRACT METADATA (Affective, Psychomotor, Comments)
+                            def get_meta_row(key):
+                                sheet = find_s(key)
                                 if not sheet: return {}
                                 df_m = data_sheets[sheet]
                                 df_m.columns = [str(c).strip() for c in df_m.iloc[0]]
                                 m = df_m[df_m.iloc[:,0].astype(str).str.strip() == adm_clean]
                                 return m.iloc[0].to_dict() if not m.empty else {}
 
-                            beh, sk, comm = get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment')
+                            beh = get_meta_row('Behaviour')
+                            sk = get_meta_row('Skill')
+                            comm = get_meta_row('Comment')
                             
-                            # Summary Data
+                            # Position logic from Bsheet (if available)
+                            pos_val = "-"
+                            bs_n = find_s('Bsheet')
+                            if bs_n:
+                                df_bs = data_sheets[bs_n]
+                                df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
+                                m_bs = df_bs[df_bs.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                if not m_bs.empty: pos_val = m_bs.iloc[0].get('Position', '-')
+
                             summary = {
                                 'avg': round(total_sum/len(processed_results), 2) if processed_results else 0,
                                 'obtained': total_sum,
                                 'max': len(processed_results) * 100,
-                                'pos': 'N/A' # Can be linked to Bsheet if needed
+                                'pos': pos_val,
+                                't1_avg': 0, 't2_avg': 0 # For transcript cumulative
                             }
 
-                            # 4. ASSEMBLY USING YOUR CLASS METHODS
-                            pdf.student_info_box(student_name, adm_clean, bulk_class, "3rd Term", summary)
+                            # 4. EXECUTE YOUR CLASS LOGICS
+                            term = "3rd Term" # Or detect from filename/sheet
+                            pdf.student_info_box(student_name, adm_clean, bulk_class, term, summary)
                             
                             if is_test_mode:
                                 pdf.draw_test_table(processed_results)
                             else:
                                 pdf.draw_scores_table(processed_results, bulk_class)
-                                pdf.draw_footer_sections(beh, sk, comm, summary, bulk_class, "3rd Term")
+                                # Only 3rd term gets the cumulative transcript
+                                if "3rd" in term:
+                                    pdf.draw_transcript_summary(summary, term)
+                                pdf.draw_footer_sections(beh, sk, comm, summary, bulk_class, term)
 
-                            # 5. SAVE TO ZIP
+                            # 5. GENERATE & ZIP
                             pdf_output = pdf.output(dest='S')
                             pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
                             
-                            file_name = f"{student_name.replace(' ', '_')}_Result.pdf"
-                            zf.writestr(file_name, pdf_bytes)
-                            
-                        except Exception as e:
-                            st.error(f"Error processing {adm_clean}: {e}")
+                            clean_name = student_name.replace(' ', '_').replace('/', '-')
+                            zf.writestr(f"{clean_name}_Result.pdf", pdf_bytes)
 
-                        # Update Progress UI
+                        except Exception as e:
+                            st.error(f"Failed to process {adm_clean}: {e}")
+
+                        # Update Progress
                         progress = (index + 1) / len(adm_list)
                         progress_bar.progress(progress)
-                        status_text.text(f"Generated: {student_name}")
+                        status_text.text(f"🔥 Processing: {student_name}")
 
-                # --- THE DOWNLOAD BUTTON ---
-                st.success(f"🏁 {len(adm_list)} Professional PDFs Prepared!")
+                # --- FINAL DOWNLOAD ---
+                st.success(f"🏁 Successfully Zipped {len(adm_list)} Professional Reports!")
                 st.download_button(
-                    label=f"📥 DOWNLOAD ALL {bulk_class} PDFs (ZIP)",
+                    label=f"📥 DOWNLOAD {bulk_class} COMPLETE PACKAGE",
                     data=zip_buffer.getvalue(),
-                    file_name=f"{bulk_class}_Full_Reports.zip",
+                    file_name=f"Ruby_Springfield_{bulk_class}_Full_Reports.zip",
                     mime="application/zip",
                     use_container_width=True
                 )
                 st.balloons()
         else:
-            st.error(f"❌ File 'Report {bulk_class}.xlsx' not found.")
+            st.error(f"❌ Excel file 'Report {bulk_class}.xlsx' not found in system.")
 
     with col_notif:
         st.markdown("#### 🔔 Parent Notifications")
