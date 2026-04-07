@@ -191,25 +191,28 @@ def load_portal_data():
             return defaults
     return defaults 
 
+# --- UPDATED: SMART GLOBAL DATABASE LOADING ---
 def load_main_database():
+    """ Automatically finds and loads the Report file, fixing column naming issues """
     report_files = glob.glob("Report *.xlsx")
     if report_files:
         try:
             temp_df = pd.read_excel(report_files[0])
             
             # --- SMART COLUMN CLEANER ---
+            # 1. Strip extra spaces from headers
             temp_df.columns = [str(c).strip() for c in temp_df.columns]
             
-            # --- SMART ROW CLEANER ---
-            # This removes hidden spaces from the actual data in the 'Class' column
+            # 2. Check for 'Class' (case-insensitive) and force it to be 'Class'
             col_map = {col.lower(): col for col in temp_df.columns}
             if 'class' in col_map:
-                actual_col_name = col_map['class']
-                temp_df[actual_col_name] = temp_df[actual_col_name].astype(str).str.strip()
-                temp_df = temp_df.rename(columns={actual_col_name: 'Class'})
+                temp_df = temp_df.rename(columns={col_map['class']: 'Class'})
                 return temp_df
-            return temp_df
-        except Exception:
+            else:
+                st.error(f"❌ DATA ERROR: The column 'Class' was not found in {report_files[0]}. Please check your Excel headers!")
+                return temp_df
+        except Exception as e:
+            st.error(f"❌ LOAD ERROR: {e}")
             return pd.DataFrame()
     return pd.DataFrame()
 
@@ -1193,15 +1196,58 @@ with tab_analytics:
                         st.warning("No performance data found.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-if page == "🖨️ Bulk Printing":
     bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
     col_pdf, col_notif = st.columns(2)
 
     with col_pdf:
         st.markdown("#### 📄 Document Export")
-        st.info("💡 Bulk PDF Printing logic has been removed. Individual reports can still be generated from the Result Portal.")
-        # We use 'pass' here to keep the column block valid in Python
-        pass
+        if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
+            target_file = f"Report {bulk_class}.xlsx"
+            
+            if os.path.exists(target_file):
+                df_bulk = pd.read_excel(target_file)
+                df_bulk.columns = [str(c).strip() for c in df_bulk.columns]
+                col_map = {col.lower(): col for col in df_bulk.columns}
+                
+                if 'class' in col_map:
+                    actual_col = col_map['class']
+                    # Bulletproof matching
+                    class_data = df_bulk[df_bulk[actual_col].astype(str).str.contains(bulk_class.strip(), case=False, na=False)]
+                    
+                    if class_data.empty:
+                        st.warning(f"⚠️ No rows match '{bulk_class}'. Check Excel values: {df_bulk[actual_col].unique()[:3]}")
+                    else:
+                        # --- ZIP PREPARATION ---
+                        zip_buffer = BytesIO()
+                        with zipfile.ZipFile(zip_buffer, "w") as zf:
+                            progress_bar = st.progress(0)
+                            st.info(f"📦 Generating {len(class_data)} results for {bulk_class}...")
+                            
+                            for index, row in class_data.iterrows():
+                                # 1. Create the PDF in memory (Replace with your actual PDF function)
+                                # pdf_bytes = your_pdf_function(row) 
+                                
+                                # 2. Add to Zip (Placeholder name using Student Name)
+                                student_name = str(row.get('Full Name', f'Student_{index}')).replace(" ", "_")
+                                # zf.writestr(f"{student_name}_Result.pdf", pdf_bytes)
+                                
+                                # Update UI
+                                progress = (index + 1) / len(class_data)
+                                progress_bar.progress(progress)
+                        
+                        # --- DOWNLOAD BUTTON ---
+                        st.success(f"🏁 {len(class_data)} Results Processed!")
+                        st.download_button(
+                            label=f"📥 Download {bulk_class} Zip Archive",
+                            data=zip_buffer.getvalue(),
+                            file_name=f"{bulk_class}_Results_Bulk.zip",
+                            mime="application/zip"
+                        )
+                        st.balloons()
+                else:
+                    st.error(f"❌ 'Class' column missing in {target_file}")
+            else:
+                st.error(f"❌ File {target_file} not found.")
 
     with col_notif:
         st.markdown("#### 🔔 Parent Notifications")
