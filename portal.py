@@ -997,7 +997,6 @@ if page == "🎓 Result Portal":
                             
                             st.table(pd.DataFrame(test_results).T)
                             
-                            # Silent PDF Prep
                             try:
                                 pdf = ResultPDF()
                                 pdf.is_test = True 
@@ -1062,22 +1061,20 @@ if page == "🎓 Result Portal":
                             m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
                             st.table(pd.DataFrame(processed_results).T)
 
-                            # --- PDF Generation (With Resumption Date) ---
+                            # --- PDF Generation with Resumption Date ---
                             try:
                                 pdf = ResultPDF()
                                 pdf.set_margins(left=10, top=10, right=10)
                                 pdf.set_auto_page_break(auto=True, margin=10)
                                 pdf.add_page()
-                                
-                                # Add Content
                                 _ = pdf.student_info_box(student_name, adm_clean, selected_class, disp_term, summary)
                                 _ = pdf.draw_scores_table(processed_results, selected_class)
                                 if is_3rd: _ = pdf.draw_transcript_summary(summary, disp_term)
                                 _ = pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, disp_term)
                                 
-                                # --- ADD RESUMPTION DATE TO PDF ---
-                                pdf.ln(10)
-                                pdf.set_font('Arial', 'B', 11)
+                                # Adding the specific Resumption Requirement
+                                pdf.ln(8)
+                                pdf.set_font('Arial', 'B', 10)
                                 pdf.cell(0, 10, "NEXT TERM BEGINS: 20th APRIL, 2026", ln=1, align='C')
                                 
                                 pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
@@ -1085,6 +1082,14 @@ if page == "🎓 Result Portal":
                                 st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"{student_name}.pdf", use_container_width=True)
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
+                    else:
+                        st.sidebar.error("❌ Invalid Login Credentials")
+                else:
+                    st.error("❌ 'Data' sheet not found in the file.")
+            except Exception as e:
+                st.error(f"System Error: {e}")
+        else:
+            st.error(f"❌ Record for {selected_class} not found.")
 # --- STAFF MANAGEMENT LOGIC ---
 elif page == "🛠️ Staff Management":
     import io  
