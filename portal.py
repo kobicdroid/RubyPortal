@@ -171,7 +171,7 @@ def upload_notice_to_github(file_bytes, file_name):
     response = requests.put(url, headers=headers, json=data)
     return response.status_code
     
-# --- STEP 4: PERMANENT STORAGE ENGINE ---
+# --- STEP 4: PERMANENT STORAGE ENGINE & GLOBAL DATA LOADING ---
 def load_portal_data():
     storage_path = "portal_data.xlsx"
     defaults = {
@@ -185,11 +185,25 @@ def load_portal_data():
     
     if os.path.exists(storage_path):
         try:
-            df = pd.read_excel(storage_path, engine='openpyxl')
-            return dict(zip(df['Key'].astype(str), df['Value'].astype(str)))
+            df_storage = pd.read_excel(storage_path, engine='openpyxl')
+            return dict(zip(df_storage['Key'].astype(str), df_storage['Value'].astype(str)))
         except Exception:
             return defaults
-    return defaults # Corrected Indentation here
+    return defaults 
+
+# --- NEW: GLOBAL DATABASE LOADING TO FIX NAMEERROR ---
+def load_main_database():
+    """ Automatically finds and loads the first available Report file as 'df' """
+    report_files = glob.glob("Report *.xlsx")
+    if report_files:
+        try:
+            return pd.read_excel(report_files[0])
+        except Exception:
+            return pd.DataFrame()
+    return pd.DataFrame()
+
+# Initialize Global Data
+df = load_main_database()
 
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
@@ -221,19 +235,17 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
                 <p style="margin-top: 0;"><strong>Access Key/Password:</strong> {access_key}</p>
             </div>
 
-            <p>Please log in to the portal to view the full terminal report and performance analysis. If you encounter any technical difficulties, kindly contact the school's ICT department.</p>
-            
+            <p>Please log in to the portal to view the full terminal report and performance analysis.</p>
             <br>
             <p>Best Regards,</p>
             <hr style="border: 0; border-top: 1px solid #ccc; width: 200px; margin-left: 0;">
             <p><strong>School Management</strong><br>
-            Ruby Springfield College<br>
-            <em>Excellence in Learning</em></p>
+            Ruby Springfield College</p>
         </div>
     </body>
     </html>
     """
-    message.attach(MIMEText(body, "html")) # Changed to HTML for professional look
+    message.attach(MIMEText(body, "html"))
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -245,7 +257,8 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
     except Exception as e:
         st.error(f"❌ Mail Error: {e}")
         return False      
-        # --- CONFIGURATION ---
+
+# --- STEP 6: CONFIGURATION & DIRECTORIES ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_DIR, "logo.jpg") 
 SIG_PATH = os.path.join(BASE_DIR, "signature.png") 
@@ -255,17 +268,13 @@ STAMP_PATH = os.path.join(BASE_DIR, "Stamp.jpg")
 STAFF_MASTER_KEY = "ADMIN2026" 
 
 def log_activity(user_type, action, details):
-    """
-    Step 6: Security & Logging System
-    Records system usage to a local file for security audits.
-    """
     try:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_entry = f"[{timestamp}] {user_type.upper()} | {action} | {details}\n"
         with open("system_audit.log", "a", encoding="utf-8") as f:
             f.write(log_entry)
     except Exception:
-        pass # Prevents app from crashing if log file is locked
+        pass 
 
 def get_available_classes():
     files = glob.glob("Report *.xlsx")
@@ -282,17 +291,14 @@ def show_analytics(selected_class):
             header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
             header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
             
-            r1 = df_sc.iloc[header_idx-1] # Subjects
-            r2 = df_sc.iloc[header_idx]   # "Total" labels
+            r1 = df_sc.iloc[header_idx-1] 
+            r2 = df_sc.iloc[header_idx]   
             
             subjects = []
             averages = []
-            total_cols = [] # Track columns for Step 3
             
             for i in range(len(r2)):
                 if str(r2.iloc[i]).strip().lower() == "total":
-                    total_cols.append(i)
-                    # --- SMART SUBJECT NAME DETECTION ---
                     sub_name = str(r1.iloc[i]).strip()
                     if sub_name.lower() == 'nan' or sub_name == '':
                         for look_back in range(i-1, max(-1, i-10), -1):
@@ -307,7 +313,6 @@ def show_analytics(selected_class):
                     if not score_col.empty:
                         subjects.append(sub_name)
                         averages.append(round(score_col.mean(), 1))
-
             st.markdown(f"### 📊 Performance Overview: {selected_class}")
             
             # --- STEP 3: MANAGEMENT SUMMARY LOGIC ---
