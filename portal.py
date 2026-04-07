@@ -1207,24 +1207,60 @@ elif page == "🛠️ Staff Management":
                 
                 if 'class' in col_map:
                     actual_col = col_map['class']
-                    # THE SPACE-PROOF FIX
                     clean_selection = str(bulk_class).replace(" ", "").upper()
                     df_bulk['helper_clean'] = df_bulk[actual_col].astype(str).str.replace(" ", "").str.upper()
                     class_data = df_bulk[df_bulk['helper_clean'] == clean_selection]
                     
                     if class_data.empty:
-                        raw_val = df_bulk[actual_col].iloc[0] if not df_bulk.empty else "Empty"
-                        st.warning(f"⚠️ No match. Selected: '{bulk_class}' vs Excel: '{raw_val}'")
+                        st.warning(f"⚠️ No match found for {bulk_class}.")
                     else:
                         st.success(f"✅ Match Found for {bulk_class}!")
-                        progress_bar = st.progress(0)
-                        for index, row in class_data.iterrows():
-                            # Your PDF Logic here
-                            progress = (index + 1) / len(class_data)
-                            progress_bar.progress(progress)
+                        
+                        # --- THE PDF & ZIP ENGINE ---
+                        zip_buffer = BytesIO()
+                        with zipfile.ZipFile(zip_buffer, "w") as zf:
+                            progress_bar = st.progress(0)
+                            status_text = st.empty()
+                            
+                            for index, row in class_data.iterrows():
+                                # 1. CREATE PDF (Simplified version of your portal's result)
+                                pdf = FPDF()
+                                pdf.add_page()
+                                pdf.set_font("Arial", 'B', 16)
+                                pdf.cell(200, 10, txt="RUBY SPRINGFIELD COLLEGE", ln=True, align='C')
+                                pdf.set_font("Arial", size=12)
+                                pdf.cell(200, 10, txt=f"Official Result: {bulk_class}", ln=True, align='C')
+                                pdf.ln(10)
+                                
+                                # Add student details from your Excel
+                                s_name = str(row.get('Names ', f'Student_{index}'))
+                                s_id = str(row.get('Admission_No', 'N/A'))
+                                pdf.cell(200, 10, txt=f"Student: {s_name}", ln=True)
+                                pdf.cell(200, 10, txt=f"Reg No: {s_id}", ln=True)
+                                
+                                # 2. SAVE PDF TO MEMORY
+                                pdf_output = pdf.output(dest='S').encode('latin-1')
+                                
+                                # 3. ADD TO ZIP FILE
+                                file_name = f"{s_name.replace(' ', '_')}_Result.pdf"
+                                zf.writestr(file_name, pdf_output)
+                                
+                                # Update Progress
+                                progress = (index + 1) / len(class_data)
+                                progress_bar.progress(progress)
+                                status_text.text(f"Generated: {file_name}")
+
+                        # --- THE DOWNLOAD BUTTON (Must be outside the loop) ---
+                        st.success(f"🏁 {len(class_data)} PDFs Prepared!")
+                        st.download_button(
+                            label=f"📥 DOWNLOAD ALL {bulk_class} PDFs (ZIP)",
+                            data=zip_buffer.getvalue(),
+                            file_name=f"{bulk_class}_Results_Bulk.zip",
+                            mime="application/zip"
+                        )
                         st.balloons()
                 else:
-                    st.error("❌ 'Class' column not found in Excel.")
+                    st.error("❌ 'Class' column not found.")
             else:
                 st.error(f"❌ File 'Report {bulk_class}.xlsx' not found.")
 
