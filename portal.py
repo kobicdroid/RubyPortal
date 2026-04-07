@@ -1429,10 +1429,13 @@ with tab_content:
                 if os.path.exists(notice['path']): os.remove(notice['path'])
                 st.session_state.notices.pop(i)
                 st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
+               # ... (This is the end of the Content Manager Delete button logic)
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
                 st.rerun()
-                    
+
+# --- MAKE SURE THIS IS ALIGNED WITH THE STARTING 'IF' OF YOUR APP ---
 elif page == "📊 Dashboard":
+    # Your Dashboard code starts here...
     import os
     import random
     import io
