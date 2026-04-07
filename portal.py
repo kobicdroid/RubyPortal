@@ -1170,117 +1170,120 @@ elif page == "🛠️ Staff Management":
         bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
         col_pdf, col_notif = st.columns(2)
 
-        with col_pdf:
+       with col_pdf:
             st.markdown("#### 📄 Document Export")
             # --- PDF BULK PRINTING SECTION ---
-       if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
-            target_file = f"Report {bulk_class}.xlsx"
             
-            if os.path.exists(target_file):
-                xl = pd.ExcelFile(target_file)
-                sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
-                data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
+            # This line must be indented exactly 4 spaces from the 'with' statement
+            if st.button("🚀 GENERATE & PACKAGE ALL PDFs", use_container_width=True):
+                target_file = f"Report {bulk_class}.xlsx"
                 
-                def find_s(key):
-                    return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
-
-                sc_n = find_s('Scoresheet')
-                if not sc_n:
-                    st.error("❌ 'Scoresheet' not found.")
-                else:
-                    df_sc_raw = data_sheets[sc_n]
-                    adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
-
-                    zip_buffer = BytesIO()
-                    with zipfile.ZipFile(zip_buffer, "w") as zf:
-                        progress_bar = st.progress(0)
-                        
-                        header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
-                        header_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
-                        subject_row = df_sc_raw.iloc[header_idx - 1]
-                        label_row = df_sc_raw.iloc[header_idx] 
-
-                        for index, adm_val in enumerate(adm_list):
-                            adm_clean = str(adm_val).strip()
-                            
-                            try:
-                                pdf = ResultPDF()
-                                # --- PROFESSIONAL THEME SETUP ---
-                                pdf.set_auto_page_break(auto=True, margin=15)
-                                pdf.is_test = "test" in sc_n.lower()
-                                pdf.add_page() # This will trigger your professional header/background
-
-                                s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip() == adm_clean]
-                                if s_row_data.empty: continue
-                                
-                                student_vals = s_row_data.iloc[0]
-                                student_name = str(student_vals.iloc[1]).upper()
-
-                                processed_results = {}
-                                total_marks = 0
-
-                                for i, label in enumerate(label_row):
-                                    if str(label).strip().lower() == 'total':
-                                        subject_name = "Unknown"
-                                        for j in range(i, -1, -1):
-                                            val = str(subject_row.iloc[j]).strip()
-                                            if val.lower() != 'nan' and val != '':
-                                                subject_name = val
-                                                break
-                                        try:
-                                            ca = float(student_vals.iloc[i-2]) if pd.notna(student_vals.iloc[i-2]) else 0
-                                            ex = float(student_vals.iloc[i-1]) if pd.notna(student_vals.iloc[i-1]) else 0
-                                            tot = float(student_vals.iloc[i]) if pd.notna(student_vals.iloc[i]) else 0
-                                            
-                                            if subject_name != "Unknown":
-                                                processed_results[subject_name] = {"CA": ca, "Exam": ex, "Total": tot}
-                                                total_marks += tot
-                                        except: continue
-
-                                def get_meta(key):
-                                    sh = find_s(key)
-                                    if not sh: return {}
-                                    df = data_sheets[sh].copy()
-                                    df.columns = [str(c).strip() for c in df.iloc[0]]
-                                    m = df[df.iloc[:,0].astype(str).str.strip() == adm_clean]
-                                    return m.iloc[0].to_dict() if not m.empty else {}
-
-                                # Package summary with 'out_of' for professional positioning
-                                summary = {
-                                    'obtained': total_marks,
-                                    'avg': round(total_marks/max(1, len(processed_results)), 2),
-                                    'pos': get_meta('Bsheet').get('Position', 'N/A'),
-                                    'max': len(processed_results) * 100,
-                                    'out_of': len(adm_list)
-                                }
-
-                                # --- DRAWING WITH BEAUTIFUL COLOR LOGIC ---
-                                pdf.student_info_box(student_name, adm_clean, bulk_class, "3rd Term", summary)
-                                # The draw_scores_table handles the Zebra striping internally
-                                pdf.draw_scores_table(processed_results, bulk_class)
-                                pdf.draw_transcript_summary(summary, "3rd Term")
-                                pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, bulk_class, "3rd Term")
-
-                                # --- SAVE TO ZIP ---
-                                pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
-                                zf.writestr(f"{student_name.replace(' ', '_')}.pdf", pdf_bytes)
-
-                            except Exception as e:
-                                st.error(f"Error for {adm_clean}: {e}")
-
-                            progress_bar.progress((index + 1) / len(adm_list))
-
-                    st.balloons()
-                    st.success(f"✅ {len(adm_list)} Professional Reports Ready!")
+                if os.path.exists(target_file):
+                    xl = pd.ExcelFile(target_file)
+                    sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
+                    data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
                     
-                    # --- FIT TO SCREEN DOWNLOAD BUTTON ---
-                    st.download_button(
-                        label="📥 DOWNLOAD ALL REPORTS (ZIP)",
-                        data=zip_buffer.getvalue(),
-                        file_name=f"Reports_{bulk_class}.zip",
-                        mime="application/zip",
-                        use_container_width=True # Professional wide-screen button
-                    )
+                    def find_s(key):
+                        return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
+
+                    sc_n = find_s('Scoresheet')
+                    if not sc_n:
+                        st.error("❌ 'Scoresheet' not found.")
+                    else:
+                        df_sc_raw = data_sheets[sc_n]
+                        # Get Admission numbers (skipping top meta rows)
+                        adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
+
+                        zip_buffer = BytesIO()
+                        with zipfile.ZipFile(zip_buffer, "w") as zf:
+                            progress_bar = st.progress(0)
+                            
+                            # --- KEY STEP: FIND THE HEADER INDEX ---
+                            header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                            header_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
+                            
+                            subject_row = df_sc_raw.iloc[header_idx - 1]
+                            label_row = df_sc_raw.iloc[header_idx] 
+
+                            for index, adm_val in enumerate(adm_list):
+                                adm_clean = str(adm_val).strip()
+                                
+                                try:
+                                    pdf = ResultPDF()
+                                    pdf.set_auto_page_break(auto=True, margin=15)
+                                    pdf.is_test = "test" in sc_n.lower()
+                                    pdf.add_page()
+
+                                    # --- DATA EXTRACTION ---
+                                    s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip() == adm_clean]
+                                    if s_row_data.empty: continue
+                                    
+                                    student_vals = s_row_data.iloc[0]
+                                    student_name = str(student_vals.iloc[1]).upper()
+
+                                    processed_results = {}
+                                    total_marks = 0
+
+                                    # --- SUBJECT MAPPING LOOP ---
+                                    for i, label in enumerate(label_row):
+                                        if str(label).strip().lower() == 'total':
+                                            subject_name = "Unknown"
+                                            for j in range(i, -1, -1):
+                                                val = str(subject_row.iloc[j]).strip()
+                                                if val.lower() != 'nan' and val != '':
+                                                    subject_name = val
+                                                    break
+                                            
+                                            try:
+                                                ca = float(student_vals.iloc[i-2]) if pd.notna(student_vals.iloc[i-2]) else 0
+                                                ex = float(student_vals.iloc[i-1]) if pd.notna(student_vals.iloc[i-1]) else 0
+                                                tot = float(student_vals.iloc[i]) if pd.notna(student_vals.iloc[i]) else 0
+                                                
+                                                if subject_name != "Unknown":
+                                                    processed_results[subject_name] = {"CA": ca, "Exam": ex, "Total": tot}
+                                                    total_marks += tot
+                                            except: continue
+
+                                    def get_meta(key):
+                                        sh = find_s(key)
+                                        if not sh: return {}
+                                        df = data_sheets[sh].copy()
+                                        df.columns = [str(c).strip() for c in df.iloc[0]]
+                                        m = df[df.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                        return m.iloc[0].to_dict() if not m.empty else {}
+
+                                    summary = {
+                                        'obtained': total_marks,
+                                        'avg': round(total_marks/max(1, len(processed_results)), 2),
+                                        'pos': get_meta('Bsheet').get('Position', 'N/A'),
+                                        'max': len(processed_results) * 100
+                                    }
+
+                                    # --- DRAW ---
+                                    pdf.student_info_box(student_name, adm_clean, bulk_class, "3rd Term", summary)
+                                    pdf.draw_scores_table(processed_results, bulk_class)
+                                    pdf.draw_transcript_summary(summary, "3rd Term")
+                                    pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, bulk_class, "3rd Term")
+
+                                    # --- SAVE TO ZIP ---
+                                    pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
+                                    zf.writestr(f"{student_name.replace(' ', '_')}.pdf", pdf_bytes)
+
+                                except Exception as e:
+                                    st.error(f"Error for {adm_clean}: {e}")
+
+                                progress_bar.progress((index + 1) / len(adm_list))
+
+                        st.balloons()
+                        st.download_button(
+                            label="📥 DOWNLOAD ALL REPORTS",
+                            data=zip_buffer.getvalue(),
+                            file_name=f"Reports_{bulk_class}.zip",
+                            mime="application/zip",
+                            use_container_width=True
+                        )
+                else:
+                    st.error(f"❌ File {target_file} not found in the directory.")
         with col_notif:
             st.markdown("#### 🔔 Parent Notifications")
             test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
