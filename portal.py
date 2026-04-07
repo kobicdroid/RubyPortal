@@ -1118,6 +1118,7 @@ elif page == "🛠️ Staff Management":
             target_file = f"Report {bulk_class}.xlsx"
             
             if os.path.exists(target_file):
+                # Load all sheets to find Score, Behaviour, Skill, and Comments
                 data_sheets = pd.read_excel(target_file, sheet_name=None)
                 
                 def find_s(key): 
@@ -1125,9 +1126,10 @@ elif page == "🛠️ Staff Management":
 
                 sc_n = find_s('Scoresheet')
                 if not sc_n:
-                    st.error("❌ 'Scoresheet' sheet not found.")
+                    st.error("❌ 'Scoresheet' sheet not found in the Excel file.")
                 else:
                     df_sc_raw = data_sheets[sc_n]
+                    # Extract Admission numbers starting from row 3 (index 2)
                     adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
 
                     zip_buffer = BytesIO()
@@ -1141,16 +1143,19 @@ elif page == "🛠️ Staff Management":
                             try:
                                 pdf = ResultPDF()
                                 pdf.set_auto_page_break(auto=True, margin=15)
-                                # Detect if this is a CA Report or Full Report
+                                
+                                # Setup PDF Mode (CA vs Full Report)
                                 is_test_mode = "test" in sc_n.lower()
                                 pdf.is_test = is_test_mode
                                 pdf.add_page()
 
-                                # --- DATA EXTRACTION ---
+                                # --- DATA EXTRACTION LOGIC ---
+                                # Find the header row that contains 'Total'
                                 header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
                                 h_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
-                                r1 = df_sc_raw.iloc[h_idx-1]
-                                h_row = df_sc_raw.iloc[h_idx]
+                                
+                                r1 = df_sc_raw.iloc[h_idx-1] # Subjects usually sit above totals
+                                h_row = df_sc_raw.iloc[h_idx] # The row with 'CA', 'Exam', 'Total'
                                 
                                 s_row = df_sc_raw[df_sc_raw.iloc[:,0].astype(str).str.strip() == adm_clean]
                                 if s_row.empty: continue
@@ -1161,11 +1166,11 @@ elif page == "🛠️ Staff Management":
                                 processed_results = {}
                                 total_sum = 0
                                 
-                                # Loop through headers to find 'Total' columns
+                                # Loop through headers to map columns to the PDF dictionary keys
                                 for i, col_val in enumerate(h_row):
                                     if str(col_val).strip().lower() == 'total':
-                                        # Find Subject Name from row above
-                                        sub = "Unknown"
+                                        # Pull Subject Name from the row above
+                                        sub = "Unknown Subject"
                                         for j in range(i, -1, -1):
                                             val = str(r1.iloc[j]).strip()
                                             if val.lower() != 'nan' and val != '':
@@ -1173,29 +1178,28 @@ elif page == "🛠️ Staff Management":
                                                 break
                                         
                                         try:
-                                            # Mapping keys to match your draw_scores_table logic
+                                            # Pulling relative to the 'Total' column
                                             ca_val = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
                                             ex_val = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
                                             tot_val = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
                                             
                                             processed_results[sub] = {
-                                                "CA": ca_val,       # Used in draw_scores_table
-                                                "Exam": ex_val,     # Used in draw_scores_table
-                                                "Total": tot_val,   # Used in draw_scores_table
-                                                "CA1": ca_val,      # Used in draw_test_table
-                                                "CA2": 0,           # Placeholder
-                                                "CA3": 0,           # Placeholder
-                                                "CA4": 0,           # Placeholder
-                                                "Total_CA": ca_val  # Used in draw_test_table
+                                                "CA": ca_val,       # For draw_scores_table
+                                                "Exam": ex_val,     # For draw_scores_table
+                                                "Total": tot_val,   # For draw_scores_table
+                                                "CA1": ca_val,      # For draw_test_table
+                                                "CA2": 0, "CA3": 0, "CA4": 0,
+                                                "Total_CA": ca_val
                                             }
                                             total_sum += tot_val
                                         except: continue
 
-                                # --- METADATA & COMMENTS ---
+                                # --- HELPER FOR METADATA (BEHAVIOUR, SKILLS, COMMENTS) ---
                                 def get_meta_row(key):
                                     sheet = find_s(key)
                                     if not sheet: return {}
                                     df_m = data_sheets[sheet]
+                                    # Set first row as temporary columns for mapping
                                     df_m.columns = [str(c).strip() for c in df_m.iloc[0]]
                                     m = df_m[df_m.iloc[:,0].astype(str).str.strip() == adm_clean]
                                     return m.iloc[0].to_dict() if not m.empty else {}
@@ -1204,17 +1208,21 @@ elif page == "🛠️ Staff Management":
                                 sk = get_meta_row('Skill')
                                 comm = get_meta_row('Comment')
                                 
+                                # Position lookup from Broad Sheet
+                                bsheet_data = get_meta_row('Bsheet')
+                                
                                 summary = {
                                     'avg': round(total_sum/len(processed_results), 2) if processed_results else 0,
                                     'obtained': total_sum,
                                     'max': len(processed_results) * 100,
-                                    'pos': get_meta_row('Bsheet').get('Position', '-'),
-                                    't1_avg': 0, 't2_avg': 0
+                                    'pos': bsheet_data.get('Position', '-'),
+                                    't1_avg': bsheet_data.get('1st Term Avg', 0),
+                                    't2_avg': bsheet_data.get('2nd Term Avg', 0)
                                 }
 
-                                term = "3rd Term" # Or detect dynamically
+                                term = "3rd Term" # This can be made dynamic based on file name
                                 
-                                # --- DRAWING PDF ---
+                                # --- PDF DRAWING PHASE ---
                                 pdf.student_info_box(student_name, adm_clean, bulk_class, term, summary)
                                 
                                 if is_test_mode:
@@ -1224,23 +1232,30 @@ elif page == "🛠️ Staff Management":
                                     pdf.draw_transcript_summary(summary, term)
                                     pdf.draw_footer_sections(beh, sk, comm, summary, bulk_class, term)
 
+                                # Generate and Save to Zip
                                 pdf_output = pdf.output(dest='S')
                                 pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-                                zf.writestr(f"{student_name.replace(' ', '_')}_Result.pdf", pdf_bytes)
+                                zf.writestr(f"{student_name.replace(' ', '_')}_{adm_clean}.pdf", pdf_bytes)
 
                             except Exception as e:
-                                st.error(f"Error on {adm_clean}: {e}")
+                                st.error(f"Failed to process {adm_clean}: {e}")
 
-                            progress_bar.progress((index + 1) / len(adm_list))
-                            status_text.text(f"🔥 Processing: {student_name}")
+                            # Update progress
+                            progress_val = (index + 1) / len(adm_list)
+                            progress_bar.progress(progress_val)
+                            status_text.text(f"📝 Generating: {student_name}")
 
+                    # Final Download Button
+                    st.success(f"✅ All {len(adm_list)} PDFs generated successfully!")
                     st.download_button(
-                        label=f"📥 DOWNLOAD {bulk_class} PACKAGE",
+                        label=f"📥 DOWNLOAD {bulk_class} RESULTS (ZIP)",
                         data=zip_buffer.getvalue(),
                         file_name=f"Ruby_Springfield_{bulk_class}_Reports.zip",
                         mime="application/zip",
                         use_container_width=True
                     )
+            else:
+                st.error(f"❌ File '{target_file}' not found. Please upload it first.")
         with col_notif:
             st.markdown("#### 🔔 Parent Notifications")
             test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
