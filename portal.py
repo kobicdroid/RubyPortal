@@ -998,8 +998,10 @@ if page == "🎓 Result Portal":
                                                 }
                                             except: continue
                             
+                            # SHOW PREVIEW FIRST
                             st.table(pd.DataFrame(test_results).T)
                             
+                            # THEN GENERATE PDF & DOWNLOAD BUTTON
                             try:
                                 pdf = ResultPDF()
                                 pdf.is_test = True 
@@ -1065,6 +1067,7 @@ if page == "🎓 Result Portal":
                             active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
                             summary = {'obtained': total_sum, 'avg': round(total_sum/max(1, len(active_subs)), 2), 'pos': pos_val, 'max': len(processed_results)*100}
                             
+                            # SHOW PREVIEW FIRST
                             st.title(f"👋 Welcome, {student_name}")
                             m1, m2, m3 = st.columns(3)
                             m1.metric("Average", f"{summary['avg']}%")
@@ -1072,6 +1075,7 @@ if page == "🎓 Result Portal":
                             m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
                             st.table(pd.DataFrame(processed_results).T)
 
+                            # THEN GENERATE PDF & DOWNLOAD BUTTON AT BOTTOM
                             try:
                                 pdf = ResultPDF()
                                 pdf.set_margins(left=10, top=10, right=10)
