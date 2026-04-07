@@ -279,7 +279,7 @@ SIG_PATH = os.path.join(BASE_DIR, "signature.png")
 STAMP_PATH = os.path.join(BASE_DIR, "Stamp.jpg") 
 
 # STAFF ACCESS CONFIGURATION
-STAFF_MASTER_KEY = "ADMIN2026" 
+STAFF_MASTER_KEY = "MGTRSC2026" 
 
 def log_activity(user_type, action, details):
     try:
@@ -913,10 +913,10 @@ if page == "🎓 Result Portal":
     # --- SECRET CODE: SUMI ---
     if adm_no == "SUMI":
         st.balloons()
-        st.title("👸 Queen Maryam's Portal")
+        st.title("MUM's Portal")
         st.success("Access Granted for Shutdown & Babe") 
-        st.write("**Relationship Status:** Planning marriage in 7-8 years.")
-        st.info("Keep building the Master Code, Adam.")
+        st.write("**Dedication:** I dedicate the project to my beloved Chikito👸 once.")
+        st.info("Who Am I!?, Adam.")
         st.stop()
 
     pwd = st.sidebar.text_input("Access Key", type="password").strip()
