@@ -1175,13 +1175,16 @@ elif page == "🛠️ Staff Management":
                             st.warning("No performance data found.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-    # Create the columns first to avoid NameError
+    # FIRST: Define bulk_class using the selectbox so the rest of the code knows what it is
+    bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
+
+    # SECOND: Create the columns
     col_pdf, col_notif = st.columns(2)
 
     with col_pdf:
         st.markdown("#### 📄 Document Export")
         if st.button("🚀 GENERATE ALL PDFs"):
-            # 1. Fetch all students in the selected class
+            # Now bulk_class is defined above, so this won't crash
             class_data = df[df['Class'] == bulk_class]
             
             if class_data.empty:
@@ -1190,7 +1193,7 @@ elif page == "🛠️ Staff Management":
                 progress_bar = st.progress(0)
                 st.info(f"Processing {len(class_data)} results for {bulk_class}...")
                 
-                # 2. Loop through every student to generate results
+                # Loop through students
                 for index, row in class_data.iterrows():
                     student_name = row['Full Name']
                     reg_number = row['Registration Number']
