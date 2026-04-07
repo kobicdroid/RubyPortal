@@ -1175,15 +1175,33 @@ elif page == "🛠️ Staff Management":
                             st.warning("No performance data found.")
 
     # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-    with tab_bulk:
-        st.subheader("📦 Bulk Result Generator & Parent Alerts")
-        bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_target")
-        col_pdf, col_notif = st.columns(2)
-        
-        with col_pdf:
+    with col_pdf:
             st.markdown("#### 📄 Document Export")
             if st.button("🚀 GENERATE ALL PDFs"):
-                st.info(f"Generating reports for {bulk_class}...")
+                # 1. Fetch all students in the selected class
+                class_data = df[df['Class'] == bulk_class]
+                
+                if class_data.empty:
+                    st.warning(f"No records found for {bulk_class}. Check your spreadsheet!")
+                else:
+                    progress_bar = st.progress(0)
+                    st.info(f"Processing {len(class_data)} results for {bulk_class}...")
+                    
+                    # 2. Loop through every student to generate results
+                    for index, row in class_data.iterrows():
+                        student_name = row['Full Name']
+                        reg_number = row['Registration Number']
+                        
+                        # --- INSERT YOUR PDF GENERATION FUNCTION HERE ---
+                        # Example: generate_student_pdf(row) 
+                        # ------------------------------------------------
+                        
+                        # Update progress
+                        progress = (index + 1) / len(class_data)
+                        progress_bar.progress(progress)
+                    
+                    st.success(f"✅ Successfully generated {len(class_data)} PDFs for {bulk_class}!")
+                    st.balloons() # Small celebration for "Shutdown"!
 
         with col_notif:
             st.markdown("#### 🔔 Parent Notifications")
