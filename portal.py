@@ -153,7 +153,7 @@ st.markdown(
 )
 
 # Motto and Bio (Correctly placed outside the previous string)
-st.markdown("""<h3 style='text-align:center; color:#2563eb; font-style:italic; margin-top:-15px;'>Motto: A Citadel of Excellence</h3>""", unsafe_allow_html=True)
+st.markdown("""<h3 style='text-align:center; color:#2563eb; font-style:italic; margin-top:-15px;'>Motto: A Citadel of Supreme Excellence</h3>""", unsafe_allow_html=True)
 st.markdown('<div style="text-align:center; color: #374151; font-weight: 500; margin-bottom: 20px;">"We are building global leaders with integrity and academic brilliance."</div>', unsafe_allow_html=True)
 
 def upload_notice_to_github(file_bytes, file_name):
@@ -1191,7 +1191,7 @@ elif page == "🛠️ Staff Management":
                         # --- SMART TERM DETECTION ---
                         # Checks if '3rd' is in the sheet name or the filename
                         is_third_term = "3rd" in sc_n or "3rd" in target_file
-                        current_term = "3rd Term" if is_third_term else "Term Report"
+                        current_term = "3rd Term" if is_third_term else " 2ND TERM"
 
                         df_sc_raw = data_sheets[sc_n]
                         adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
