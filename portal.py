@@ -1397,7 +1397,7 @@ with tab_bulk:
                                 
                                 pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, bulk_class, current_term)
 
-                                # --- ADD RESUMPTION DATE REQUIREMENT ---
+                                # --- ADD RESUMPTION DATE REQUIREMENT (ALIGNED) ---
                                 pdf.ln(8)
                                 pdf.set_font('Arial', 'B', 10)
                                 pdf.cell(0, 10, "NEXT TERM BEGINS: 20th APRIL, 2026", ln=1, align='C')
@@ -1422,79 +1422,83 @@ with tab_bulk:
                     )
             else:
                 st.error(f"❌ File {target_file} not found.")
-        with col_notif:
-            st.markdown("#### 🔔 Parent Notifications")
-            test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
-            
-            if st.button("🧪 Send Test Email"):
-                success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
-                if success: st.success("✅ Test Email Sent!")
-                else: st.error("❌ Email Failed.")
 
-            st.markdown("---")
-            if st.button("📢 BLAST NOTIFY ALL PARENTS"):
-                f_path = f"Report {bulk_class}.xlsx"
-                if os.path.exists(f_path):
-                    with st.spinner(f"Reading {bulk_class} Data..."):
-                        try:
-                            xls = pd.ExcelFile(f_path)
-                            target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
-                            if target_sheet:
-                                df_bulk = pd.read_excel(f_path, sheet_name=target_sheet)
-                                st.info(f"🚀 Found {len(df_bulk)} parents. Starting blast...")
-                                p_bar = st.progress(0)
-                                success_count = 0
-                                for i, row in df_bulk.iterrows():
-                                    try:
-                                        p_email = str(row['Email']).strip()
-                                        p_name = str(row['Names ']).strip()
-                                        p_class = str(row['Class ']).strip()
-                                        p_reg = str(row['Admission_No']).strip()
-                                        p_pass = str(row['Password']).strip()
-                                        if "@" in p_email:
-                                            if send_email_notification(p_email, p_name, p_class, p_reg, p_pass):
-                                                success_count += 1
-                                    except: pass
-                                    p_bar.progress((i + 1) / len(df_bulk))
-                                st.success(f"🏁 Blast complete! {success_count} emails sent.")
-                            else: st.error("❌ Sheet 'Data' not found.")
-                        except Exception as e: st.error(f"❌ Error during blast: {e}")
-                else: st.error("❌ File not found.")
-
-    # --- 5. CONTENT MANAGER (NOW CORRECTLY OUTSIDE TAB_BULK) ---
-    with tab_content:
-        st.markdown("### 📰 News & Protocol Control")
-        if os.path.exists("news_event.jpg"):
-            st.image("news_event.jpg", width=400)
+    with col_notif:
+        st.markdown("#### 🔔 Parent Notifications")
+        test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
         
-        with st.form("news_update_form"):
-            st.subheader("✍️ Update Dashboard News")
-            new_title = st.text_input("Headline", value=st.session_state.news_content['title'])
-            new_desc = st.text_area("Content", value=st.session_state.news_content['desc'])
-            uploaded_news_img = st.file_uploader("Change Image", type=['jpg', 'png', 'jpeg'])
-            
-            if st.form_submit_button("🚀 Publish & Save"):
-                st.session_state.news_content.update({'title': new_title.upper(), 'desc': new_desc})
-                pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                if uploaded_news_img:
-                    with open("news_event.jpg", "wb") as f: f.write(uploaded_news_img.getbuffer())
-                st.success("✅ News updated!")
+        if st.button("🧪 Send Test Email"):
+            success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
+            if success: st.success("✅ Test Email Sent!")
+            else: st.error("❌ Email Failed.")
+
+        st.markdown("---")
+        if st.button("📢 BLAST NOTIFY ALL PARENTS"):
+            f_path = f"Report {bulk_class}.xlsx"
+            if os.path.exists(f_path):
+                with st.spinner(f"Reading {bulk_class} Data..."):
+                    try:
+                        xls = pd.ExcelFile(f_path)
+                        target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
+                        if target_sheet:
+                            df_bulk = pd.read_excel(f_path, sheet_name=target_sheet)
+                            st.info(f"🚀 Found {len(df_bulk)} parents. Starting blast...")
+                            p_bar = st.progress(0)
+                            success_count = 0
+                            for i, row in df_bulk.iterrows():
+                                try:
+                                    p_email = str(row['Email']).strip()
+                                    # Using flexible key lookup for names/class/reg
+                                    p_name = str(row.get('Names ', row.get('Name', 'Parent'))).strip()
+                                    p_class = str(row.get('Class ', row.get('Class', bulk_class))).strip()
+                                    p_reg = str(row['Admission_No']).strip()
+                                    p_pass = str(row['Password']).strip()
+                                    
+                                    if "@" in p_email:
+                                        if send_email_notification(p_email, p_name, p_class, p_reg, p_pass):
+                                            success_count += 1
+                                except: pass
+                                p_bar.progress((i + 1) / len(df_bulk))
+                            st.success(f"🏁 Blast complete! {success_count} emails sent.")
+                        else: st.error("❌ Sheet 'Data' not found.")
+                    except Exception as e: st.error(f"❌ Error during blast: {e}")
+            else: st.error("❌ File not found.")
+
+# --- 5. CONTENT MANAGER ---
+with tab_content:
+    st.markdown("### 📰 News & Protocol Control")
+    if os.path.exists("news_event.jpg"):
+        st.image("news_event.jpg", width=400)
+    
+    with st.form("news_update_form"):
+        st.subheader("✍️ Update Dashboard News")
+        new_title = st.text_input("Headline", value=st.session_state.news_content.get('title', ''))
+        new_desc = st.text_area("Content", value=st.session_state.news_content.get('desc', ''))
+        uploaded_news_img = st.file_uploader("Change Image", type=['jpg', 'png', 'jpeg'])
+        
+        if st.form_submit_button("🚀 Publish & Save"):
+            st.session_state.news_content.update({'title': new_title.upper(), 'desc': new_desc})
+            # Save to Excel persistent storage
+            pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+            if uploaded_news_img:
+                with open("news_event.jpg", "wb") as f: f.write(uploaded_news_img.getbuffer())
+            st.success("✅ News updated!")
+            st.rerun()
+
+    with st.form("notice_board_form"):
+        st.subheader("📌 Pin to Notice Board")
+        notice_name = st.text_input("Notice Title")
+        uploaded_pdf = st.file_uploader("Upload PDF", type=['pdf'])
+        if st.form_submit_button("📢 Upload & Pin"):
+            if uploaded_pdf and notice_name:
+                clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
+                file_bytes = uploaded_pdf.getvalue()
+                if not os.path.exists("notices"): os.makedirs("notices")
+                with open(os.path.join("notices", clean_filename), "wb") as f: f.write(file_bytes)
+                # Keep your GitHub upload function here
+                upload_notice_to_github(file_bytes, clean_filename)
+                st.success("Notice Pinned!")
                 st.rerun()
-
-        with st.form("notice_board_form"):
-            st.subheader("📌 Pin to Notice Board")
-            notice_name = st.text_input("Notice Title")
-            uploaded_pdf = st.file_uploader("Upload PDF", type=['pdf'])
-            if st.form_submit_button("📢 Upload & Pin"):
-                if uploaded_pdf and notice_name:
-                    clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
-                    file_bytes = uploaded_pdf.getvalue()
-                    if not os.path.exists("notices"): os.makedirs("notices")
-                    with open(os.path.join("notices", clean_filename), "wb") as f: f.write(file_bytes)
-                    upload_notice_to_github(file_bytes, clean_filename)
-                    st.success("Notice Pinned!")
-                    st.rerun()
-
 # ==========================================
 # --- 📊 DASHBOARD PAGE ---
 # ==========================================
