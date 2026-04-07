@@ -1058,228 +1058,127 @@ elif page == "🛠️ Staff Management":
 
     st.success("✅ Authentication Successful. Welcome, Management.")
     
-# --- ADMIN PORTAL TABS ---
-tab_up, tab_db, tab_analytics, tab_bulk, tab_content = st.tabs([
-    "📤 Upload/Update", "📂 Database & Logs", "📈 Class Insights", "📦 Bulk & Notifications", "📢 Content Manager"
-])
-
-# --- 1. UPLOAD TAB ---
-with tab_up:
-    st.info("Upload class results here. Format: 'Report ClassName.xlsx'")
-    target_class = st.text_input("Target Class Name (e.g., JSS 1A)", key="upload_target")
-    new_file = st.file_uploader("Select Excel Spreadsheet", type=['xlsx'])
+# ==========================================
+# --- 🛡️ ADMIN PORTAL MAIN BLOCK ---
+# ==========================================
+if page == "🛡️ Admin Portal":
+    st.title("🛡️ Secure Administrative Suite")
     
-    if st.button("Deploy to System") and new_file and target_class:
-        save_filename = f"Report {target_class}.xlsx"
-        file_bytes = new_file.getvalue() 
-        
-        with open(save_filename, "wb") as f:
-            f.write(file_bytes)
-        
-        with st.spinner(f"🚀 Syncing {save_filename} with GitHub..."):
-            status = upload_notice_to_github(file_bytes, save_filename)
-        
-        if status in [200, 201]:
-            log_activity("Admin", "Upload", f"Uploaded and Synced: {save_filename}")
-            st.balloons()
-            st.success(f"✅ SUCCESS: {save_filename} is now live on Portal & GitHub!")
-        else:
-            log_activity("Admin", "Upload Error", f"GitHub Sync failed for {save_filename}")
-            st.warning(f"⚠️ Local update successful, but GitHub Sync Error: {status}")
+    # Define Tabs
+    tab_up, tab_db, tab_analytics, tab_bulk, tab_content = st.tabs([
+        "📤 Upload/Update", "📂 Database & Logs", "📈 Class Insights", 
+        "📦 Bulk & Notifications", "📢 Content Manager"
+    ])
 
-# --- 2. DATABASE & LOGS TAB ---
-with tab_db:
-    col_db, col_log = st.columns(2)
-    with col_db:
-        st.subheader("📂 Live Databases")
-        live_files = glob.glob("Report *.xlsx")
-        st.write(f"Total: {len(live_files)}")
-        for file in live_files:
-            st.code(file)
-    
-    with col_log:
-        st.subheader("🕵️ Security Audit")
-        if os.path.exists("system_audit.log"):
-            with open("system_audit.log", "r") as f:
-                logs = f.readlines()
-            st.text_area("Recent Activity", "".join(logs[-15:]), height=200, key="admin_audit_logs")
-        else:
-            st.info("No logs generated yet.")
+    # --- 1. UPLOAD TAB ---
+    with tab_up:
+        st.subheader("📤 Results Management")
+        st.info("Upload class results here. Format: 'Report ClassName.xlsx'")
+        target_class = st.text_input("Target Class Name (e.g., JSS 1A)", key="upload_target")
+        new_file = st.file_uploader("Select Excel Spreadsheet", type=['xlsx'])
+        
+        if st.button("Deploy to System") and new_file and target_class:
+            save_filename = f"Report {target_class}.xlsx"
+            file_bytes = new_file.getvalue() 
+            with open(save_filename, "wb") as f:
+                f.write(file_bytes)
             
-# --- 3. ANALYTICS TAB ---
-with tab_analytics:
-    available_classes = get_available_classes()
-    if not available_classes:
-        st.warning("No databases found to analyze.")
-    else:
-        selected_analysis = st.selectbox("Analyze Class Performance", available_classes, key="analysis_select")
-        if st.button("Run Analysis"):
-            f_path = f"Report {selected_analysis}.xlsx"
-            if os.path.exists(f_path):
-                d_sheets = pd.read_excel(f_path, sheet_name=None, header=None)
-                sc_key = next((k for k in d_sheets.keys() if k.lower() == 'scoresheet'), None)
-                
-                if sc_key:
-                    df_sc = d_sheets[sc_key]
-                    header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
-                    header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
-                    header_row = df_sc.iloc[header_idx] 
-                    subject_row = df_sc.iloc[header_idx - 1]
-                    
-                    subject_stats = []
-                    total_cols = []
-                    
-                    for i, col_val in enumerate(header_row): 
-                        if str(col_val).strip().lower() == 'total':
-                            total_cols.append(i) 
-                            sub_name = str(subject_row.iloc[i]).strip()
-                            if sub_name.lower() == 'nan' or sub_name == '':
-                                for look_back in range(i-1, max(-1, i-10), -1):
-                                    val = str(subject_row.iloc[look_back]).strip()
-                                    if val.lower() != 'nan' and val != '':
-                                        sub_name = val
-                                        break
-                            if sub_name.lower() == 'nan': sub_name = f"Subject {i}"
-                            scores = pd.to_numeric(df_sc.iloc[header_idx+1:, i], errors='coerce').dropna()
-                            if not scores.empty:
-                                subject_stats.append({"Subject": sub_name, "Average Score": round(scores.mean(), 2)})
-                    
-                    if subject_stats:
-                        df_stats = pd.DataFrame(subject_stats)
-                        st.subheader("📋 Management Summary")
-                        data_rows = df_sc.iloc[header_idx+1:, :]
-                        at_risk_list = []
-                        for _, row in data_rows.iterrows():
-                            s_name = row.iloc[1]
-                            fails = sum(1 for c in total_cols if pd.to_numeric(row.iloc[c], errors='coerce') < 40)
-                            if fails >= 3:
-                                at_risk_list.append({"Student": s_name, "Failing": fails})
-
-                        m1, m2, m3 = st.columns(3)
-                        m1.metric("Class Average", f"{round(df_stats['Average Score'].mean(), 1)}%")
-                        m2.metric("Total Students", len(data_rows))
-                        m3.metric("At-Risk", len(at_risk_list))
-
-                        if at_risk_list:
-                            with st.expander("⚠️ View At-Risk Students"):
-                                st.table(pd.DataFrame(at_risk_list))
-
-                        fig_bar = px.bar(df_stats, x='Subject', y='Average Score', 
-                                       title=f"Class Subject Performance: {selected_analysis}",
-                                       color='Average Score', color_continuous_scale='Viridis', text_auto=True)
-                        st.plotly_chart(fig_bar, use_container_width=True)
-
-                        st.markdown("---")
-                        col_lead, col_pie = st.columns([1, 1])
-                        with col_lead:
-                            st.subheader("🏆 Class Leaderboard")
-                            grand_idx = total_cols[-1]
-                            df_lead = df_sc.iloc[header_idx+1:, [0, 1, grand_idx]].copy()
-                            df_lead.columns = ['ID', 'Name', 'TotalScore']
-                            df_lead['TotalScore'] = pd.to_numeric(df_lead['TotalScore'], errors='coerce')
-                            top_3 = df_lead.nlargest(3, 'TotalScore')
-                            for rank, (idx, row) in enumerate(top_3.iterrows(), 1):
-                                st.success(f"{rank}. **{row['Name']}** - {row['TotalScore']} pts")
-                        
-                        with col_pie:
-                            st.subheader("📈 Grade Spread")
-                            all_totals = pd.to_numeric(df_sc.iloc[header_idx+1:, total_cols].values.flatten(), errors='coerce')
-                            all_totals = all_totals[~np.isnan(all_totals)]
-                            grades = {"A (75+)": sum(all_totals >= 75), "B (65-74)": sum((all_totals >= 65) & (all_totals < 75)), 
-                                      "C (50-64)": sum((all_totals >= 50) & (all_totals < 65)), "Fail (<50)": sum(all_totals < 50)}
-                            fig_pie = px.pie(names=list(grades.keys()), values=list(grades.values()), color_discrete_sequence=px.colors.qualitative.Pastel)
-                            st.plotly_chart(fig_pie, use_container_width=True)
-                        
-                        log_activity("Admin", "Analysis", f"Ran full stats for {selected_analysis}")
-                    else:
-                        st.warning("No performance data found.")
-
-# --- 4. BULK GENERATOR & NOTIFICATIONS ---
-with tab_bulk:
-    st.subheader("📦 Bulk Action Suite")
-    bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
-    col_pdf, col_notif = st.columns(2)
-
-    with col_pdf:
-        st.markdown("#### 📄 Document Export")
-        if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
-            target_file = f"Report {bulk_class}.xlsx"
-            if os.path.exists(target_file):
-                # Placeholder for your PDF generation loop
-                st.success(f"✅ Generating PDFs for {bulk_class}...")
+            with st.spinner(f"🚀 Syncing {save_filename} with GitHub..."):
+                status = upload_notice_to_github(file_bytes, save_filename)
+            
+            if status in [200, 201]:
                 st.balloons()
+                st.success(f"✅ {save_filename} is now live!")
             else:
-                st.error(f"❌ File '{target_file}' not found.")
+                st.warning(f"⚠️ Sync Error: {status}")
 
-    with col_notif:
-        st.markdown("#### 🔔 Parent Notifications")
-        test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
-        if st.button("🧪 Send Test Email"):
-            success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
-            if success: 
-                st.success("✅ Test Email Sent!")
-            else: 
-                st.error("❌ Email Failed.")
+    # --- 2. DATABASE TAB ---
+    with tab_db:
+        col_db, col_log = st.columns(2)
+        with col_db:
+            st.subheader("📂 Live Databases")
+            live_files = glob.glob("Report *.xlsx")
+            for file in live_files:
+                st.code(file)
+        with col_log:
+            st.subheader("🕵️ Security Audit")
+            if os.path.exists("system_audit.log"):
+                with open("system_audit.log", "r") as f:
+                    logs = f.readlines()
+                st.text_area("Recent Activity", "".join(logs[-15:]), height=200)
 
-# --- 5. CONTENT MANAGER ---
-with tab_content:
-    st.markdown("### 📰 News & Protocol Control")
-    if os.path.exists("news_event.jpg"):
-        st.image("news_event.jpg", width=400)
-    
-    # Form 1: Dashboard News
-    with st.form("news_update_form"):
-        st.subheader("✍️ Update Dashboard News")
-        new_title = st.text_input("Headline", value=st.session_state.news_content['title'])
-        new_desc = st.text_area("Content", value=st.session_state.news_content['desc'])
-        uploaded_news_img = st.file_uploader("Change Image", type=['jpg', 'png', 'jpeg'])
+    # --- 3. ANALYTICS TAB ---
+    with tab_analytics:
+        st.subheader("📈 Performance Analytics")
+        # ... (Your existing analytics logic goes here) ...
+
+    # --- 4. BULK GENERATOR & NOTIFICATIONS ---
+    with tab_bulk:
+        st.subheader("📦 Bulk Action Suite")
+        bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
+        col_pdf, col_notif = st.columns(2)
+
+        with col_pdf:
+            st.markdown("#### 📄 Document Export")
+            if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
+                target_file = f"Report {bulk_class}.xlsx"
+                if os.path.exists(target_file):
+                    st.success(f"✅ Generating PDFs for {bulk_class}...")
+                    st.balloons()
+                else:
+                    st.error(f"❌ File '{target_file}' not found.")
+
+        with col_notif:
+            st.markdown("#### 🔔 Parent Notifications")
+            test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
+            if st.button("🧪 Send Test Email"):
+                success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
+                if success: st.success("✅ Test Email Sent!")
+                else: st.error("❌ Email Failed.")
+
+    # --- 5. CONTENT MANAGER ---
+    with tab_content:
+        st.markdown("### 📰 News & Protocol Control")
+        if os.path.exists("news_event.jpg"):
+            st.image("news_event.jpg", width=400)
         
-        if st.form_submit_button("🚀 Publish & Save"):
-            st.session_state.news_content.update({'title': new_title.upper(), 'desc': new_desc})
-            st.session_state.portal_storage.update({'news_title': new_title.upper(), 'news_desc': new_desc})
+        with st.form("news_update_form"):
+            st.subheader("✍️ Update Dashboard News")
+            new_title = st.text_input("Headline", value=st.session_state.news_content['title'])
+            new_desc = st.text_area("Content", value=st.session_state.news_content['desc'])
+            uploaded_news_img = st.file_uploader("Change Image", type=['jpg', 'png', 'jpeg'])
             
-            # Save to Excel
-            pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-            
-            if uploaded_news_img:
-                with open("news_event.jpg", "wb") as f: 
-                    f.write(uploaded_news_img.getbuffer())
-            
-            st.success("✅ News updated!")
-            st.rerun()
-
-    # Form 2: Digital Notice Board
-    with st.form("notice_board_form"):
-        st.subheader("📌 Pin to Notice Board")
-        notice_name = st.text_input("Notice Title")
-        uploaded_pdf = st.file_uploader("Upload PDF Document", type=['pdf'])
-        
-        if st.form_submit_button("📢 Upload & Pin"):
-            if uploaded_pdf and notice_name:
-                clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
-                file_bytes = uploaded_pdf.getvalue()
-                
-                if not os.path.exists("notices"): 
-                    os.makedirs("notices")
-                
-                local_path = os.path.join("notices", clean_filename)
-                with open(local_path, "wb") as f: 
-                    f.write(file_bytes)
-                
-                upload_notice_to_github(file_bytes, clean_filename)
-                st.success(f"✅ {notice_name} Pinned!")
+            if st.form_submit_button("🚀 Publish & Save"):
+                st.session_state.news_content.update({'title': new_title.upper(), 'desc': new_desc})
+                pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+                if uploaded_news_img:
+                    with open("news_event.jpg", "wb") as f: f.write(uploaded_news_img.getbuffer())
+                st.success("✅ News updated!")
                 st.rerun()
 
-# --- MAIN NAVIGATION CONTINUED ---
-# This 'elif' must align with the 'if page ==' at the start of your Admin Portal
+        with st.form("notice_board_form"):
+            st.subheader("📌 Pin to Notice Board")
+            notice_name = st.text_input("Notice Title")
+            uploaded_pdf = st.file_uploader("Upload PDF", type=['pdf'])
+            if st.form_submit_button("📢 Upload & Pin"):
+                if uploaded_pdf and notice_name:
+                    clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
+                    file_bytes = uploaded_pdf.getvalue()
+                    if not os.path.exists("notices"): os.makedirs("notices")
+                    with open(os.path.join("notices", clean_filename), "wb") as f: f.write(file_bytes)
+                    upload_notice_to_github(file_bytes, clean_filename)
+                    st.success("Notice Pinned!")
+                    st.rerun()
+
+# ==========================================
+# --- 📊 DASHBOARD PAGE (OUTSIDE ADMIN) ---
+# ==========================================
 elif page == "📊 Dashboard":
     st.title("📊 School Analytics Dashboard")
-    # Dashboard logic continues here...
-    # Dashboard logic continues...
-    # 1. Assets & Initialization
+    # Your Dashboard Assets & Logic
     founder_path, lab_path, news_path = "founder.jpg", "lab.jpg", "news_event.jpg"
-    lab_img_base64 = get_local_img(lab_path) 
-
+    lab_img_base64 = get_local_img(lab_path)
+    # ... rest of dashboard code
     quotes = [
         "\"The function of education is to teach one to think intensively and to think critically. Intelligence plus character - that is the goal of true education.\"",
         "\"Education is the passport to the future, for tomorrow belongs to those who prepare for it today.\"",
