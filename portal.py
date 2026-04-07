@@ -1321,20 +1321,25 @@ elif page == "🛠️ Staff Management":
                     st.rerun()
 
 # ==========================================
-# --- 📊 DASHBOARD PAGE (OUTSIDE ADMIN) ---
+# --- 📊 DASHBOARD PAGE ---
 # ==========================================
 elif page == "📊 Dashboard":
     st.title("📊 School Analytics Dashboard")
+    
+    # 1. Assets & Initialization
     founder_path, lab_path, news_path = "founder.jpg", "lab.jpg", "news_event.jpg"
     lab_img_base64 = get_local_img(lab_path)
-    # ... your dashboard code follows
-	quotes = [
-        "\"The function of education is to teach one to think intensively and to think critically. Intelligence plus character - that is the goal of true education.\"",
-        "\"Education is the passport to the future, for tomorrow belongs to those who prepare for it today.\"",
-        "\"Your attitude, not your aptitude, will determine your altitude.\"",
-        "\"Great leaders don't set out to be leaders... they set out to make a difference. It's never about the role-always about the goal.\"",
-        "\"Knowledge is power, but character is respect.\""
+
+    # --- 2. QUOTES SECTION (FIXED INDENTATION) ---
+    quotes = [
+        "Education is the most powerful weapon which you can use to change the world.",
+        "The beautiful thing about learning is that no one can take it away from you.",
+        "Success is not final; failure is not fatal: it is the courage to continue that counts.",
+        "The mind is not a vessel to be filled, but a fire to be kindled."
     ]
+    
+    selected_quote = random.choice(quotes)
+    st.markdown(f"> *{selected_quote}*")
      
     # 2. TOP SECTION (Updated for Light Theme)
     st.markdown(f"""
