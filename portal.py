@@ -1514,7 +1514,7 @@ with tab_bulk:
 # --- 📊 DASHBOARD PAGE ---
 # ==========================================
 elif page == "📊 Dashboard":
-        
+        # <--- Extra indentation here
     # 1. Assets & Initialization
     founder_path, lab_path, news_path = "founder.jpg", "lab.jpg", "news_event.jpg"
     lab_img_base64 = get_local_img(lab_path)
