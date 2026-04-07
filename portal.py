@@ -1431,7 +1431,6 @@ with tab_content:
                 st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
                 st.rerun()
-
 # --- THE BIG FIX: ALIGNED TO FAR LEFT MARGIN ---
 elif page == "📊 Dashboard":
     import os
