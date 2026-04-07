@@ -957,7 +957,6 @@ if page == "🎓 Result Portal":
                                 if key.lower() in s.lower(): return s
                             return None
 
-                        # --- HELPER: Score Cleaning to prevent '>' comparison errors ---
                         def clean_score(val):
                             try:
                                 if pd.isna(val) or str(val).strip() in ["-", "None", ""]: return 0.0
@@ -997,27 +996,28 @@ if page == "🎓 Result Portal":
                             
                             st.table(pd.DataFrame(test_results).T)
                             
+                            # --- PDF Generation (Isolated) ---
+                            pdf_container = st.container()
                             try:
-                                pdf = ResultPDF()
-                                pdf.is_test = True 
-                                pdf.set_margins(left=10, top=10, right=10)
-                                pdf.add_page()
-                                # The underscore '_' hides the return value 'None' from the UI
-                                _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0})
-                                _ = pdf.draw_test_table(test_results)
-                                
-                                pdf_output = pdf.output(dest='S')
-                                pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-                                
-                                st.markdown("---")
-                                st.download_button("📥 Download Test Result", data=pdf_bytes, file_name=f"Test_{student_name}.pdf", use_container_width=True)
+                                with pdf_container:
+                                    pdf = ResultPDF()
+                                    pdf.is_test = True 
+                                    pdf.set_margins(left=10, top=10, right=10)
+                                    pdf.add_page()
+                                    _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0})
+                                    _ = pdf.draw_test_table(test_results)
+                                    
+                                    pdf_output = pdf.output(dest='S')
+                                    pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
+                                    
+                                    st.markdown("---")
+                                    st.download_button("📥 Download Test Result", data=pdf_bytes, file_name=f"Test_{student_name}.pdf", use_container_width=True)
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
 
                         # --- BRANCH 2: FULL TERM RESULTS ---
                         else:
-                            bs_n = find_s('Bsheet')
-                            beh_n, sk_n, com_n = find_s('Behaviour'), find_s('Skill'), find_s('Comment')
+                            bs_n, beh_n, sk_n, com_n = find_s('Bsheet'), find_s('Behaviour'), find_s('Skill'), find_s('Comment')
                             pos_val = "N/A"
                             if bs_n:
                                 df_bs = data_sheets[bs_n]
@@ -1043,9 +1043,7 @@ if page == "🎓 Result Portal":
                                                 val = str(r1.iloc[j]).strip()
                                                 if val.lower() != 'nan' and val != '': sub = val; break
                                             try:
-                                                ca = clean_score(s_vals.iloc[i-2])
-                                                ex = clean_score(s_vals.iloc[i-1])
-                                                tot = clean_score(s_vals.iloc[i])
+                                                ca, ex, tot = clean_score(s_vals.iloc[i-2]), clean_score(s_vals.iloc[i-1]), clean_score(s_vals.iloc[i])
                                                 processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
                                                 total_sum += tot
                                             except: continue
@@ -1068,22 +1066,24 @@ if page == "🎓 Result Portal":
                             m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
                             st.table(pd.DataFrame(processed_results).T)
 
+                            # --- PDF Generation (Isolated) ---
+                            pdf_container = st.container()
                             try:
-                                pdf = ResultPDF()
-                                pdf.set_margins(left=10, top=10, right=10)
-                                pdf.set_auto_page_break(auto=True, margin=10)
-                                pdf.add_page()
-                                # The underscore '_' prevents "None" strings from appearing
-                                _ = pdf.student_info_box(student_name, adm_clean, selected_class, display_term, summary)
-                                _ = pdf.draw_scores_table(processed_results, selected_class)
-                                if "3rd" in sc_n.lower(): _ = pdf.draw_transcript_summary(summary, display_term)
-                                _ = pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, display_term)
-                                
-                                pdf_output = pdf.output(dest='S')
-                                pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-                                
-                                st.markdown("---")
-                                st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"{student_name}.pdf", use_container_width=True)
+                                with pdf_container:
+                                    pdf = ResultPDF()
+                                    pdf.set_margins(left=10, top=10, right=10)
+                                    pdf.set_auto_page_break(auto=True, margin=10)
+                                    pdf.add_page()
+                                    _ = pdf.student_info_box(student_name, adm_clean, selected_class, display_term, summary)
+                                    _ = pdf.draw_scores_table(processed_results, selected_class)
+                                    if "3rd" in sc_n.lower(): _ = pdf.draw_transcript_summary(summary, display_term)
+                                    _ = pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, display_term)
+                                    
+                                    pdf_output = pdf.output(dest='S')
+                                    pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
+                                    
+                                    st.markdown("---")
+                                    st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"{student_name}.pdf", use_container_width=True)
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
                     else:
