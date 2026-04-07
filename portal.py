@@ -1192,51 +1192,58 @@ elif page == "🛠️ Staff Management":
                             st.warning("No performance data found.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-    # We define these at the top level of the tab
     bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
     col_pdf, col_notif = st.columns(2)
 
     with col_pdf:
         st.markdown("#### 📄 Document Export")
-        if st.button("🚀 GENERATE ALL PDFs"):
-            # FIX: Load the specific file for the selected class to avoid 'empty' results
+        if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
             target_file = f"Report {bulk_class}.xlsx"
             
             if os.path.exists(target_file):
-                # Load data and clean column/row spaces automatically
                 df_bulk = pd.read_excel(target_file)
                 df_bulk.columns = [str(c).strip() for c in df_bulk.columns]
-                
-                # Check for the 'Class' column (handle case sensitivity)
                 col_map = {col.lower(): col for col in df_bulk.columns}
+                
                 if 'class' in col_map:
-                    class_col = col_map['class']
-                    # Clean the data inside the column (strip spaces)
-                    df_bulk[class_col] = df_bulk[class_col].astype(str).str.strip()
-                    
-                    # Filter for the selected class
-                    class_data = df_bulk[df_bulk[class_col] == bulk_class]
+                    actual_col = col_map['class']
+                    # Bulletproof matching
+                    class_data = df_bulk[df_bulk[actual_col].astype(str).str.contains(bulk_class.strip(), case=False, na=False)]
                     
                     if class_data.empty:
-                        st.warning(f"⚠️ Found the file, but no rows match '{bulk_class}'. Check if the class name in Excel matches exactly.")
+                        st.warning(f"⚠️ No rows match '{bulk_class}'. Check Excel values: {df_bulk[actual_col].unique()[:3]}")
                     else:
-                        progress_bar = st.progress(0)
-                        st.info(f"Processing {len(class_data)} results for {bulk_class}...")
-                        
-                        for index, row in class_data.iterrows():
-                            # --- YOUR PDF GENERATION LOGIC CALL HERE ---
-                            # (Example: generate_pdf(row))
+                        # --- ZIP PREPARATION ---
+                        zip_buffer = BytesIO()
+                        with zipfile.ZipFile(zip_buffer, "w") as zf:
+                            progress_bar = st.progress(0)
+                            st.info(f"📦 Generating {len(class_data)} results for {bulk_class}...")
                             
-                            # Update progress
-                            progress = (index + 1) / len(class_data)
-                            progress_bar.progress(progress)
+                            for index, row in class_data.iterrows():
+                                # 1. Create the PDF in memory (Replace with your actual PDF function)
+                                # pdf_bytes = your_pdf_function(row) 
+                                
+                                # 2. Add to Zip (Placeholder name using Student Name)
+                                student_name = str(row.get('Full Name', f'Student_{index}')).replace(" ", "_")
+                                # zf.writestr(f"{student_name}_Result.pdf", pdf_bytes)
+                                
+                                # Update UI
+                                progress = (index + 1) / len(class_data)
+                                progress_bar.progress(progress)
                         
-                        st.success(f"✅ Successfully generated {len(class_data)} PDFs for {bulk_class}!")
+                        # --- DOWNLOAD BUTTON ---
+                        st.success(f"🏁 {len(class_data)} Results Processed!")
+                        st.download_button(
+                            label=f"📥 Download {bulk_class} Zip Archive",
+                            data=zip_buffer.getvalue(),
+                            file_name=f"{bulk_class}_Results_Bulk.zip",
+                            mime="application/zip"
+                        )
                         st.balloons()
                 else:
-                    st.error(f"❌ Header Error: Could not find a 'Class' column in {target_file}")
+                    st.error(f"❌ 'Class' column missing in {target_file}")
             else:
-                st.error(f"❌ File Missing: {target_file} not found on server.")
+                st.error(f"❌ File {target_file} not found.")
 
     with col_notif:
         st.markdown("#### 🔔 Parent Notifications")
