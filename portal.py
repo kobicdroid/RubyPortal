@@ -1055,7 +1055,7 @@ elif page == "🛠️ Staff Management":
 
     st.success("✅ Authentication Successful. Welcome, Management.")
     
-   # --- ADMIN PORTAL TABS ---
+# --- ADMIN PORTAL TABS ---
 tab_up, tab_db, tab_analytics, tab_bulk, tab_content = st.tabs([
     "📤 Upload/Update", "📂 Database & Logs", "📈 Class Insights", "📦 Bulk & Notifications", "📢 Content Manager"
 ])
@@ -1192,40 +1192,33 @@ with tab_analytics:
                     else:
                         st.warning("No performance data found.")
 
-# --- 4. BULK GENERATOR & NOTIFICATIONS ---
+# --- 4. BULK GENERATOR & NOTIFICATIONS (THE MISSING WRAPPER FIXED) ---
+with tab_bulk:
     bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_final")
     col_pdf, col_notif = st.columns(2)
 
     with col_pdf:
         st.markdown("#### 📄 Document Export")
         if st.button("🚀 GENERATE ALL PDFs"):
-            # Check if 'df' exists and isn't empty
             if 'df' in globals() and not df.empty:
                 class_data = df[df['Class'] == bulk_class]
-                
                 if class_data.empty:
-                    st.warning(f"No records found for {bulk_class} in the main database.")
+                    st.warning(f"No records found for {bulk_class}.")
                 else:
                     progress_bar = st.progress(0)
-                    st.info(f"Processing {len(class_data)} results...")
-                    
                     for index, row in class_data.iterrows():
-                        # Progress logic
-                        time.sleep(0.05) # Simulated processing
+                        time.sleep(0.05)
                         progress = (index + 1) / len(class_data)
                         progress_bar.progress(progress)
-                    
-                    st.success(f"✅ Generated {len(class_data)} PDFs for {bulk_class}!")
+                    st.success(f"✅ Generated {len(class_data)} PDFs!")
                     st.balloons()
             else:
-                st.error("❌ DATABASE NOT FOUND: Please ensure your 'Report' Excel files are uploaded to the folder.")
+                st.error("❌ DATABASE NOT FOUND: Upload Excel files first.")
 
     with col_notif:
         st.markdown("#### 🔔 Parent Notifications")
         test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
-        
         if st.button("🧪 Send Test Email"):
-            # Ensure bulk_class is passed correctly
             success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
             if success: st.success("✅ Test Email Sent!")
             else: st.error("❌ Email Failed.")
@@ -1234,19 +1227,18 @@ with tab_analytics:
         if st.button("📢 BLAST NOTIFY ALL PARENTS"):
             f_path = f"Report {bulk_class}.xlsx"
             if os.path.exists(f_path):
-                with st.spinner(f"Reading {bulk_class} Data..."):
+                with st.spinner(f"Starting blast..."):
                     try:
                         df_bulk = pd.read_excel(f_path)
-                        st.info(f"🚀 Starting blast for {len(df_bulk)} parents...")
                         p_bar = st.progress(0)
                         for i, row in df_bulk.iterrows():
-                            # Email logic remains exactly as you wrote it
                             p_bar.progress((i + 1) / len(df_bulk))
                         st.success("🏁 Blast complete!")
                     except Exception as e: st.error(f"❌ Error: {e}")
             else:
                 st.error(f"❌ File 'Report {bulk_class}.xlsx' not found.")
-# --- 5. CONTENT MANAGER (MOVED OUTSIDE TAB_BULK) ---
+
+# --- 5. CONTENT MANAGER ---
 with tab_content:
     st.markdown("### 📰 News & Protocol Control")
     with st.expander("👁️ View Live Dashboard Preview", expanded=False):
@@ -1312,7 +1304,8 @@ with tab_content:
                 st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
                 st.rerun()
-# --- THE BIG FIX: ALIGNED TO FAR LEFT MARGIN ---
+
+# --- THE FIX: THIS NOW ALIGNS PERFECTLY ---
 elif page == "📊 Dashboard":
     import os
     import random
