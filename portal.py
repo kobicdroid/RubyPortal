@@ -1485,25 +1485,26 @@ with tab_content:
             st.success("✅ News updated!")
             st.rerun()
 
-    with st.form("notice_board_form"):
-        st.subheader("📌 Pin to Notice Board")
-        notice_name = st.text_input("Notice Title")
-        uploaded_pdf = st.file_uploader("Upload PDF", type=['pdf'])
-        if st.form_submit_button("📢 Upload & Pin"):
-            if uploaded_pdf and notice_name:
-                clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
-                file_bytes = uploaded_pdf.getvalue()
-                if not os.path.exists("notices"): os.makedirs("notices")
-                with open(os.path.join("notices", clean_filename), "wb") as f: f.write(file_bytes)
-                # Keep your GitHub upload function here
-                upload_notice_to_github(file_bytes, clean_filename)
-                st.success("Notice Pinned!")
-                st.rerun()
-# ==========================================
-# --- 📊 DASHBOARD PAGE ---
-# ==========================================
+   # --- End of Notice Board Form ---
+        with st.form("notice_board_form"):
+            st.subheader("📌 Pin to Notice Board")
+            notice_name = st.text_input("Notice Title")
+            uploaded_pdf = st.file_uploader("Upload PDF", type=['pdf'])
+            if st.form_submit_button("📢 Upload & Pin"):
+                if uploaded_pdf and notice_name:
+                    clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
+                    file_bytes = uploaded_pdf.getvalue()
+                    if not os.path.exists("notices"): 
+                        os.makedirs("notices")
+                    with open(os.path.join("notices", clean_filename), "wb") as f: 
+                        f.write(file_bytes)
+                    upload_notice_to_github(file_bytes, clean_filename)
+                    st.success("Notice Pinned!")
+                    st.rerun()
+
+# --- NOW the elif can safely start ---
 elif page == "📊 Dashboard":
-        
+    # Your dashboard code continues here...
     # 1. Assets & Initialization
     founder_path, lab_path, news_path = "founder.jpg", "lab.jpg", "news_event.jpg"
     lab_img_base64 = get_local_img(lab_path)
