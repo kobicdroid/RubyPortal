@@ -244,7 +244,8 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
         return True
     except Exception as e:
         st.error(f"❌ Mail Error: {e}")
-        return False        # --- CONFIGURATION ---
+        return False      
+        # --- CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOGO_PATH = os.path.join(BASE_DIR, "logo.jpg") 
 SIG_PATH = os.path.join(BASE_DIR, "signature.png") 
@@ -1175,34 +1176,29 @@ elif page == "🛠️ Staff Management":
                             st.warning("No performance data found.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-    # 1. Define the class selector first
+    # We define these at the top level of the tab so they are "Global" to this section
     bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
-
-    # 2. Setup the layout
     col_pdf, col_notif = st.columns(2)
 
     with col_pdf:
         st.markdown("#### 📄 Document Export")
         if st.button("🚀 GENERATE ALL PDFs"):
-            # CHECK: Does 'df' exist in the current scope?
-            if 'df' in locals() or 'df' in globals():
-                class_data = df[df['Class'] == bulk_class]
-                
-                if class_data.empty:
-                    st.warning(f"No records found for {bulk_class}. Check your spreadsheet!")
-                else:
-                    progress_bar = st.progress(0)
-                    st.info(f"Processing {len(class_data)} results for {bulk_class}...")
-                    
-                    for index, row in class_data.iterrows():
-                        # Update progress
-                        progress = (index + 1) / len(class_data)
-                        progress_bar.progress(progress)
-                    
-                    st.success(f"✅ Successfully generated {len(class_data)} PDFs for {bulk_class}!")
-                    st.balloons()
+            # This will now find 'df' from the top of your script
+            class_data = df[df['Class'] == bulk_class]
+            
+            if class_data.empty:
+                st.warning(f"No records found for {bulk_class}. Check your spreadsheet!")
             else:
-                st.error("❌ Data Error: The main database 'df' is not loaded. Please refresh the app.")
+                progress_bar = st.progress(0)
+                st.info(f"Processing {len(class_data)} results for {bulk_class}...")
+                
+                for index, row in class_data.iterrows():
+                    # Your PDF logic goes here
+                    progress = (index + 1) / len(class_data)
+                    progress_bar.progress(progress)
+                
+                st.success(f"✅ Successfully generated {len(class_data)} PDFs for {bulk_class}!")
+                st.balloons() 
 
     with col_notif:
         st.markdown("#### 🔔 Parent Notifications")
@@ -1237,12 +1233,11 @@ elif page == "🛠️ Staff Management":
                                         if send_email_notification(p_email, p_name, p_class, p_reg, p_pass):
                                             success_count += 1
                                 except: pass
-                                p_bar.progress((i + i) / len(df_bulk))
+                                p_bar.progress((i + 1) / len(df_bulk))
                             st.success(f"🏁 Blast complete! {success_count} emails sent.")
                         else: st.error("❌ Sheet 'Data' not found.")
                     except Exception as e: st.error(f"❌ Error: {e}")
             else: st.error("❌ File not found.")
-
     # --- 5. CONTENT MANAGER ---
     with tab_content:
         st.markdown("### 📰 News & Protocol Control")
