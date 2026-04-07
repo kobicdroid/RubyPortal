@@ -1402,7 +1402,12 @@ elif page == "🛠️ Staff Management":
                                     
                                     # Adjusted footer to stay at the bottom of a single page
                                     pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, bulk_class, current_term)
-
+                                    
+                                    # --- ADD RESUMPTION DATE TO PDF ---
+                                    pdf.ln(10)
+                                    pdf.set_font('Arial', 'B', 11)
+                                    pdf.cell(0, 10, "NEXT TERM BEGINS: 20th APRIL, 2026", ln=1, align='C')                        
+                                    
                                     pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
                                     zf.writestr(f"{student_name.replace(' ', '_')}.pdf", pdf_bytes)
 
