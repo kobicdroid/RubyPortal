@@ -1192,29 +1192,51 @@ elif page == "🛠️ Staff Management":
                             st.warning("No performance data found.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-    # We define these at the top level of the tab so they are "Global" to this section
+    # We define these at the top level of the tab
     bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
     col_pdf, col_notif = st.columns(2)
 
     with col_pdf:
         st.markdown("#### 📄 Document Export")
         if st.button("🚀 GENERATE ALL PDFs"):
-            # This will now find 'df' from the top of your script
-            class_data = df[df['Class'] == bulk_class]
+            # FIX: Load the specific file for the selected class to avoid 'empty' results
+            target_file = f"Report {bulk_class}.xlsx"
             
-            if class_data.empty:
-                st.warning(f"No records found for {bulk_class}. Check your spreadsheet!")
+            if os.path.exists(target_file):
+                # Load data and clean column/row spaces automatically
+                df_bulk = pd.read_excel(target_file)
+                df_bulk.columns = [str(c).strip() for c in df_bulk.columns]
+                
+                # Check for the 'Class' column (handle case sensitivity)
+                col_map = {col.lower(): col for col in df_bulk.columns}
+                if 'class' in col_map:
+                    class_col = col_map['class']
+                    # Clean the data inside the column (strip spaces)
+                    df_bulk[class_col] = df_bulk[class_col].astype(str).str.strip()
+                    
+                    # Filter for the selected class
+                    class_data = df_bulk[df_bulk[class_col] == bulk_class]
+                    
+                    if class_data.empty:
+                        st.warning(f"⚠️ Found the file, but no rows match '{bulk_class}'. Check if the class name in Excel matches exactly.")
+                    else:
+                        progress_bar = st.progress(0)
+                        st.info(f"Processing {len(class_data)} results for {bulk_class}...")
+                        
+                        for index, row in class_data.iterrows():
+                            # --- YOUR PDF GENERATION LOGIC CALL HERE ---
+                            # (Example: generate_pdf(row))
+                            
+                            # Update progress
+                            progress = (index + 1) / len(class_data)
+                            progress_bar.progress(progress)
+                        
+                        st.success(f"✅ Successfully generated {len(class_data)} PDFs for {bulk_class}!")
+                        st.balloons()
+                else:
+                    st.error(f"❌ Header Error: Could not find a 'Class' column in {target_file}")
             else:
-                progress_bar = st.progress(0)
-                st.info(f"Processing {len(class_data)} results for {bulk_class}...")
-                
-                for index, row in class_data.iterrows():
-                    # Your PDF logic goes here
-                    progress = (index + 1) / len(class_data)
-                    progress_bar.progress(progress)
-                
-                st.success(f"✅ Successfully generated {len(class_data)} PDFs for {bulk_class}!")
-                st.balloons() 
+                st.error(f"❌ File Missing: {target_file} not found on server.")
 
     with col_notif:
         st.markdown("#### 🔔 Parent Notifications")
