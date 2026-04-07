@@ -908,17 +908,18 @@ if page == "🎓 Result Portal":
         index=0
     )
 
-    adm_no = st.sidebar.text_input("Admission Number")
+    adm_no = st.sidebar.text_input("Admission Number").strip()
     
+    # --- SECRET CODE: SUMI ---
     if adm_no == "SUMI":
         st.balloons()
         st.title("👸 Queen Maryam's Portal")
-        st.success(f"Access Granted for Shutdown & Babe") 
-        st.write(f"**Relationship Status:** Planning marriage in 7-8 years.")
+        st.success("Access Granted for Shutdown & Babe") 
+        st.write("**Relationship Status:** Planning marriage in 7-8 years.")
         st.info("Keep building the Master Code, Adam.")
         st.stop()
 
-    pwd = st.sidebar.text_input("Access Key", type="password")
+    pwd = st.sidebar.text_input("Access Key", type="password").strip()
     selected_class = st.sidebar.selectbox("Class", get_available_classes())
     
     btn_label = "Generate Full Report" if portal_type == "📊 Full Term Results" else "View Test Scores"
@@ -934,7 +935,7 @@ if page == "🎓 Result Portal":
                     df_data.columns = [str(c).strip() for c in df_data.iloc[0]]
                     df_data = df_data[1:]
                     
-                    adm_clean, pwd_clean = str(adm_no).strip(), str(pwd).strip()
+                    adm_clean, pwd_clean = str(adm_no), str(pwd)
                     cols = df_data.columns.tolist()
                     adm_col = next((c for c in cols if "admission" in c.lower()), "Admission_No")
                     pwd_col = next((c for c in cols if "pass" in c.lower() or "key" in c.lower()), "Password")
@@ -996,22 +997,17 @@ if page == "🎓 Result Portal":
                             
                             st.table(pd.DataFrame(test_results).T)
                             
-                            # --- PDF Generation (Isolated) ---
-                            pdf_container = st.container()
+                            # Silent PDF Prep
                             try:
-                                with pdf_container:
-                                    pdf = ResultPDF()
-                                    pdf.is_test = True 
-                                    pdf.set_margins(left=10, top=10, right=10)
-                                    pdf.add_page()
-                                    _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0})
-                                    _ = pdf.draw_test_table(test_results)
-                                    
-                                    pdf_output = pdf.output(dest='S')
-                                    pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-                                    
-                                    st.markdown("---")
-                                    st.download_button("📥 Download Test Result", data=pdf_bytes, file_name=f"Test_{student_name}.pdf", use_container_width=True)
+                                pdf = ResultPDF()
+                                pdf.is_test = True 
+                                pdf.set_margins(left=10, top=10, right=10)
+                                pdf.add_page()
+                                _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0})
+                                _ = pdf.draw_test_table(test_results)
+                                pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
+                                st.markdown("---")
+                                st.download_button("📥 Download Test Result", data=pdf_bytes, file_name=f"Test_{student_name}.pdf", use_container_width=True)
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
 
@@ -1027,8 +1023,8 @@ if page == "🎓 Result Portal":
 
                             processed_results, total_sum = {}, 0
                             if sc_n:
-                                is_third_term = "3rd" in sc_n.lower()
-                                display_term = "3RD TERM" if is_third_term else "2ND TERM"
+                                is_3rd = "3rd" in sc_n.lower()
+                                disp_term = "3RD TERM" if is_3rd else "2ND TERM"
                                 df_sc = data_sheets[sc_n]
                                 header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
                                 header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
@@ -1066,24 +1062,20 @@ if page == "🎓 Result Portal":
                             m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
                             st.table(pd.DataFrame(processed_results).T)
 
-                            # --- PDF Generation (Isolated) ---
-                            pdf_container = st.container()
+                            # Silent PDF Prep
                             try:
-                                with pdf_container:
-                                    pdf = ResultPDF()
-                                    pdf.set_margins(left=10, top=10, right=10)
-                                    pdf.set_auto_page_break(auto=True, margin=10)
-                                    pdf.add_page()
-                                    _ = pdf.student_info_box(student_name, adm_clean, selected_class, display_term, summary)
-                                    _ = pdf.draw_scores_table(processed_results, selected_class)
-                                    if "3rd" in sc_n.lower(): _ = pdf.draw_transcript_summary(summary, display_term)
-                                    _ = pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, display_term)
-                                    
-                                    pdf_output = pdf.output(dest='S')
-                                    pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-                                    
-                                    st.markdown("---")
-                                    st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"{student_name}.pdf", use_container_width=True)
+                                pdf = ResultPDF()
+                                pdf.set_margins(left=10, top=10, right=10)
+                                pdf.set_auto_page_break(auto=True, margin=10)
+                                pdf.add_page()
+                                _ = pdf.student_info_box(student_name, adm_clean, selected_class, disp_term, summary)
+                                _ = pdf.draw_scores_table(processed_results, selected_class)
+                                if is_3rd: _ = pdf.draw_transcript_summary(summary, disp_term)
+                                _ = pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, disp_term)
+                                
+                                pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
+                                st.markdown("---")
+                                st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"{student_name}.pdf", use_container_width=True)
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
                     else:
