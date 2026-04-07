@@ -1175,6 +1175,9 @@ elif page == "🛠️ Staff Management":
                             st.warning("No performance data found.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
+    # Create the columns first to avoid NameError
+    col_pdf, col_notif = st.columns(2)
+
     with col_pdf:
         st.markdown("#### 📄 Document Export")
         if st.button("🚀 GENERATE ALL PDFs"):
