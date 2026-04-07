@@ -1167,9 +1167,6 @@ elif page == "🛠️ Staff Management":
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
     with tab_bulk:
         st.subheader("📦 Bulk Action Suite")
-        # --- SHUTDOWN: SETTING THE CURRENT TERM MANUALLY ---
-        current_term = "2ND TERM" 
-        
         bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
         col_pdf, col_notif = st.columns(2)
 
@@ -1181,7 +1178,6 @@ elif page == "🛠️ Staff Management":
                 
                 if os.path.exists(target_file):
                     xl = pd.ExcelFile(target_file)
-                    # Load all necessary sheets
                     sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
                     data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
                     
@@ -1198,13 +1194,13 @@ elif page == "🛠️ Staff Management":
                         # --- LIVE UI ELEMENTS ---
                         status_window = st.empty() 
                         progress_bar = st.progress(0)
-                        button_placeholder = st.empty() 
+                        button_placeholder = st.empty() # Placeholder for the final download button
                         
                         zip_buffer = BytesIO()
                         with zipfile.ZipFile(zip_buffer, "w") as zf:
-                            # Find Header Logic
                             header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
                             header_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
+                            
                             subject_row = df_sc_raw.iloc[header_idx - 1]
                             label_row = df_sc_raw.iloc[header_idx] 
 
@@ -1217,26 +1213,24 @@ elif page == "🛠️ Staff Management":
                                     student_vals = s_row_data.iloc[0]
                                     student_name = str(student_vals.iloc[1]).upper()
 
-                                    # Live Name Animation
+                                    # Live Animation
                                     status_window.markdown(f"""
                                         <div style="padding:15px; border-radius:10px; background-color:#f8f9fa; border-left: 5px solid #1E3A8A;">
-                                            <span style="color:#1E3A8A; font-weight:bold; font-size:12px;">2ND TERM PROCESSING...</span><br>
+                                            <span style="color:#1E3A8A; font-weight:bold; font-size:12px;">SYSTEM PROCESSING...</span><br>
                                             <span style="font-size:18px; color:#333;">📄 <b>{student_name}</b></span>
                                         </div>
                                     """, unsafe_allow_html=True)
 
-                                    # --- PHYSICAL A4 PDF CONFIGURATION ---
                                     pdf = ResultPDF()
-                                    pdf.set_margins(left=10, top=10, right=10) # Maximize Width
-                                    pdf.set_auto_page_break(auto=True, margin=10) # Keep to 1 page
+                                    pdf.set_auto_page_break(auto=True, margin=15)
+                                    pdf.is_test = "test" in sc_n.lower()
                                     pdf.add_page()
 
-                                    # Extract Scores
+                                    # --- (Your PDF Drawing Logic remains exactly the same) ---
                                     processed_results = {}
                                     total_marks = 0
                                     for i, label in enumerate(label_row):
                                         if str(label).strip().lower() == 'total':
-                                            # (Your subject mapping logic here)
                                             subject_name = "Unknown"
                                             for j in range(i, -1, -1):
                                                 val = str(subject_row.iloc[j]).strip()
@@ -1244,27 +1238,28 @@ elif page == "🛠️ Staff Management":
                                                     subject_name = val
                                                     break
                                             try:
-                                                tot = float(student_vals.iloc[i]) if pd.notna(student_vals.iloc[i]) else 0
                                                 ca = float(student_vals.iloc[i-2]) if pd.notna(student_vals.iloc[i-2]) else 0
                                                 ex = float(student_vals.iloc[i-1]) if pd.notna(student_vals.iloc[i-1]) else 0
-                                                processed_results[subject_name] = {"CA": ca, "Exam": ex, "Total": tot}
-                                                total_marks += tot
+                                                tot = float(student_vals.iloc[i]) if pd.notna(student_vals.iloc[i]) else 0
+                                                if subject_name != "Unknown":
+                                                    processed_results[subject_name] = {"CA": ca, "Exam": ex, "Total": tot}
+                                                    total_marks += tot
                                             except: continue
 
-                                    summary = {'obtained': total_marks, 'avg': round(total_marks/max(1, len(processed_results)), 2)}
+                                    def get_meta(key):
+                                        sh = find_s(key)
+                                        if not sh: return {}
+                                        df = data_sheets[sh].copy()
+                                        df.columns = [str(c).strip() for c in df.iloc[0]]
+                                        m = df[df.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                        return m.iloc[0].to_dict() if not m.empty else {}
 
-                                    # --- APPLYING YOUR CUSTOM HEADER LOGIC ---
-                                    # Passing "2ND TERM" into your function
-                                    pdf.student_info_box(student_name, adm_clean, bulk_class, current_term, summary)
-
-                                    # Expand table to 190mm in your draw_scores_table function
-                                    pdf.draw_scores_table(processed_results, bulk_class)
-
-                                    # --- SKIP CUMULATIVE TRANSCRIPT ---
-                                    # Since it's 2nd Term, we DO NOT call pdf.draw_transcript_summary()
+                                    summary = {'obtained': total_marks, 'avg': round(total_marks/max(1, len(processed_results)), 2), 'pos': get_meta('Bsheet').get('Position', 'N/A'), 'max': len(processed_results) * 100}
                                     
-                                    # Draw Footer (Behaviour, Skills, Comments)
-                                    pdf.draw_footer_sections(None, None, None, summary, bulk_class, current_term)
+                                    pdf.student_info_box(student_name, adm_clean, bulk_class, "3rd Term", summary)
+                                    pdf.draw_scores_table(processed_results, bulk_class)
+                                    pdf.draw_transcript_summary(summary, "3rd Term")
+                                    pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, bulk_class, "3rd Term")
 
                                     pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
                                     zf.writestr(f"{student_name.replace(' ', '_')}.pdf", pdf_bytes)
@@ -1274,19 +1269,20 @@ elif page == "🛠️ Staff Management":
 
                                 progress_bar.progress((index + 1) / len(adm_list))
 
-                        # Finish and show download button at the top
-                        status_window.success(f"✅ DONE! {len(adm_list)} 2nd Term Reports generated.")
+                        # --- THE MAGIC FIX: BUTTON APPEARS RIGHT HERE ---
+                        status_window.success(f"✅ READY! All {len(adm_list)} reports packaged successfully.")
                         st.balloons()
                         
+                        # We use the placeholder to inject the button exactly under the success message
                         button_placeholder.download_button(
-                            label="📥 DOWNLOAD ALL 2ND TERM REPORTS",
+                            label="📥 DOWNLOAD ZIP PACKAGE NOW",
                             data=zip_buffer.getvalue(),
-                            file_name=f"2nd_Term_Reports_{bulk_class}.zip",
+                            file_name=f"Reports_{bulk_class}.zip",
                             mime="application/zip",
                             use_container_width=True
                         )
                 else:
-                    st.error(f"❌ Excel file not found.")
+                    st.error(f"❌ File {target_file} not found.")
         with col_notif:
             st.markdown("#### 🔔 Parent Notifications")
             test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
