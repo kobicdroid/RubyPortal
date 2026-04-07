@@ -1196,6 +1196,7 @@ with tab_analytics:
                         st.warning("No performance data found.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
+if page == "🖨️ Bulk Printing": 
     bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
     col_pdf, col_notif = st.columns(2)
 
@@ -1211,7 +1212,6 @@ with tab_analytics:
                 
                 if 'class' in col_map:
                     actual_col = col_map['class']
-                    # THE SPACE-PROOF FIX
                     clean_selection = str(bulk_class).replace(" ", "").upper()
                     df_bulk['helper_clean'] = df_bulk[actual_col].astype(str).str.replace(" ", "").str.upper()
                     class_data = df_bulk[df_bulk['helper_clean'] == clean_selection]
@@ -1257,12 +1257,12 @@ with tab_analytics:
                     except Exception as e: st.error(f"❌ Error: {e}")
             else:
                 st.error(f"❌ File not found.")
-    
-# --- 5. CONTENT MANAGER ---
-with tab_content:
-    st.markdown("### 📰 News & Protocol Control")
-    with st.expander("👁️ View Live Dashboard Preview", expanded=False):
-        st.markdown(f"#### {st.session_state.news_content['title']}")
+
+# --- 5. CONTENT MANAGER (Note: This is now correctly outside the Bulk Printing block) ---
+# Assuming tab_content is defined earlier in your script
+elif page == "📰 Content Manager": 
+    with tab_content:
+        st.markdown("### 📰 News & Protocol Control")
         if os.path.exists("news_event.jpg"):
             st.image("news_event.jpg", width=400)
         st.write(st.session_state.news_content['desc'])
@@ -1324,6 +1324,7 @@ with tab_content:
                 st.session_state.portal_storage['notices_data'] = str(st.session_state.notices)
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
                 st.rerun()
+
 
 # --- THE FIX: THIS NOW ALIGNS PERFECTLY ---
 elif page == "📊 Dashboard":
