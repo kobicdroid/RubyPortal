@@ -1057,13 +1057,7 @@ elif page == "🛠️ Staff Management":
         st.session_state['logged_in'] = True
 
     st.success("✅ Authentication Successful. Welcome, Management.")
-    
-# ==========================================
-# --- 🛡️ ADMIN PORTAL MAIN BLOCK ---
-# ==========================================
-if page == "🛡️ Admin Portal":
-    st.title("🛡️ Secure Administrative Suite")
-    
+     
     # Define Tabs
     tab_up, tab_db, tab_analytics, tab_bulk, tab_content = st.tabs([
         "📤 Upload/Update", "📂 Database & Logs", "📈 Class Insights", 
@@ -1174,7 +1168,6 @@ if page == "🛡️ Admin Portal":
 # --- 📊 DASHBOARD PAGE (OUTSIDE ADMIN) ---
 # ==========================================
 elif page == "📊 Dashboard":
-    st.title("📊 School Analytics Dashboard")
     # Your Dashboard Assets & Logic
     founder_path, lab_path, news_path = "founder.jpg", "lab.jpg", "news_event.jpg"
     lab_img_base64 = get_local_img(lab_path)
