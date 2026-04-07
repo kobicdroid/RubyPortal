@@ -1192,77 +1192,130 @@ elif page == "🛠️ Staff Management":
                             st.warning("No performance data found.")
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-    bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
-    col_pdf, col_notif = st.columns(2)
+bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
+col_pdf, col_notif = st.columns(2)
 
-    with col_pdf:
-        st.markdown("#### 📄 Document Export")
-        if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
-            target_file = f"Report {bulk_class}.xlsx"
+with col_pdf:
+    st.markdown("#### 📄 Document Export")
+    if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
+        target_file = f"Report {bulk_class}.xlsx"
+        
+        if os.path.exists(target_file):
+            # Load all sheets to handle metadata (Behaviour, Skills, Comments)
+            data_sheets = pd.read_excel(target_file, sheet_name=None)
             
-            if os.path.exists(target_file):
-                df_bulk = pd.read_excel(target_file)
-                df_bulk.columns = [str(c).strip() for c in df_bulk.columns]
-                col_map = {col.lower(): col for col in df_bulk.columns}
-                
-                if 'class' in col_map:
-                    actual_col = col_map['class']
-                    clean_selection = str(bulk_class).replace(" ", "").upper()
-                    df_bulk['helper_clean'] = df_bulk[actual_col].astype(str).str.replace(" ", "").str.upper()
-                    class_data = df_bulk[df_bulk['helper_clean'] == clean_selection]
-                    
-                    if class_data.empty:
-                        st.warning(f"⚠️ No match found for {bulk_class}.")
-                    else:
-                        st.success(f"✅ Match Found for {bulk_class}!")
-                        
-                        # --- THE PDF & ZIP ENGINE ---
-                        zip_buffer = BytesIO()
-                        with zipfile.ZipFile(zip_buffer, "w") as zf:
-                            progress_bar = st.progress(0)
-                            status_text = st.empty()
-                            
-                            for index, row in class_data.iterrows():
-                                # 1. CREATE PDF (Simplified version of your portal's result)
-                                pdf = FPDF()
-                                pdf.add_page()
-                                pdf.set_font("Arial", 'B', 16)
-                                pdf.cell(200, 10, txt="RUBY SPRINGFIELD COLLEGE", ln=True, align='C')
-                                pdf.set_font("Arial", size=12)
-                                pdf.cell(200, 10, txt=f"Official Result: {bulk_class}", ln=True, align='C')
-                                pdf.ln(10)
-                                
-                                # Add student details from your Excel
-                                s_name = str(row.get('Names ', f'Student_{index}'))
-                                s_id = str(row.get('Admission_No', 'N/A'))
-                                pdf.cell(200, 10, txt=f"Student: {s_name}", ln=True)
-                                pdf.cell(200, 10, txt=f"Reg No: {s_id}", ln=True)
-                                
-                                # 2. SAVE PDF TO MEMORY
-                                pdf_output = pdf.output(dest='S').encode('latin-1')
-                                
-                                # 3. ADD TO ZIP FILE
-                                file_name = f"{s_name.replace(' ', '_')}_Result.pdf"
-                                zf.writestr(file_name, pdf_output)
-                                
-                                # Update Progress
-                                progress = (index + 1) / len(class_data)
-                                progress_bar.progress(progress)
-                                status_text.text(f"Generated: {file_name}")
+            # Helper to find sheets flexibly
+            def find_s(key): 
+                return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
 
-                        # --- THE DOWNLOAD BUTTON (Must be outside the loop) ---
-                        st.success(f"🏁 {len(class_data)} PDFs Prepared!")
-                        st.download_button(
-                            label=f"📥 DOWNLOAD ALL {bulk_class} PDFs (ZIP)",
-                            data=zip_buffer.getvalue(),
-                            file_name=f"{bulk_class}_Results_Bulk.zip",
-                            mime="application/zip"
-                        )
-                        st.balloons()
-                else:
-                    st.error("❌ 'Class' column not found.")
+            sc_n = find_s('Scoresheet')
+            if not sc_n:
+                st.error("❌ 'Scoresheet' not found in Excel.")
             else:
-                st.error(f"❌ File 'Report {bulk_class}.xlsx' not found.")
+                df_sc_raw = data_sheets[sc_n]
+                # Assuming admission numbers start from row 3 (index 2) in column 0
+                adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
+
+                # --- THE PDF & ZIP ENGINE ---
+                zip_buffer = BytesIO()
+                with zipfile.ZipFile(zip_buffer, "w") as zf:
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    
+                    for index, adm_val in enumerate(adm_list):
+                        adm_clean = str(adm_val).strip()
+                        
+                        try:
+                            # 1. INITIALIZE YOUR MASTER PDF CLASS
+                            pdf = ResultPDF()
+                            pdf.set_auto_page_break(auto=True, margin=15)
+                            
+                            # Determine if this is a Test or Full Term based on sheet name
+                            is_test_mode = "test" in sc_n.lower()
+                            pdf.is_test = is_test_mode
+                            pdf.add_page()
+
+                            # 2. DATA EXTRACTION LOGIC
+                            header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                            h_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
+                            r1, h_row = df_sc_raw.iloc[h_idx-1], df_sc_raw.iloc[h_idx]
+                            
+                            s_row = df_sc_raw[df_sc_raw.iloc[:,0].astype(str).str.strip() == adm_clean]
+                            if s_row.empty: continue
+                            
+                            s_vals = s_row.iloc[0]
+                            student_name = str(s_vals.iloc[1]).upper() # 2nd column for Name
+                            
+                            processed_results = {}
+                            total_sum = 0
+                            
+                            # Build Subject Dictionary
+                            for i, col_val in enumerate(h_row):
+                                if str(col_val).strip().lower() == 'total':
+                                    sub = next((str(r1.iloc[j]).strip() for j in range(i, -1, -1) if str(r1.iloc[j]).lower() != 'nan'), "Unknown")
+                                    try:
+                                        ca = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
+                                        ex = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
+                                        tot = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
+                                        processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot, "CA1": ca, "Total_CA": ca}
+                                        total_sum += tot
+                                    except: continue
+
+                            # 3. GET METADATA (Behaviour, Skill, Comment)
+                            def get_meta(k):
+                                sheet = find_s(k)
+                                if not sheet: return {}
+                                df_m = data_sheets[sheet]
+                                df_m.columns = [str(c).strip() for c in df_m.iloc[0]]
+                                m = df_m[df_m.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                return m.iloc[0].to_dict() if not m.empty else {}
+
+                            beh, sk, comm = get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment')
+                            
+                            # Summary Data
+                            summary = {
+                                'avg': round(total_sum/len(processed_results), 2) if processed_results else 0,
+                                'obtained': total_sum,
+                                'max': len(processed_results) * 100,
+                                'pos': 'N/A' # Can be linked to Bsheet if needed
+                            }
+
+                            # 4. ASSEMBLY USING YOUR CLASS METHODS
+                            pdf.student_info_box(student_name, adm_clean, bulk_class, "3rd Term", summary)
+                            
+                            if is_test_mode:
+                                pdf.draw_test_table(processed_results)
+                            else:
+                                pdf.draw_scores_table(processed_results, bulk_class)
+                                pdf.draw_footer_sections(beh, sk, comm, summary, bulk_class, "3rd Term")
+
+                            # 5. SAVE TO ZIP
+                            pdf_output = pdf.output(dest='S')
+                            pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
+                            
+                            file_name = f"{student_name.replace(' ', '_')}_Result.pdf"
+                            zf.writestr(file_name, pdf_bytes)
+                            
+                        except Exception as e:
+                            st.error(f"Error processing {adm_clean}: {e}")
+
+                        # Update Progress UI
+                        progress = (index + 1) / len(adm_list)
+                        progress_bar.progress(progress)
+                        status_text.text(f"Generated: {student_name}")
+
+                # --- THE DOWNLOAD BUTTON ---
+                st.success(f"🏁 {len(adm_list)} Professional PDFs Prepared!")
+                st.download_button(
+                    label=f"📥 DOWNLOAD ALL {bulk_class} PDFs (ZIP)",
+                    data=zip_buffer.getvalue(),
+                    file_name=f"{bulk_class}_Full_Reports.zip",
+                    mime="application/zip",
+                    use_container_width=True
+                )
+                st.balloons()
+        else:
+            st.error(f"❌ File 'Report {bulk_class}.xlsx' not found.")
 
     with col_notif:
         st.markdown("#### 🔔 Parent Notifications")
