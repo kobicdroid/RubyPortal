@@ -923,184 +923,189 @@ if page == "🎓 Result Portal":
     pwd = st.sidebar.text_input("Access Key", type="password")
     selected_class = st.sidebar.selectbox("Class", get_available_classes())
     
-    # Dynamic button label based on selection
-    btn_label = "Generate Full Report" if portal_type == "📊 Full Term Results" else "View Test Scores"
-    login_btn = st.sidebar.button(btn_label)
+  # Dynamic button label based on selection
+btn_label = "Generate Full Report" if portal_type == "📊 Full Term Results" else "View Test Scores"
+login_btn = st.sidebar.button(btn_label)
 
-    if login_btn:
-        file_path = f"Report {selected_class}.xlsx"
-        if os.path.exists(file_path):
-            try:
-                xl = pd.ExcelFile(file_path)
-                
-                if 'Data' in xl.sheet_names:
-                    df_data = xl.parse('Data', header=None)
-                    df_data.columns = [str(c).strip() for c in df_data.iloc[0]]
-                    df_data = df_data[1:]
-                    
-                    cols = df_data.columns.tolist()
-                    adm_col = next((c for c in cols if "admission" in c.lower()), "Admission_No")
-                    pwd_col = next((c for c in cols if "pass" in c.lower() or "key" in c.lower()), "Password")
-                    name_col = next((c for c in cols if "name" in c.lower()), "Name")
-                    
-                    adm_clean = str(adm_no).strip()
-                    pwd_clean = str(pwd).strip()
-
-                    user = df_data[(df_data[adm_col].astype(str).str.strip() == adm_clean) & 
-                                   (df_data[pwd_col].astype(str).str.strip() == pwd_clean)]
-
-                    if not user.empty:
-                        student = user.iloc[0]
-                        student_name = str(student.get(name_col, 'Student')).upper()
-                        term = student.get('Term', 'N/A')
-                        
-                        log_activity("Student", "Login", f"Success: {student_name} ({adm_clean})")
-
-                        # Load data sheets
-                        sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
-                        data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
-
-                        def find_s(key):
-                            for s in data_sheets.keys():
-                                if key.lower() in s.lower(): return s
-                            return None
-
-                        sc_n = find_s('Scoresheet')
-                        
-# --- DATABASE LOADING (Start of Logic) ---
-try:
-    # --- BRANCH 1: TEST RESULTS (C.A) ---
-    if portal_type == "📝 Test Results (C.A)":
-        st.title(f"📝 Test Records: {student_name}")
-        test_results = {}
-        if sc_n:
-            df_sc = data_sheets[sc_n]
-            header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
-            header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
-            r1 = df_sc.iloc[header_idx-1]
-            header_row = df_sc.iloc[header_idx] 
-            s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
-            
-            if not s_row.empty:
-                s_vals = s_row.iloc[0]
-                for i, col_val in enumerate(header_row):
-                    if str(col_val).strip().lower() == 'total':
-                        sub = "Unknown"
-                        for j in range(i, -1, -1):
-                            val = str(r1.iloc[j]).strip()
-                            if val.lower() != 'nan' and val != '':
-                                sub = val; break
-                        try:
-                            test_results[sub] = {
-                                "CA1": s_vals.iloc[i-6] if pd.notna(s_vals.iloc[i-6]) else "-",
-                                "CA2": s_vals.iloc[i-5] if pd.notna(s_vals.iloc[i-5]) else "-",
-                                "CA3": s_vals.iloc[i-4] if pd.notna(s_vals.iloc[i-4]) else "-",
-                                "CA4": s_vals.iloc[i-3] if pd.notna(s_vals.iloc[i-3]) else "-",
-                                "Total_CA": s_vals.iloc[i-2] if pd.notna(s_vals.iloc[i-2]) else 0
-                            }
-                        except: continue
-        
-        st.table(pd.DataFrame(test_results).T)
-        
+if login_btn:
+    file_path = f"Report {selected_class}.xlsx"
+    if os.path.exists(file_path):
         try:
-            pdf = ResultPDF()
-            pdf.is_test = True 
-            pdf.set_margins(left=10, top=10, right=10) # A4 Optimization
-            pdf.add_page()
-            # Capture returns with '_' to stop the "None" repetition
-            _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 'N/A'})
-            _ = pdf.draw_test_table(test_results)
+            xl = pd.ExcelFile(file_path)
             
-            pdf_output = pdf.output(dest='S')
-            pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-            st.download_button("📥 Download Test Result", data=pdf_bytes, file_name=f"Test_{student_name}.pdf", key="dl_test", use_container_width=True)
-        except Exception as e:
-            st.error(f"PDF Error: {e}")
+            if 'Data' in xl.sheet_names:
+                df_data = xl.parse('Data', header=None)
+                df_data.columns = [str(c).strip() for c in df_data.iloc[0]]
+                df_data = df_data[1:]
+                
+                cols = df_data.columns.tolist()
+                adm_col = next((c for c in cols if "admission" in c.lower()), "Admission_No")
+                pwd_col = next((c for c in cols if "pass" in c.lower() or "key" in c.lower()), "Password")
+                name_col = next((c for c in cols if "name" in c.lower()), "Name")
+                
+                adm_clean = str(adm_no).strip()
+                pwd_clean = str(pwd).strip()
 
-    # --- BRANCH 2: FULL TERM RESULTS ---
+                user = df_data[(df_data[adm_col].astype(str).str.strip() == adm_clean) & 
+                               (df_data[pwd_col].astype(str).str.strip() == pwd_clean)]
+
+                if not user.empty:
+                    student = user.iloc[0]
+                    student_name = str(student.get(name_col, 'Student')).upper()
+                    term = student.get('Term', 'N/A')
+                    
+                    log_activity("Student", "Login", f"Success: {student_name} ({adm_clean})")
+
+                    # Load data sheets
+                    sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
+                    data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
+
+                    def find_s(key):
+                        for s in data_sheets.keys():
+                            if key.lower() in s.lower(): return s
+                        return None
+
+                    sc_n = find_s('Scoresheet')
+                    
+                    # --- START OF DATA PROCESSING ---
+                    try:
+                        # --- BRANCH 1: TEST RESULTS (C.A) ---
+                        if portal_type == "📝 Test Results (C.A)":
+                            st.title(f"📝 Test Records: {student_name}")
+                            test_results = {}
+                            if sc_n:
+                                df_sc = data_sheets[sc_n]
+                                header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                                header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
+                                r1 = df_sc.iloc[header_idx-1]
+                                header_row = df_sc.iloc[header_idx] 
+                                s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                
+                                if not s_row.empty:
+                                    s_vals = s_row.iloc[0]
+                                    for i, col_val in enumerate(header_row):
+                                        if str(col_val).strip().lower() == 'total':
+                                            sub = "Unknown"
+                                            for j in range(i, -1, -1):
+                                                val = str(r1.iloc[j]).strip()
+                                                if val.lower() != 'nan' and val != '':
+                                                    sub = val; break
+                                            try:
+                                                test_results[sub] = {
+                                                    "CA1": s_vals.iloc[i-6] if pd.notna(s_vals.iloc[i-6]) else "-",
+                                                    "CA2": s_vals.iloc[i-5] if pd.notna(s_vals.iloc[i-5]) else "-",
+                                                    "CA3": s_vals.iloc[i-4] if pd.notna(s_vals.iloc[i-4]) else "-",
+                                                    "CA4": s_vals.iloc[i-3] if pd.notna(s_vals.iloc[i-3]) else "-",
+                                                    "Total_CA": s_vals.iloc[i-2] if pd.notna(s_vals.iloc[i-2]) else 0
+                                                }
+                                            except: continue
+                            
+                            st.table(pd.DataFrame(test_results).T)
+                            
+                            try:
+                                pdf = ResultPDF()
+                                pdf.is_test = True 
+                                pdf.set_margins(left=10, top=10, right=10)
+                                pdf.add_page()
+                                _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 'N/A'})
+                                _ = pdf.draw_test_table(test_results)
+                                
+                                pdf_output = pdf.output(dest='S')
+                                pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
+                                st.download_button("📥 Download Test Result", data=pdf_bytes, file_name=f"Test_{student_name}.pdf", key="dl_test", use_container_width=True)
+                            except Exception as e:
+                                st.error(f"PDF Error: {e}")
+
+                        # --- BRANCH 2: FULL TERM RESULTS ---
+                        else:
+                            bs_n = find_s('Bsheet')
+                            beh_n, sk_n, com_n = find_s('Behaviour'), find_s('Skill'), find_s('Comment')
+
+                            pos_val = "N/A"
+                            if bs_n:
+                                df_bs = data_sheets[bs_n]
+                                df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
+                                match = df_bs[df_bs.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                if not match.empty: pos_val = match.iloc[0].get('Position', 'N/A')
+
+                            processed_results = {}; total_sum = 0
+                            if sc_n:
+                                is_third_term = "3rd" in sc_n.lower()
+                                display_term = "3RD TERM" if is_third_term else "2ND TERM"
+
+                                df_sc = data_sheets[sc_n]
+                                header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                                header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
+                                r1 = df_sc.iloc[header_idx-1]
+                                header_row = df_sc.iloc[header_idx] 
+                                s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                if not s_row.empty:
+                                    s_vals = s_row.iloc[0]
+                                    for i, col_val in enumerate(header_row):
+                                        if str(col_val).strip().lower() == 'total':
+                                            sub = "Unknown"
+                                            for j in range(i, -1, -1):
+                                                val = str(r1.iloc[j]).strip()
+                                                if val.lower() != 'nan' and val != '':
+                                                    sub = val; break
+                                            try:
+                                                ca = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
+                                                ex = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
+                                                tot = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
+                                                processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
+                                                total_sum += tot
+                                            except: continue
+
+                            def get_row(sn):
+                                if not sn: return {}
+                                df = data_sheets[sn]
+                                df.columns = [str(c).strip() for c in df.iloc[0]]
+                                m = df[df.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                return m.iloc[0].to_dict() if not m.empty else {}
+
+                            beh, sk, comm = get_row(beh_n), get_row(sk_n), get_row(com_n)
+                            active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
+                            summary = {'obtained': total_sum, 'avg': round(total_sum/max(1, len(active_subs)), 2), 'pos': pos_val, 'max': len(processed_results)*100}
+                            
+                            st.title(f"👋 Welcome, {student_name}")
+                            m1, m2, m3 = st.columns(3)
+                            m1.metric("Average", f"{summary['avg']}%")
+                            m2.metric("Position", summary['pos'])
+                            m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
+                            st.table(pd.DataFrame(processed_results).T)
+
+                            try:
+                                pdf = ResultPDF()
+                                pdf.set_margins(left=10, top=10, right=10)
+                                pdf.set_auto_page_break(auto=True, margin=10)
+                                pdf.add_page()
+                                
+                                _ = pdf.student_info_box(student_name, adm_clean, selected_class, display_term, summary)
+                                _ = pdf.draw_scores_table(processed_results, selected_class)
+                                
+                                if is_third_term:
+                                    _ = pdf.draw_transcript_summary(summary, display_term)
+                                    
+                                _ = pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, display_term)
+                                
+                                pdf_output = pdf.output(dest='S')
+                                pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
+                                st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"{student_name}.pdf", key="dl_full", use_container_width=True)
+                            except Exception as e:
+                                st.error(f"PDF Error: {e}")
+
+                    except Exception as e:
+                        st.error(f"Data Processing Error: {e}")
+                
+                else:
+                    st.sidebar.error("❌ Invalid Admission No or Password")
+            else:
+                st.error("❌ 'Data' sheet missing from the report file.")
+
+        except Exception as e:
+            st.error(f"File Error: {e}")
     else:
-        bs_n = find_s('Bsheet')
-        beh_n, sk_n, com_n = find_s('Behaviour'), find_s('Skill'), find_s('Comment')
-
-        pos_val = "N/A"
-        if bs_n:
-            df_bs = data_sheets[bs_n]
-            df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
-            match = df_bs[df_bs.iloc[:,0].astype(str).str.strip() == adm_clean]
-            if not match.empty: pos_val = match.iloc[0].get('Position', 'N/A')
-
-        processed_results = {}; total_sum = 0
-        if sc_n:
-            # Force 2nd Term unless '3rd' is found
-            is_third_term = "3rd" in sc_n.lower()
-            display_term = "3RD TERM" if is_third_term else "2ND TERM"
-
-            df_sc = data_sheets[sc_n]
-            header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
-            header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
-            r1 = df_sc.iloc[header_idx-1]
-            header_row = df_sc.iloc[header_idx] 
-            s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
-            if not s_row.empty:
-                s_vals = s_row.iloc[0]
-                for i, col_val in enumerate(header_row):
-                    if str(col_val).strip().lower() == 'total':
-                        sub = "Unknown"
-                        for j in range(i, -1, -1):
-                            val = str(r1.iloc[j]).strip()
-                            if val.lower() != 'nan' and val != '':
-                                sub = val; break
-                        try:
-                            ca = float(s_vals.iloc[i-2]) if pd.notna(s_vals.iloc[i-2]) else 0
-                            ex = float(s_vals.iloc[i-1]) if pd.notna(s_vals.iloc[i-1]) else 0
-                            tot = float(s_vals.iloc[i]) if pd.notna(s_vals.iloc[i]) else 0
-                            processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
-                            total_sum += tot
-                        except: continue
-
-        def get_row(sn):
-            if not sn: return {}
-            df = data_sheets[sn]
-            df.columns = [str(c).strip() for c in df.iloc[0]]
-            m = df[df.iloc[:,0].astype(str).str.strip() == adm_clean]
-            return m.iloc[0].to_dict() if not m.empty else {}
-
-        beh, sk, comm = get_row(beh_n), get_row(sk_n), get_row(com_n)
-        active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
-        summary = {'obtained': total_sum, 'avg': round(total_sum/max(1, len(active_subs)), 2), 'pos': pos_val, 'max': len(processed_results)*100}
-        
-        st.title(f"👋 Welcome, {student_name}")
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Average", f"{summary['avg']}%")
-        m2.metric("Position", summary['pos'])
-        m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
-        st.table(pd.DataFrame(processed_results).T)
-
-        try:
-            pdf = ResultPDF()
-            pdf.set_margins(left=10, top=10, right=10) # Physical A4 width
-            pdf.set_auto_page_break(auto=True, margin=10) # Single page fix
-            pdf.add_page()
-            
-            # Silent execution to stop "None" repetition
-            _ = pdf.student_info_box(student_name, adm_clean, selected_class, display_term, summary)
-            _ = pdf.draw_scores_table(processed_results, selected_class)
-            
-            if is_third_term:
-                _ = pdf.draw_transcript_summary(summary, display_term)
-                
-            _ = pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, display_term)
-            
-            pdf_output = pdf.output(dest='S')
-            pdf_bytes = pdf_output.encode('latin-1', errors='replace') if isinstance(pdf_output, str) else pdf_output
-            
-            st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"{student_name}.pdf", key="dl_full", use_container_width=True)
-        except Exception as e:
-            st.error(f"PDF Error: {e}")
-
-# This closes the 'try' block that was causing the SyntaxError
-except Exception as e:
-    st.error(f"System Process Error: {e}")
+        st.error(f"❌ Database for {selected_class} not found.")
 # --- STAFF MANAGEMENT LOGIC ---
 elif page == "🛠️ Staff Management":
     import io  
