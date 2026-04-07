@@ -1196,6 +1196,7 @@ with tab_analytics:
 
 # --- 4. BULK GENERATOR & NOTIFICATIONS ---
 with tab_bulk:
+    st.subheader("📦 Bulk Action Suite")
     bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
     col_pdf, col_notif = st.columns(2)
 
@@ -1204,19 +1205,21 @@ with tab_bulk:
         if st.button("🚀 GENERATE & PACKAGE ALL PDFs"):
             target_file = f"Report {bulk_class}.xlsx"
             if os.path.exists(target_file):
-                # Add your PDF logic loop here
+                # Placeholder for your PDF generation loop
                 st.success(f"✅ Generating PDFs for {bulk_class}...")
                 st.balloons()
             else:
-                st.error(f"❌ File 'Report {bulk_class}.xlsx' not found.")
+                st.error(f"❌ File '{target_file}' not found.")
 
     with col_notif:
         st.markdown("#### 🔔 Parent Notifications")
         test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
         if st.button("🧪 Send Test Email"):
             success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
-            if success: st.success("✅ Test Email Sent!")
-            else: st.error("❌ Email Failed.")
+            if success: 
+                st.success("✅ Test Email Sent!")
+            else: 
+                st.error("❌ Email Failed.")
 
 # --- 5. CONTENT MANAGER ---
 with tab_content:
@@ -1224,6 +1227,7 @@ with tab_content:
     if os.path.exists("news_event.jpg"):
         st.image("news_event.jpg", width=400)
     
+    # Form 1: Dashboard News
     with st.form("news_update_form"):
         st.subheader("✍️ Update Dashboard News")
         new_title = st.text_input("Headline", value=st.session_state.news_content['title'])
@@ -1233,35 +1237,44 @@ with tab_content:
         if st.form_submit_button("🚀 Publish & Save"):
             st.session_state.news_content.update({'title': new_title.upper(), 'desc': new_desc})
             st.session_state.portal_storage.update({'news_title': new_title.upper(), 'news_desc': new_desc})
+            
+            # Save to Excel
             pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+            
             if uploaded_news_img:
-                with open("news_event.jpg", "wb") as f: f.write(uploaded_news_img.getbuffer())
+                with open("news_event.jpg", "wb") as f: 
+                    f.write(uploaded_news_img.getbuffer())
+            
             st.success("✅ News updated!")
             st.rerun()
 
+    # Form 2: Digital Notice Board
     with st.form("notice_board_form"):
         st.subheader("📌 Pin to Notice Board")
         notice_name = st.text_input("Notice Title")
         uploaded_pdf = st.file_uploader("Upload PDF Document", type=['pdf'])
+        
         if st.form_submit_button("📢 Upload & Pin"):
             if uploaded_pdf and notice_name:
                 clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
                 file_bytes = uploaded_pdf.getvalue()
-                if not os.path.exists("notices"): os.makedirs("notices")
+                
+                if not os.path.exists("notices"): 
+                    os.makedirs("notices")
+                
                 local_path = os.path.join("notices", clean_filename)
-                with open(local_path, "wb") as f: f.write(file_bytes)
+                with open(local_path, "wb") as f: 
+                    f.write(file_bytes)
+                
                 upload_notice_to_github(file_bytes, clean_filename)
-                st.success("Notice Pinned!")
+                st.success(f"✅ {notice_name} Pinned!")
                 st.rerun()
 
-# --- THE FIX: THIS NOW ALIGNS PERFECTLY ---
+# --- MAIN NAVIGATION CONTINUED ---
+# This 'elif' must align with the 'if page ==' at the start of your Admin Portal
 elif page == "📊 Dashboard":
     st.title("📊 School Analytics Dashboard")
-    import os
-    import random
-    import io
-    from io import BytesIO
-
+    # Dashboard logic continues here...
     # Dashboard logic continues...
     # 1. Assets & Initialization
     founder_path, lab_path, news_path = "founder.jpg", "lab.jpg", "news_event.jpg"
