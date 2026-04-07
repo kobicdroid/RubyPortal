@@ -191,28 +191,25 @@ def load_portal_data():
             return defaults
     return defaults 
 
-# --- UPDATED: SMART GLOBAL DATABASE LOADING ---
 def load_main_database():
-    """ Automatically finds and loads the Report file, fixing column naming issues """
     report_files = glob.glob("Report *.xlsx")
     if report_files:
         try:
             temp_df = pd.read_excel(report_files[0])
             
             # --- SMART COLUMN CLEANER ---
-            # 1. Strip extra spaces from headers
             temp_df.columns = [str(c).strip() for c in temp_df.columns]
             
-            # 2. Check for 'Class' (case-insensitive) and force it to be 'Class'
+            # --- SMART ROW CLEANER ---
+            # This removes hidden spaces from the actual data in the 'Class' column
             col_map = {col.lower(): col for col in temp_df.columns}
             if 'class' in col_map:
-                temp_df = temp_df.rename(columns={col_map['class']: 'Class'})
+                actual_col_name = col_map['class']
+                temp_df[actual_col_name] = temp_df[actual_col_name].astype(str).str.strip()
+                temp_df = temp_df.rename(columns={actual_col_name: 'Class'})
                 return temp_df
-            else:
-                st.error(f"❌ DATA ERROR: The column 'Class' was not found in {report_files[0]}. Please check your Excel headers!")
-                return temp_df
-        except Exception as e:
-            st.error(f"❌ LOAD ERROR: {e}")
+            return temp_df
+        except Exception:
             return pd.DataFrame()
     return pd.DataFrame()
 
