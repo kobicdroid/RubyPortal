@@ -718,7 +718,7 @@ class ResultPDF(FPDF):
     def draw_scores_table(self, subject_data, s_class):
         # Increased f_size to 12 as requested
         f_size = 12
-        row_h = 8 
+        row_h = 7 
         
         self.set_fill_color(40, 70, 120) 
         self.set_text_color(255, 255, 255) 
@@ -826,32 +826,32 @@ class ResultPDF(FPDF):
             fill = not fill
             
         self.ln(1)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
         self.cell(55, 5, 'POSITION OF RESPONSIBILITY', 1, 1, 'L', 1)
-        self.set_text_color(0,0,0); self.set_font('Arial', '', 12); self.cell(55, 6, f" {comm.get('Position', 'None')}", 1, 1, 'L')
+        self.set_text_color(0,0,0); self.set_font('Arial', '', 10); self.cell(55, 6, f" {comm.get('Position', 'None')}", 1, 1, 'L')
         
-        # Psychomotor Skills (Size 11)
+        # Psychomotor Skills (Size 10)
         self.set_xy(75, curr_y)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
         self.cell(55, 6, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
-        self.set_text_color(0,0,0); self.set_font('Arial', '', 11)
+        self.set_text_color(0,0,0); self.set_font('Arial', '', 10)
         fill = False
         for k, v in list(sk.items())[1:6]:
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
             self.set_x(75); self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, str(v), 1, 1, 'C', 1)
             fill = not fill
             
-        # Comments Section (Size 12)
+        # Comments Section (Size 11)
         self.set_xy(140, curr_y)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(60, 6, "HOUSE MASTER'S REPORT", 1, 1, 'L', 1)
-        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 12); self.cell(60, 6, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
+        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 11); self.cell(60, 6, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
         
-        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
+        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(60, 6, "FORM MASTER'S COMMENT", 1, 1, 'L', 1)
-        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 12); self.cell(60, 6, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
+        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 11); self.cell(60, 6, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
         
-        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
+        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(60, 6, "PRINCIPAL'S COMMENT", 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_x(140)
         avg = summary['avg']
