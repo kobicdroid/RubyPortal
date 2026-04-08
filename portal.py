@@ -631,30 +631,30 @@ class ResultPDF(FPDF):
         self.set_font('Arial', 'B', 16)
         self.set_text_color(40, 70, 120) # Deep Navy Blue
         self.cell(0, 8, 'RUBY SPRINGFIELD COLLEGE', 0, 1, 'C') 
-        self.set_font('Arial', 'I', 9)
+        self.set_font('Arial', 'I', 14)
         self.set_text_color(100, 100, 100)
         self.cell(0, 4, 'Motto: A Citadel of Supreme Excellence', 0, 1, 'C') 
         
         # Right Side Branding & Address
-        self.set_font('Arial', '', 7)
+        self.set_font('Arial', '', 10)
         self.set_text_color(0, 0, 0)
         self.cell(0, 4, 'Opposite Polo Field, Old GRA, Maiduguri, Borno State', 0, 1, 'R') 
         self.cell(0, 4, 'Contact: 08131032577', 0, 1, 'R') 
         
         # Current Date
         curr_date = datetime.now().strftime("%d %B, %Y")
-        self.set_font('Arial', 'I', 6)
+        self.set_font('Arial', 'I', 10)
         self.cell(0, 3, f'Generated on: {curr_date}', 0, 1, 'R')
         
         # Developer Credit
-        self.set_font('Arial', 'B', 6)
+        self.set_font('Arial', 'B', 10)
         self.set_text_color(150, 150, 150)
         self.cell(0, 3, 'Developed by: Adam Usman | Powered by SumiLogics(NJA)', 0, 1, 'R')
         
         self.ln(2)
         # --- NEW: STYLED HEADER BOX ---
         self.set_fill_color(40, 70, 120) # Match school blue
-        self.set_font('Arial', 'B', 10)
+        self.set_font('Arial', 'B', 12)
         self.set_text_color(255, 255, 255) # White text for header
         
         title = "OFFICIAL CONTINUOUS ASSESSMENT RECORD" if hasattr(self, 'is_test') and self.is_test else "OFFICIAL TERMLY PERFORMANCE RECORD"
@@ -663,7 +663,7 @@ class ResultPDF(FPDF):
 
     def footer(self):
         self.set_y(-15)
-        self.set_font('Arial', 'I', 7)
+        self.set_font('Arial', 'I', 10)
         self.set_text_color(128, 128, 128)
         footer_note = "Copyright 2026 Ruby Springfield College - Dev: Adam Usman (SumiLogics NJA)"
         self.cell(0, 10, footer_note, 0, 0, 'L')
@@ -671,24 +671,24 @@ class ResultPDF(FPDF):
 
     def student_info_box(self, student_name, adm, s_class, term, summary):
         self.set_text_color(40, 70, 120)
-        self.set_font('Arial', 'B', 8)
+        self.set_font('Arial', 'B', 12)
         start_y = self.get_y()
         
         # Left side info
         self.cell(30, 5, 'Name of student:', 0, 0) 
-        self.set_font('Arial', 'B', 10)
+        self.set_font('Arial', 'B', 12)
         self.set_text_color(0, 0, 0)
         self.cell(80, 5, f" {str(student_name).upper()}", 'B', 1)
         
         self.set_text_color(40, 70, 120)
-        self.set_font('Arial', 'B', 8)
+        self.set_font('Arial', 'B', 12)
         self.cell(30, 5, 'Admission No:', 0, 0) 
-        self.set_font('Arial', '', 9)
+        self.set_font('Arial', '', 12)
         self.set_text_color(0, 0, 0)
         self.cell(80, 5, f" {adm}", 'B', 1)
         
         self.set_text_color(40, 70, 120)
-        self.set_font('Arial', 'B', 8)
+        self.set_font('Arial', 'B', 12)
         self.cell(30, 5, 'Class:', 0, 0) 
         self.set_font('Arial', '', 9)
         self.set_text_color(0, 0, 0)
@@ -698,7 +698,7 @@ class ResultPDF(FPDF):
         if summary.get('avg') not in ["N/A", 0, "0", None]:
             self.set_xy(135, start_y)
             self.set_fill_color(240, 242, 248) # Professional Blue-Grey box
-            self.set_font('Arial', 'B', 7)
+            self.set_font('Arial', 'B', 12)
             self.set_text_color(40, 70, 120)
             self.cell(35, 5, 'Obtained Score:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
@@ -718,7 +718,7 @@ class ResultPDF(FPDF):
     def draw_test_table(self, subject_data):
         self.set_fill_color(40, 70, 120) 
         self.set_text_color(255, 255, 255) 
-        self.set_font('Arial', 'B', 9)
+        self.set_font('Arial', 'B', 12)
         w = [75, 23, 23, 23, 23, 23]
         headers = ['Subject', '1st CA', '2nd CA', '3rd CA', '4th CA', 'Total CA']
         for i in range(len(headers)):
@@ -726,7 +726,7 @@ class ResultPDF(FPDF):
         self.ln()
         
         self.set_text_color(0, 0, 0)
-        self.set_font('Arial', '', 9)
+        self.set_font('Arial', '', 12)
         fill = False # Zebra striping
         for sub, sc in subject_data.items():
             if sc.get('Total_CA', 0) > 0:
@@ -804,7 +804,7 @@ class ResultPDF(FPDF):
         if "3rd" in str(term):
             self.set_fill_color(40, 70, 120)
             self.set_text_color(255, 255, 255)
-            self.set_font('Arial', 'B', 7)
+            self.set_font('Arial', 'B', 12)
             self.cell(0, 5, 'ANNUAL CUMULATIVE TRANSCRIPT', 1, 1, 'C', 1)
             
             self.set_fill_color(230, 235, 245)
@@ -817,11 +817,11 @@ class ResultPDF(FPDF):
             self.cell(47, 4, '3rd Term Avg', 1, 0, 'C', 1)
             self.cell(49, 4, 'CUMULATIVE AVG (%)', 1, 1, 'C', 1)
             
-            self.set_font('Arial', '', 7)
+            self.set_font('Arial', '', 12)
             self.cell(47, 5, f"{t1}%", 1, 0, 'C')
             self.cell(47, 5, f"{t2}%", 1, 0, 'C')
             self.cell(47, 5, f"{t3}%", 1, 0, 'C')
-            self.set_font('Arial', 'B', 7)
+            self.set_font('Arial', 'B', 12)
             self.cell(49, 5, f"{cum}%", 1, 1, 'C')
             self.ln(1)
 
@@ -831,10 +831,10 @@ class ResultPDF(FPDF):
         if curr_y > 235: self.ln(-8)
         
         # Section Titles with Blue Fill
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
         self.cell(55, 5, 'AFFECTIVE DOMAIN (A)', 1, 1, 'C', 1)
         
-        self.set_text_color(0, 0, 0); self.set_font('Arial', '', 6.5)
+        self.set_text_color(0, 0, 0); self.set_font('Arial', '', 12)
         fill = False
         for k, v in list(beh.items())[1:9]: 
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
@@ -842,15 +842,15 @@ class ResultPDF(FPDF):
             fill = not fill
             
         self.ln(1)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
         self.cell(55, 4.5, 'POSITION OF RESPONSIBILITY', 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_font('Arial', '', 6.5); self.cell(55, 4.5, f" {comm.get('Position', 'None')}", 1, 1, 'L')
         
         # Psychomotor Skills (Middle Column)
         self.set_xy(75, curr_y)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
         self.cell(55, 5, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
-        self.set_text_color(0,0,0); self.set_font('Arial', '', 6.5)
+        self.set_text_color(0,0,0); self.set_font('Arial', '', 12)
         fill = False
         for k, v in list(sk.items())[1:6]:
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
@@ -859,15 +859,15 @@ class ResultPDF(FPDF):
             
         # Comments Section (Right Column)
         self.set_xy(140, curr_y)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
         self.cell(60, 4.5, "HOUSE MASTER'S REPORT", 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 6.5); self.cell(60, 5, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
         
-        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
         self.cell(60, 4.5, "FORM MASTER'S COMMENT", 1, 1, 'L', 1)
-        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 6.5); self.cell(60, 5, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
+        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 12); self.cell(60, 5, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
         
-        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 7)
+        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
         self.cell(60, 4.5, "PRINCIPAL'S COMMENT", 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_x(140)
         avg = summary['avg']
@@ -875,10 +875,10 @@ class ResultPDF(FPDF):
             p_remark = "Outstanding performance." if avg >= 75 else "Average performance." if avg >= 50 else "Poor result."
         else:
             p_remark = "An Impressive performance!" if avg >= 75 else "A fair performance." if avg >= 50 else "Sit up."
-        self.set_font('Arial', 'I', 6.5); self.multi_cell(60, 4, f" {p_remark}", 1, 'L')
+        self.set_font('Arial', 'I', 12); self.multi_cell(60, 4, f" {p_remark}", 1, 'L')
         
         if "3rd" in str(term):
-            self.ln(1.5); self.set_x(10); self.set_font('Arial', 'B', 8)
+            self.ln(1.5); self.set_x(10); self.set_font('Arial', 'B', 12)
             status = "PROMOTED TO NEXT CLASS" if avg >= 40 else "HELD BACK"
             self.set_fill_color(230, 245, 230) if avg >= 40 else self.set_fill_color(255, 230, 230)
             self.cell(125, 6, f"PROMOTION STATUS: {status}", 1, 1, 'C', 1)
@@ -887,7 +887,7 @@ class ResultPDF(FPDF):
         if os.path.exists(STAMP_PATH): self.image(STAMP_PATH, 142, sig_y - 4, 20) 
         if os.path.exists(SIG_PATH): self.image(SIG_PATH, 158, sig_y - 2, 15)
         self.set_x(140); self.cell(60, 0, '', 'T', 1, 'C')
-        self.set_x(140); self.set_font('Arial', 'B', 6); self.set_text_color(40,70,120); self.cell(60, 3, "Principal's Signature & Stamp", 0, 1, 'C')
+        self.set_x(140); self.set_font('Arial', 'B', 12); self.set_text_color(40,70,120); self.cell(60, 3, "Principal's Signature & Stamp", 0, 1, 'C')
 #--- SIDEBAR ---#
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
