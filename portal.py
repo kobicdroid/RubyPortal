@@ -605,6 +605,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 class ResultPDF(FPDF):
+    # --- NEW: TRANSPARENCY LOGIC ---
+    def set_alpha(self, alpha):
+        """Enable transparency for images and text"""
+        self._out(f'q /ca {alpha} /CA {alpha} gs')
+
     def draw_watermark(self):
         """Adds professional diagonal watermark using manual rotation"""
         try:
@@ -620,7 +625,6 @@ class ResultPDF(FPDF):
         # --- PROFESSIONAL BACKGROUND COLOR ---
         self.set_fill_color(252, 252, 254) 
         self.rect(0, 0, 210, 297, 'F')
-        
         self.draw_watermark()
         
         # Logo handling
