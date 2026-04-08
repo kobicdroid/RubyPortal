@@ -627,8 +627,8 @@ class ResultPDF(FPDF):
         if 'LOGO_PATH' in globals() and os.path.exists(LOGO_PATH):
             self.image(LOGO_PATH, 10, 8, 22) 
         
-        # School Name (Size 16)
-        self.set_font('Arial', 'B', 16)
+        # School Name (Size 18)
+        self.set_font('Arial', 'B', 18)
         self.set_text_color(40, 70, 120) 
         self.cell(0, 8, 'RUBY SPRINGFIELD COLLEGE', 0, 1, 'C') 
         
