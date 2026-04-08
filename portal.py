@@ -718,15 +718,21 @@ class ResultPDF(FPDF):
     def draw_scores_table(self, subject_data, s_class):
         # Increased f_size to 12 as requested
         f_size = 12
-        row_h = 7 
+        row_h = 8 
         
         self.set_fill_color(40, 70, 120) 
         self.set_text_color(255, 255, 255) 
         self.set_font('Arial', 'B', f_size)
         
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
-        # Adjusted widths to accommodate larger font
-        w = [65, 25, 25, 25, 50] if is_ss else [70, 30, 30, 30, 30]
+        
+        # --- FIXED WIDTHS TO PREVENT OVERLAP ---
+        # We shrink the middle columns slightly to give "Grade" enough room (60mm+)
+        if is_ss:
+            w = [60, 22, 22, 22, 64] # Total 190mm
+        else:
+            w = [65, 22, 22, 21, 60] # Total 190mm
+            
         headers = ['Subject', 'C.A (40)', 'Exam (60)', 'Total (100)', 'Grade & Remark' if is_ss else 'Grade']
         
         for i in range(len(headers)):
@@ -742,15 +748,18 @@ class ResultPDF(FPDF):
             if total > 0:
                 self.set_fill_color(242, 244, 248) if fill else self.set_fill_color(255, 255, 255)
                 
+                # Subject Name
                 self.cell(w[0], row_h, f" {sub}", 1, 0, 'L', 1)
+                # CA & Exam
                 self.cell(w[1], row_h, str(scores.get('CA', '')), 1, 0, 'C', 1)
                 self.cell(w[2], row_h, str(scores.get('Exam', '')), 1, 0, 'C', 1)
                 
+                # Bold Total
                 self.set_font('Arial', 'B', f_size)
                 self.cell(w[3], row_h, str(total), 1, 0, 'C', 1)
                 self.set_font('Arial', '', f_size)
                 
-                # Grading Logic
+                # --- GRADING LOGIC ---
                 g = ""
                 t = total
                 if is_ss:
@@ -771,7 +780,8 @@ class ResultPDF(FPDF):
                     elif t >= 40: g = "E (PASS)"
                     else: g = "F (FAIL)"
                 
-                self.cell(w[-1], row_h, g, 1, 1, 'C', 1)
+                # Render Grade without overlap
+                self.cell(w[4], row_h, g, 1, 1, 'C', 1)
                 fill = not fill
         self.ln(2)
 
