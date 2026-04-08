@@ -605,6 +605,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 class ResultPDF(FPDF):
+    # --- NEW: TRANSPARENCY LOGIC ---
+    def set_alpha(self, alpha):
+        """Enable transparency for images and text"""
+        self._out(f'q /ca {alpha} /CA {alpha} gs')
+
     def draw_watermark(self):
         """Adds professional diagonal watermark using manual rotation"""
         try:
@@ -727,7 +732,6 @@ class ResultPDF(FPDF):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         
         # --- FIXED WIDTHS TO PREVENT OVERLAP ---
-        # We shrink the middle columns slightly to give "Grade" enough room (60mm+)
         if is_ss:
             w = [60, 22, 22, 22, 64] # Total 190mm
         else:
@@ -814,7 +818,7 @@ class ResultPDF(FPDF):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         curr_y = self.get_y()
         
-        # All sections headers and text updated to Size 11
+        # Header updated to Size 11
         self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(55, 6, 'AFFECTIVE DOMAIN (A)', 1, 1, 'C', 1)
         
@@ -867,9 +871,19 @@ class ResultPDF(FPDF):
             self.set_fill_color(230, 245, 230) if avg >= 40 else self.set_fill_color(255, 230, 230)
             self.cell(125, 7, f"PROMOTION STATUS: {status}", 1, 1, 'C', 1)
             
+        # --- UPDATED SIGNATURE & TRANSPARENT STAMP SECTION ---
         self.ln(2.5); sig_y = self.get_y()
-        if os.path.exists(STAMP_PATH): self.image(STAMP_PATH, 142, sig_y - 4, 20) 
-        if os.path.exists(SIG_PATH): self.image(SIG_PATH, 158, sig_y - 2, 15)
+        
+        # Draw signature first
+        if os.path.exists(SIG_PATH): 
+            self.image(SIG_PATH, 155, sig_y - 2, 22)
+            
+        # Draw big transparent stamp to overlap
+        if os.path.exists(STAMP_PATH):
+            self.set_alpha(0.5) # Set 50% transparency
+            self.image(STAMP_PATH, 145, sig_y - 15, 45) # Bigger size: 45
+            self.set_alpha(1.0) # Reset transparency for text
+            
         self.set_x(140); self.cell(60, 0, '', 'T', 1, 'C')
         self.set_x(140); self.set_font('Arial', 'B', 12); self.set_text_color(40,70,120); self.cell(60, 5, "Principal's Signature & Stamp", 0, 1, 'C')
 #--- SIDEBAR ---#
