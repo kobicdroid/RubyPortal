@@ -681,7 +681,6 @@ class ResultPDF(FPDF):
         self.set_font('Arial', 'B', 12)
         start_y = self.get_y()
         
-        # Left side info (All Size 12)
         self.cell(40, 6, 'Name of student:', 0, 0) 
         self.set_text_color(0, 0, 0)
         self.cell(75, 6, f" {str(student_name).upper()}", 'B', 1)
@@ -699,7 +698,6 @@ class ResultPDF(FPDF):
         self.set_text_color(0, 0, 0)
         self.cell(75, 6, f" {s_class}   |   Term: {term}", 'B', 1)
 
-        # Right side summary box (Size 12)
         if summary.get('avg') not in ["N/A", 0, "0", None]:
             self.set_xy(130, start_y)
             self.set_fill_color(240, 242, 248) 
@@ -721,49 +719,33 @@ class ResultPDF(FPDF):
         self.ln(6)
 
     def draw_scores_table(self, subject_data, s_class):
-        # Increased f_size to 12 as requested
         f_size = 12
         row_h = 7 
-        
         self.set_fill_color(40, 70, 120) 
         self.set_text_color(255, 255, 255) 
         self.set_font('Arial', 'B', f_size)
-        
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
-        
-        # --- FIXED WIDTHS TO PREVENT OVERLAP ---
         if is_ss:
-            w = [60, 22, 22, 22, 64] # Total 190mm
+            w = [60, 22, 22, 22, 64]
         else:
-            w = [65, 22, 22, 21, 60] # Total 190mm
-            
+            w = [65, 22, 22, 21, 60]
         headers = ['Subject', 'C.A (40)', 'Exam (60)', 'Total (100)', 'Grade & Remark' if is_ss else 'Grade']
-        
         for i in range(len(headers)):
             self.cell(w[i], row_h + 1, headers[i], 1, 0, 'C', 1)
         self.ln()
-        
         self.set_text_color(0, 0, 0) 
         self.set_font('Arial', '', f_size)
-        
         fill = False
         for sub, scores in subject_data.items():
             total = scores.get('Total', 0)
             if total > 0:
                 self.set_fill_color(242, 244, 248) if fill else self.set_fill_color(255, 255, 255)
-                
-                # Subject Name
                 self.cell(w[0], row_h, f" {sub}", 1, 0, 'L', 1)
-                # CA & Exam
                 self.cell(w[1], row_h, str(scores.get('CA', '')), 1, 0, 'C', 1)
                 self.cell(w[2], row_h, str(scores.get('Exam', '')), 1, 0, 'C', 1)
-                
-                # Bold Total
                 self.set_font('Arial', 'B', f_size)
                 self.cell(w[3], row_h, str(total), 1, 0, 'C', 1)
                 self.set_font('Arial', '', f_size)
-                
-                # --- GRADING LOGIC ---
                 g = ""
                 t = total
                 if is_ss:
@@ -783,8 +765,6 @@ class ResultPDF(FPDF):
                     elif t >= 45: g = "D (PASS)"
                     elif t >= 40: g = "E (PASS)"
                     else: g = "F (FAIL)"
-                
-                # Render Grade without overlap
                 self.cell(w[4], row_h, g, 1, 1, 'C', 1)
                 fill = not fill
         self.ln(2)
@@ -795,17 +775,14 @@ class ResultPDF(FPDF):
             self.set_text_color(255, 255, 255)
             self.set_font('Arial', 'B', 12)
             self.cell(0, 6, 'ANNUAL CUMULATIVE TRANSCRIPT', 1, 1, 'C', 1)
-            
             self.set_fill_color(230, 235, 245)
             self.set_text_color(0, 0, 0)
             t1, t2, t3 = summary.get('t1_avg', 0), summary.get('t2_avg', 0), summary.get('avg', 0)
             cum = round((t1 + t2 + t3) / 3, 2) if t1 > 0 else t3
-            
             self.cell(47, 5, '1st Term Avg', 1, 0, 'C', 1)
             self.cell(47, 5, '2nd Term Avg', 1, 0, 'C', 1)
             self.cell(47, 5, '3rd Term Avg', 1, 0, 'C', 1)
             self.cell(49, 5, 'CUMULATIVE AVG (%)', 1, 1, 'C', 1)
-            
             self.set_font('Arial', '', 12)
             self.cell(47, 6, f"{t1}%", 1, 0, 'C')
             self.cell(47, 6, f"{t2}%", 1, 0, 'C')
@@ -817,24 +794,18 @@ class ResultPDF(FPDF):
     def draw_footer_sections(self, beh, sk, comm, summary, s_class, term):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         curr_y = self.get_y()
-        
-        # Header updated to Size 11
         self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(55, 6, 'AFFECTIVE DOMAIN (A)', 1, 1, 'C', 1)
-        
         self.set_text_color(0, 0, 0); self.set_font('Arial', '', 12)
         fill = False
         for k, v in list(beh.items())[1:9]: 
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
             self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, str(v), 1, 1, 'C', 1)
             fill = not fill
-            
         self.ln(1)
         self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
         self.cell(55, 5, 'POSITION OF RESPONSIBILITY', 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_font('Arial', '', 10); self.cell(55, 6, f" {comm.get('Position', 'None')}", 1, 1, 'L')
-        
-        # Psychomotor Skills (Size 10)
         self.set_xy(75, curr_y)
         self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
         self.cell(55, 6, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
@@ -844,25 +815,18 @@ class ResultPDF(FPDF):
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
             self.set_x(75); self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, str(v), 1, 1, 'C', 1)
             fill = not fill
-            
-        # Comments Section (Size 11)
         self.set_xy(140, curr_y)
         self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(60, 6, "HOUSE MASTER'S REPORT", 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 11); self.cell(60, 6, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
-        
         self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(60, 6, "FORM MASTER'S COMMENT", 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 11); self.cell(60, 6, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
-        
         self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(60, 6, "PRINCIPAL'S COMMENT", 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_x(140)
         avg = summary['avg']
-        if is_ss:
-            p_remark = "Outstanding performance." if avg >= 75 else "Average performance." if avg >= 50 else "Poor result."
-        else:
-            p_remark = "An Impressive performance!" if avg >= 75 else "A fair performance." if avg >= 50 else "Sit up."
+        p_remark = "Outstanding performance." if avg >= 75 else "Average performance." if avg >= 50 else "Poor result."
         self.set_font('Arial', 'I', 12); self.multi_cell(60, 6, f" {p_remark}", 1, 'L')
         
         if "3rd" in str(term):
@@ -871,18 +835,15 @@ class ResultPDF(FPDF):
             self.set_fill_color(230, 245, 230) if avg >= 40 else self.set_fill_color(255, 230, 230)
             self.cell(125, 7, f"PROMOTION STATUS: {status}", 1, 1, 'C', 1)
             
-        # --- UPDATED SIGNATURE & TRANSPARENT STAMP SECTION ---
+        # --- BIG TRANSPARENT STAMP LOGIC ---
         self.ln(2.5); sig_y = self.get_y()
-        
-        # Draw signature first
         if os.path.exists(SIG_PATH): 
             self.image(SIG_PATH, 155, sig_y - 2, 22)
             
-        # Draw big transparent stamp to overlap
         if os.path.exists(STAMP_PATH):
-            self.set_alpha(0.5) # Set 50% transparency
-            self.image(STAMP_PATH, 145, sig_y - 15, 45) # Bigger size: 45
-            self.set_alpha(1.0) # Reset transparency for text
+            self.set_alpha(0.5)  # Make see-through
+            self.image(STAMP_PATH, 145, sig_y - 15, 45)  # Increased size to 45
+            self.set_alpha(1.0)  # Reset to solid for text
             
         self.set_x(140); self.cell(60, 0, '', 'T', 1, 'C')
         self.set_x(140); self.set_font('Arial', 'B', 12); self.set_text_color(40,70,120); self.cell(60, 5, "Principal's Signature & Stamp", 0, 1, 'C')
