@@ -632,20 +632,20 @@ class ResultPDF(FPDF):
         self.set_text_color(40, 70, 120) 
         self.cell(0, 8, 'RUBY SPRINGFIELD COLLEGE', 0, 1, 'C') 
         
-        # Motto (Size 14)
-        self.set_font('Arial', 'I', 14)
+        # Motto (Size 12)
+        self.set_font('Arial', 'I', 12)
         self.set_text_color(100, 100, 100)
         self.cell(0, 4, 'Motto: A Citadel of Supreme Excellence', 0, 1, 'C') 
         
         # Right Side Branding & Address (Size 12)
-        self.set_font('Arial', '', 12)
+        self.set_font('Arial', '', 10)
         self.set_text_color(0, 0, 0)
         self.cell(0, 5, 'Opposite Polo Field, Old GRA, Maiduguri, Borno State', 0, 1, 'R') 
         self.cell(0, 5, 'Contact: 08131032577', 0, 1, 'R') 
         
-        # Current Date (Size 12)
+        # Current Date (Size 10)
         curr_date = datetime.now().strftime("%d %B, %Y")
-        self.set_font('Arial', 'I', 12)
+        self.set_font('Arial', 'I', 10)
         self.cell(0, 5, f'Generated on: {curr_date}', 0, 1, 'R')
         
         # Developer Credit (Small)
@@ -667,7 +667,7 @@ class ResultPDF(FPDF):
         self.set_y(-15)
         self.set_font('Arial', 'I', 10)
         self.set_text_color(128, 128, 128)
-        footer_note = "Copyright 2026 Ruby Springfield College - Dev: Adam Usman (SumiLogics NJA)"
+        footer_note = "Copyright @2026 Ruby Springfield College - Dev: Adam Usman (SumiLogics NJA)"
         self.cell(0, 10, footer_note, 0, 0, 'L')
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'R')
 
@@ -804,8 +804,8 @@ class ResultPDF(FPDF):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         curr_y = self.get_y()
         
-        # All sections headers and text updated to Size 12
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
+        # All sections headers and text updated to Size 11
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(55, 6, 'AFFECTIVE DOMAIN (A)', 1, 1, 'C', 1)
         
         self.set_text_color(0, 0, 0); self.set_font('Arial', '', 12)
@@ -816,15 +816,15 @@ class ResultPDF(FPDF):
             fill = not fill
             
         self.ln(1)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(55, 5, 'POSITION OF RESPONSIBILITY', 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_font('Arial', '', 12); self.cell(55, 6, f" {comm.get('Position', 'None')}", 1, 1, 'L')
         
-        # Psychomotor Skills (Size 12)
+        # Psychomotor Skills (Size 11)
         self.set_xy(75, curr_y)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 12)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(55, 6, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
-        self.set_text_color(0,0,0); self.set_font('Arial', '', 12)
+        self.set_text_color(0,0,0); self.set_font('Arial', '', 11)
         fill = False
         for k, v in list(sk.items())[1:6]:
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
