@@ -763,22 +763,22 @@ class ResultPDF(FPDF):
                 g = ""
                 t = total
                 if is_ss:
-                    if t >= 75: g = "A1 (EXCELLENT)"
-                    elif t >= 70: g = "B2 (V-GOOD)"
-                    elif t >= 65: g = "B3 (GOOD)"
-                    elif t >= 60: g = "C4 (CREDIT)"
-                    elif t >= 55: g = "C5 (CREDIT)"
-                    elif t >= 50: g = "C6 (CREDIT)"
-                    elif t >= 45: g = "D7 (PASS)"
-                    elif t >= 40: g = "E8 (PASS)"
-                    else: g = "F9 (FAIL)"
+                    if t >= 75: g = "EXCELLENT"
+                    elif t >= 70: g = "V-GOOD"
+                    elif t >= 65: g = "GOOD"
+                    elif t >= 60: g = "CREDIT"
+                    elif t >= 55: g = "CREDIT"
+                    elif t >= 50: g = "CREDIT"
+                    elif t >= 45: g = "PASS"
+                    elif t >= 40: g = "PASS"
+                    else: g = "FAIL"
                 else:
-                    if t >= 75: g = "A (DISTINCTION)"
-                    elif t >= 65: g = "B (UPPER CREDIT)"
-                    elif t >= 55: g = "C (LOWER CREDIT)"
-                    elif t >= 45: g = "D (PASS)"
-                    elif t >= 40: g = "E (PASS)"
-                    else: g = "F (FAIL)"
+                    if t >= 75: g = "DISTINCTION"
+                    elif t >= 65: g = "UPPER CREDIT"
+                    elif t >= 55: g = "LOWER CREDIT"
+                    elif t >= 45: g = "PASS"
+                    elif t >= 40: g = "PASS"
+                    else: g = "FAIL"
                 
                 # Render Grade without overlap
                 self.cell(w[4], row_h, g, 1, 1, 'C', 1)
@@ -867,11 +867,30 @@ class ResultPDF(FPDF):
             self.set_fill_color(230, 245, 230) if avg >= 40 else self.set_fill_color(255, 230, 230)
             self.cell(125, 7, f"PROMOTION STATUS: {status}", 1, 1, 'C', 1)
             
-        self.ln(2.5); sig_y = self.get_y()
-        if os.path.exists(STAMP_PATH): self.image(STAMP_PATH, 142, sig_y - 4, 20) 
-        if os.path.exists(SIG_PATH): self.image(SIG_PATH, 158, sig_y - 2, 15)
-        self.set_x(140); self.cell(60, 0, '', 'T', 1, 'C')
-        self.set_x(140); self.set_font('Arial', 'B', 12); self.set_text_color(40,70,120); self.cell(60, 5, "Principal's Signature & Stamp", 0, 1, 'C')
+        # --- SIGNATURE & TRANSPARENT STAMP SECTION ---
+        self.ln(2.5)
+        sig_y = self.get_y()
+        
+        # 1. Draw the Signature first (so it sits under the stamp)
+        if os.path.exists(SIG_PATH):
+            # Adjusted position to be centered under the stamp
+            self.image(SIG_PATH, 155, sig_y - 2, 22) 
+
+        # 2. Draw the BIG TRANSPARENT STAMP
+        if os.path.exists(STAMP_PATH):
+            self.set_alpha(0.5)  # Set transparency to 50%
+            # Increased size to 45 to cover the comment and signature area
+            # Adjusted X and Y to overlay the text area
+            self.image(STAMP_PATH, 145, sig_y - 15, 45) 
+            self.set_alpha(1.0)  # Reset transparency to 100% for the text
+
+        # 3. Signature Line & Title
+        self.set_x(140)
+        self.cell(60, 0, '', 'T', 1, 'C') # Top border line
+        self.set_x(140)
+        self.set_font('Arial', 'B', 12)
+        self.set_text_color(40, 70, 120)
+        self.cell(60, 5, "Principal's Signature & Stamp", 0, 1, 'C')
 #--- SIDEBAR ---#
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
