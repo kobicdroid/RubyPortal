@@ -1510,40 +1510,31 @@ elif page == "🛠️ Staff Management":
 # --- PROTOCOL & CONTACT UPDATES ---
         with st.form("protocol_updates_form"):
             st.subheader("📅 School Protocol & Contact Info")
-            
-            # Ensure we are pulling from the live portal_storage dictionary
             current_storage = st.session_state.get('portal_storage', {})
             
             col1, col2 = st.columns(2)
             with col1:
-                # Value pulls from 'calendar' key to match dashboard
-                new_calendar = st.text_area("School Calendar", value=current_storage.get('calendar', 'Enter school dates...'))
-                # Value pulls from 'contact' key to match dashboard
-                new_contact = st.text_area("Contact Information", value=current_storage.get('contact', 'Opposite Polo Field, Old GRA, Maiduguri...'))
+                new_calendar = st.text_area("School Calendar", value=current_storage.get('calendar', ''))
+                new_contact = st.text_area("Contact Information", value=current_storage.get('contact', ''))
             with col2:
-                # Value pulls from 'exams' key to match dashboard
-                new_guidelines = st.text_area("Exam Guidelines", value=current_storage.get('exams', 'Rules for examination...'))
-            
-            if st.form_submit_button("💾 Save Protocols"):
-                # 1. Update the live portal_storage dictionary with correct keys
-                st.session_state.portal_storage['calendar'] = new_calendar
-                st.session_state.portal_storage['exams'] = new_guidelines
-                st.session_state.portal_storage['contact'] = new_contact
-                
-                # 2. Update individual session keys just to be safe
-                st.session_state.update({
-                    'calendar': new_calendar,
-                    'contact_info': new_contact,
-                    'exam_guidelines': new_guidelines
-                })
-                
-                # 3. Save the updated portal_storage to the Excel file
+                new_guidelines = st.text_area("Exam Guidelines", value=current_storage.get('exams', ''))
+
+            # Buttons for Saving and Clearing
+            btn_col1, btn_col2 = st.columns(2)
+            if btn_col1.form_submit_button("💾 Save Protocols"):
+                st.session_state.portal_storage.update({'calendar': new_calendar, 'exams': new_guidelines, 'contact': new_contact})
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                
-                st.success("✅ Dashboard updated successfully!")
+                st.success("✅ Dashboard updated!")
+                st.rerun()
+            
+            if btn_col2.form_submit_button("🗑️ Clear All Protocol"):
+                st.session_state.portal_storage.update({'calendar': '', 'exams': '', 'contact': ''})
+                pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+                st.warning("🚨 Protocol text cleared!")
                 st.rerun()
 
-        # --- NOTICE BOARD WITH ROBUST DIRECTORY FIX ---
+        # --- NOTICE BOARD WITH UPLOAD & DELETE ---
+        st.markdown("---")
         with st.form("notice_board_form"):
             st.subheader("📌 Pin to Notice Board")
             notice_name = st.text_input("Notice Title")
@@ -1551,28 +1542,33 @@ elif page == "🛠️ Staff Management":
             
             if st.form_submit_button("📢 Upload & Pin"):
                 if uploaded_pdf and notice_name:
-                    # Create directory at the top level to ensure it exists
                     target_dir = os.path.abspath("notices")
-                    if not os.path.exists(target_dir):
-                        os.makedirs(target_dir, exist_ok=True)
-                    
+                    os.makedirs(target_dir, exist_ok=True)
                     clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
                     final_path = os.path.join(target_dir, clean_filename)
                     file_bytes = uploaded_pdf.getvalue()
                     
                     try:
-                        # Write the file using the absolute path
-                        with open(final_path, "wb") as f:
-                            f.write(file_bytes)
-                        
-                        # Sync to GitHub
+                        with open(final_path, "wb") as f: f.write(file_bytes)
                         if 'upload_notice_to_github' in globals():
                             upload_notice_to_github(file_bytes, clean_filename)
-                            
-                        st.success(f"✅ Notice '{notice_name}' pinned successfully!")
+                        st.success(f"✅ '{notice_name}' pinned!")
                         st.rerun()
-                    except Exception as e:
-                        st.error(f"Upload failed: {e}")
+                    except Exception as e: st.error(f"Upload failed: {e}")
+
+        # --- DELETE NOTICE SECTION ---
+        st.subheader("🗑️ Delete Pinned Notices")
+        notice_dir = os.path.abspath("notices")
+        if os.path.exists(notice_dir):
+            files = [f for f in os.listdir(notice_dir) if f.endswith(".pdf")]
+            if files:
+                to_delete = st.selectbox("Select notice to remove:", files)
+                if st.button("🔥 Delete Selected Notice"):
+                    os.remove(os.path.join(notice_dir, to_delete))
+                    st.success(f"Successfully deleted {to_delete}")
+                    st.rerun()
+            else:
+                st.info("No notices found to delete.")
 
 # ==========================================
 # --- 📊 DASHBOARD PAGE ---
