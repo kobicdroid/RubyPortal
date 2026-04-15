@@ -1487,7 +1487,7 @@ elif page == "🛠️ Staff Management":
                         except Exception as e: st.error(f"❌ Error during blast: {e}")
                 else: st.error("❌ File not found.")
 
-  # --- 5. CONTENT MANAGER (NOW CORRECTLY OUTSIDE TAB_BULK) ---
+# --- 5. CONTENT MANAGER (NOW CORRECTLY OUTSIDE TAB_BULK) ---
     with tab_content:
         st.markdown("### 📰 News & Protocol Control")
         if os.path.exists("news_event.jpg"):
@@ -1507,7 +1507,7 @@ elif page == "🛠️ Staff Management":
                 st.success("✅ News updated!")
                 st.rerun()
 
-        # --- NEW SECTION: PROTOCOL & CONTACT UPDATES ---
+        # --- PROTOCOL & CONTACT UPDATES ---
         with st.form("protocol_updates_form"):
             st.subheader("📅 School Protocol & Contact Info")
             col1, col2 = st.columns(2)
@@ -1528,25 +1528,36 @@ elif page == "🛠️ Staff Management":
                 st.success("✅ Protocols updated successfully!")
                 st.rerun()
 
+        # --- NOTICE BOARD WITH ROBUST DIRECTORY FIX ---
         with st.form("notice_board_form"):
             st.subheader("📌 Pin to Notice Board")
             notice_name = st.text_input("Notice Title")
             uploaded_pdf = st.file_uploader("Upload PDF", type=['pdf'])
+            
             if st.form_submit_button("📢 Upload & Pin"):
                 if uploaded_pdf and notice_name:
+                    # Create directory at the top level to ensure it exists
+                    target_dir = os.path.abspath("notices")
+                    if not os.path.exists(target_dir):
+                        os.makedirs(target_dir, exist_ok=True)
+                    
                     clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
+                    final_path = os.path.join(target_dir, clean_filename)
                     file_bytes = uploaded_pdf.getvalue()
                     
-                    # Fix for FileNotFoundError
-                    if not os.path.exists("notices"): 
-                        os.makedirs("notices", exist_ok=True)
+                    try:
+                        # Write the file using the absolute path
+                        with open(final_path, "wb") as f:
+                            f.write(file_bytes)
                         
-                    with open(os.path.join("notices", clean_filename), "wb") as f: 
-                        f.write(file_bytes)
-                        
-                    upload_notice_to_github(file_bytes, clean_filename)
-                    st.success("Notice Pinned!")
-                    st.rerun()
+                        # Sync to GitHub
+                        if 'upload_notice_to_github' in globals():
+                            upload_notice_to_github(file_bytes, clean_filename)
+                            
+                        st.success(f"✅ Notice '{notice_name}' pinned successfully!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Upload failed: {e}")
 
 # ==========================================
 # --- 📊 DASHBOARD PAGE ---
