@@ -727,7 +727,6 @@ class ResultPDF(FPDF):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         
         # --- FIXED WIDTHS TO PREVENT OVERLAP ---
-        # We shrink the middle columns slightly to give "Grade" enough room (60mm+)
         if is_ss:
             w = [60, 22, 22, 22, 64] # Total 190mm
         else:
@@ -872,7 +871,39 @@ class ResultPDF(FPDF):
         if os.path.exists(SIG_PATH): self.image(SIG_PATH, 155, sig_y - 2, 22)
         self.set_x(140); self.cell(60, 0, '', 'T', 1, 'C')
         self.set_x(140); self.set_font('Arial', 'B', 12); self.set_text_color(40,70,120); self.cell(60, 5, "Principal's Signature & Stamp", 0, 1, 'C')
-#--- SIDEBAR ---#
+
+    # --- MISSING PART ADDED BELOW ---
+    def draw_test_table(self, test_results):
+        """Specifically for the C.A / Test Results portal"""
+        f_size = 11
+        row_h = 8
+        self.set_fill_color(40, 70, 120)
+        self.set_text_color(255, 255, 255)
+        self.set_font('Arial', 'B', f_size)
+        
+        # Column widths (Total 190mm)
+        w = [60, 26, 26, 26, 26, 26]
+        headers = ['Subject', 'CA 1', 'CA 2', 'CA 3', 'CA 4', 'Total CA']
+        
+        for i in range(len(headers)):
+            self.cell(w[i], row_h + 1, headers[i], 1, 0, 'C', 1)
+        self.ln()
+        
+        self.set_text_color(0, 0, 0)
+        self.set_font('Arial', '', f_size)
+        fill = False
+        
+        for sub, scores in test_results.items():
+            self.set_fill_color(242, 244, 248) if fill else self.set_fill_color(255, 255, 255)
+            self.cell(w[0], row_h, f" {sub}", 1, 0, 'L', 1)
+            self.cell(w[1], row_h, str(scores.get('CA1', 0)), 1, 0, 'C', 1)
+            self.cell(w[2], row_h, str(scores.get('CA2', 0)), 1, 0, 'C', 1)
+            self.cell(w[3], row_h, str(scores.get('CA3', 0)), 1, 0, 'C', 1)
+            self.cell(w[4], row_h, str(scores.get('CA4', 0)), 1, 0, 'C', 1)
+            self.set_font('Arial', 'B', f_size)
+            self.cell(w[5], row_h, str(scores.get('Total_CA', 0)), 1, 1, 'C', 1)
+            self.set_font('Arial', '', f_size)
+            fill = not fill#--- SIDEBAR ---#
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         logo_base64 = get_base64_of_bin_file(LOGO_PATH)
@@ -909,7 +940,7 @@ if page == "🎓 Result Portal":
     btn_label = "Generate Full Report" if portal_type == "📊 Full Term Results" else "View Test Scores"
     login_btn = st.sidebar.button(btn_label)
 
-    # --- NEW: POPUP DIALOG FOR DOWNLOAD ---
+    # --- POPUP DIALOG FOR DOWNLOAD ---
     @st.dialog("📥 Report Ready")
     def show_download_popup(pdf_bytes, filename):
         st.success("Your PDF has been generated successfully!")
@@ -995,15 +1026,15 @@ if page == "🎓 Result Portal":
                                 pdf.set_margins(left=10, top=10, right=10)
                                 pdf.add_page()
                                 _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0})
-                                _ = pdf.draw_test_table(test_results)
+                                _ = pdf.draw_test_table(test_results) # Works now!
                                 pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
-                                # Show popup immediately
                                 show_download_popup(pdf_bytes, f"Test_{student_name}.pdf")
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
 
                         # --- BRANCH 2: FULL TERM RESULTS ---
                         else:
+                            # ... (Full Term Logic remains the same) ...
                             bs_n, beh_n, sk_n, com_n = find_s('Bsheet'), find_s('Behaviour'), find_s('Skill'), find_s('Comment')
                             pos_val = "N/A"
                             if bs_n:
@@ -1053,7 +1084,6 @@ if page == "🎓 Result Portal":
                             m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
                             st.table(pd.DataFrame(processed_results).T)
 
-                            # --- PDF Generation with Resumption Date ---
                             try:
                                 pdf = ResultPDF()
                                 pdf.set_margins(left=10, top=10, right=10)
@@ -1069,7 +1099,6 @@ if page == "🎓 Result Portal":
                                 pdf.cell(0, 10, "NEXT TERM BEGINS: 20th APRIL, 2026", ln=1, align='C')
                                 
                                 pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
-                                # Show popup immediately
                                 show_download_popup(pdf_bytes, f"{student_name}.pdf")
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
