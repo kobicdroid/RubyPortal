@@ -1507,25 +1507,40 @@ elif page == "🛠️ Staff Management":
                 st.success("✅ News updated!")
                 st.rerun()
 
-        # --- PROTOCOL & CONTACT UPDATES ---
+# --- PROTOCOL & CONTACT UPDATES ---
         with st.form("protocol_updates_form"):
             st.subheader("📅 School Protocol & Contact Info")
+            
+            # Ensure we are pulling from the live portal_storage dictionary
+            current_storage = st.session_state.get('portal_storage', {})
+            
             col1, col2 = st.columns(2)
             with col1:
-                new_calendar = st.text_area("School Calendar", value=st.session_state.get('calendar', 'Enter school dates...'))
-                new_contact = st.text_area("Contact Information", value=st.session_state.get('contact_info', 'Opposite Polo Field, Old GRA, Maiduguri...'))
+                # Value pulls from 'calendar' key to match dashboard
+                new_calendar = st.text_area("School Calendar", value=current_storage.get('calendar', 'Enter school dates...'))
+                # Value pulls from 'contact' key to match dashboard
+                new_contact = st.text_area("Contact Information", value=current_storage.get('contact', 'Opposite Polo Field, Old GRA, Maiduguri...'))
             with col2:
-                new_guidelines = st.text_area("Exam Guidelines", value=st.session_state.get('exam_guidelines', 'Rules for examination...'))
+                # Value pulls from 'exams' key to match dashboard
+                new_guidelines = st.text_area("Exam Guidelines", value=current_storage.get('exams', 'Rules for examination...'))
             
             if st.form_submit_button("💾 Save Protocols"):
+                # 1. Update the live portal_storage dictionary with correct keys
+                st.session_state.portal_storage['calendar'] = new_calendar
+                st.session_state.portal_storage['exams'] = new_guidelines
+                st.session_state.portal_storage['contact'] = new_contact
+                
+                # 2. Update individual session keys just to be safe
                 st.session_state.update({
                     'calendar': new_calendar,
                     'contact_info': new_contact,
                     'exam_guidelines': new_guidelines
                 })
-                # Saving to your storage file
+                
+                # 3. Save the updated portal_storage to the Excel file
                 pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
-                st.success("✅ Protocols updated successfully!")
+                
+                st.success("✅ Dashboard updated successfully!")
                 st.rerun()
 
         # --- NOTICE BOARD WITH ROBUST DIRECTORY FIX ---
@@ -1657,7 +1672,7 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-   # 8. NEWS FEED & PROTOCOL
+  # # 8. NEWS FEED & PROTOCOL (DASHBOARD SIDE)
     col_l, col_r = st.columns([2, 1])
     with col_l:
         st.markdown("<h3 style='color:#1e3a8a;'>🔔 RSC News Feed</h3>", unsafe_allow_html=True)
@@ -1670,25 +1685,27 @@ elif page == "📊 Dashboard":
     
     with col_r:
         st.markdown("<h3 style='color:#1e3a8a;'>🛠️ Official Protocol</h3>", unsafe_allow_html=True)
-        # Protocol box style updated for light theme
-        st.markdown("""<style>.protocol-box {background-color: #eff6ff; color: #1e3a8a; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #2563eb; border: 1px solid #e2e8f0;}</style>""", unsafe_allow_html=True)
+        st.markdown("""<style>.protocol-box {background-color: #eff6ff; color: #1e3a8a; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #2563eb; border: 1px solid #e2e8f0; white-space: pre-wrap;}</style>""", unsafe_allow_html=True)
+
+        # Accessing the live storage
+        storage = st.session_state.get('portal_storage', {})
 
         if st.button("📅 School Calendar", use_container_width=True): 
             st.session_state.show_cal = not st.session_state.get('show_cal', False)
         if st.session_state.get('show_cal', False):
-            cal_data = st.session_state.get('portal_storage', {}).get('calendar', 'Calendar update pending.')
+            cal_data = storage.get('calendar', 'Calendar update pending.')
             st.markdown(f'<div class="protocol-box"><b>🗓️ ACADEMIC CALENDAR:</b><br>{cal_data}</div>', unsafe_allow_html=True)
 
         if st.button("📜 Exam Guidelines", use_container_width=True): 
             st.session_state.show_exam = not st.session_state.get('show_exam', False)
         if st.session_state.get('show_exam', False):
-            exam_data = st.session_state.get('portal_storage', {}).get('exams', 'Proper uniform and ID card required for entry.')
+            exam_data = storage.get('exams', 'Proper uniform and ID card required for entry.')
             st.markdown(f'<div class="protocol-box"><b style="color:#2563eb;">EXAM PROTOCOL:</b><br>{exam_data}</div>', unsafe_allow_html=True)
 
         if st.button("📞 Contact Info", use_container_width=True): 
             st.session_state.show_contact = not st.session_state.get('show_contact', False)
         if st.session_state.get('show_contact', False):
-            contact_data = st.session_state.get('portal_storage', {}).get('contact', 'School Office: Maiduguri, Borno State.')
+            contact_data = storage.get('contact', 'School Office: Maiduguri, Borno State.')
             st.markdown(f'<div class="protocol-box"><b>📞 OFFICIAL CONTACT:</b><br>{contact_data}</div>', unsafe_allow_html=True)
 
     # 9. NOTICE BOARD
