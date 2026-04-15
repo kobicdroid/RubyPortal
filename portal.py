@@ -909,6 +909,14 @@ if page == "🎓 Result Portal":
     btn_label = "Generate Full Report" if portal_type == "📊 Full Term Results" else "View Test Scores"
     login_btn = st.sidebar.button(btn_label)
 
+    # --- NEW: POPUP DIALOG FOR DOWNLOAD ---
+    @st.dialog("📥 Report Ready")
+    def show_download_popup(pdf_bytes, filename):
+        st.success("Your PDF has been generated successfully!")
+        st.download_button("Click here to Download PDF", data=pdf_bytes, file_name=filename, use_container_width=True)
+        if st.button("Close"):
+            st.rerun()
+
     if login_btn:
         file_path = f"Report {selected_class}.xlsx"
         if os.path.exists(file_path):
@@ -989,8 +997,8 @@ if page == "🎓 Result Portal":
                                 _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0})
                                 _ = pdf.draw_test_table(test_results)
                                 pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
-                                st.markdown("---")
-                                st.download_button("📥 Download Test Result", data=pdf_bytes, file_name=f"Test_{student_name}.pdf", use_container_width=True)
+                                # Show popup immediately
+                                show_download_popup(pdf_bytes, f"Test_{student_name}.pdf")
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
 
@@ -1056,14 +1064,13 @@ if page == "🎓 Result Portal":
                                 if is_3rd: _ = pdf.draw_transcript_summary(summary, disp_term)
                                 _ = pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, disp_term)
                                 
-                                # Adding the specific Resumption Requirement
                                 pdf.ln(8)
                                 pdf.set_font('Arial', 'B', 10)
                                 pdf.cell(0, 10, "NEXT TERM BEGINS: 20th APRIL, 2026", ln=1, align='C')
                                 
                                 pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
-                                st.markdown("---")
-                                st.download_button("📥 Download PDF Report", data=pdf_bytes, file_name=f"{student_name}.pdf", use_container_width=True)
+                                # Show popup immediately
+                                show_download_popup(pdf_bytes, f"{student_name}.pdf")
                             except Exception as e:
                                 st.error(f"PDF Error: {e}")
                     else:
