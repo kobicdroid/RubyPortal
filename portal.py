@@ -1487,7 +1487,7 @@ elif page == "🛠️ Staff Management":
                         except Exception as e: st.error(f"❌ Error during blast: {e}")
                 else: st.error("❌ File not found.")
 
-    # --- 5. CONTENT MANAGER (NOW CORRECTLY OUTSIDE TAB_BULK) ---
+  # --- 5. CONTENT MANAGER (NOW CORRECTLY OUTSIDE TAB_BULK) ---
     with tab_content:
         st.markdown("### 📰 News & Protocol Control")
         if os.path.exists("news_event.jpg"):
@@ -1507,6 +1507,27 @@ elif page == "🛠️ Staff Management":
                 st.success("✅ News updated!")
                 st.rerun()
 
+        # --- NEW SECTION: PROTOCOL & CONTACT UPDATES ---
+        with st.form("protocol_updates_form"):
+            st.subheader("📅 School Protocol & Contact Info")
+            col1, col2 = st.columns(2)
+            with col1:
+                new_calendar = st.text_area("School Calendar", value=st.session_state.get('calendar', 'Enter school dates...'))
+                new_contact = st.text_area("Contact Information", value=st.session_state.get('contact_info', 'Opposite Polo Field, Old GRA, Maiduguri...'))
+            with col2:
+                new_guidelines = st.text_area("Exam Guidelines", value=st.session_state.get('exam_guidelines', 'Rules for examination...'))
+            
+            if st.form_submit_button("💾 Save Protocols"):
+                st.session_state.update({
+                    'calendar': new_calendar,
+                    'contact_info': new_contact,
+                    'exam_guidelines': new_guidelines
+                })
+                # Saving to your storage file
+                pd.DataFrame(list(st.session_state.portal_storage.items()), columns=['Key', 'Value']).to_excel("portal_data.xlsx", index=False)
+                st.success("✅ Protocols updated successfully!")
+                st.rerun()
+
         with st.form("notice_board_form"):
             st.subheader("📌 Pin to Notice Board")
             notice_name = st.text_input("Notice Title")
@@ -1515,8 +1536,14 @@ elif page == "🛠️ Staff Management":
                 if uploaded_pdf and notice_name:
                     clean_filename = f"notice_{notice_name.replace(' ', '_').lower()}.pdf"
                     file_bytes = uploaded_pdf.getvalue()
-                    if not os.path.exists("notices"): os.makedirs("notices")
-                    with open(os.path.join("notices", clean_filename), "wb") as f: f.write(file_bytes)
+                    
+                    # Fix for FileNotFoundError
+                    if not os.path.exists("notices"): 
+                        os.makedirs("notices", exist_ok=True)
+                        
+                    with open(os.path.join("notices", clean_filename), "wb") as f: 
+                        f.write(file_bytes)
+                        
                     upload_notice_to_github(file_bytes, clean_filename)
                     st.success("Notice Pinned!")
                     st.rerun()
