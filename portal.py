@@ -23,11 +23,10 @@ import streamlit.components.v1 as components
 
 
 # =================================================================
-# --- ADVANCED MAINTENANCE ENGINE (AUTO-LAUNCH MODE) ---
+# --- ADVANCED MAINTENANCE ENGINE (GHOST DOUBLE-CLICK MODE) ---
 # =================================================================
 import streamlit as st
 from datetime import datetime
-import time
 
 # --- LIVE TICKING ENGINE ---
 try:
@@ -42,15 +41,17 @@ ADMIN_SECRET_KEY = "SUMI"
 # 🛠️ SET YOUR RESUMPTION TIME HERE
 TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
 
-# --- AUTO-UNLOCK LOGIC ---
+# --- SESSION STATE INITIALIZATION ---
 if 'maintenance_bypass' not in st.session_state:
     st.session_state.maintenance_bypass = False
+if 'ghost_unlocked' not in st.session_state:
+    st.session_state.ghost_unlocked = False
 
-# Check if time has already passed
+# --- AUTO-UNLOCK LOGIC ---
 now = datetime.now()
 diff = TARGET_DATE - now
 
-# If countdown is finished, automatically disable maintenance for the user
+# Auto-open if time is up
 if diff.total_seconds() <= 0:
     st.session_state.maintenance_bypass = True
 
@@ -63,27 +64,53 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     minutes, seconds = divmod(remainder, 60)
     timer_display = f"{days:02d}d : {hours:02d}h : {minutes:02d}m : {seconds:02d}s"
 
-    # 1. --- THE STYLE BLOCK ---
+    # 1. --- THE STYLE BLOCK (WITH INVISIBLE SENSOR) ---
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
         .stApp { background: radial-gradient(circle at top right, #1e3a8a, #0f172a, #020617) !important; }
+        
         .main-card {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 40px; border-radius: 25px; text-align: center; margin-top: 30px;
         }
+        
         .timer-container {
             font-family: 'JetBrains Mono', monospace; color: #3b82f6; font-size: 3em; font-weight: 700;
             padding: 20px; background: rgba(59, 130, 246, 0.1); border-radius: 15px;
             border: 1px solid rgba(59, 130, 246, 0.3); margin: 25px auto; display: inline-block;
         }
+
+        /* THE GHOST SENSOR: Invisible box in the top-left corner */
+        .ghost-sensor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 80px;
+            height: 80px;
+            background: transparent;
+            z-index: 99999;
+            cursor: default;
+        }
         </style>
+        
+        <div class="ghost-sensor" id="sensor"></div>
+
+        <script>
+            // JS to detect double click on the invisible sensor
+            const sensor = window.parent.document.getElementById('sensor');
+            sensor.addEventListener('dblclick', function() {
+                // This triggers the hidden Streamlit element
+                const btn = window.parent.document.querySelector('button[kind="secondary"]');
+                if (btn) btn.click();
+            });
+        </script>
     """, unsafe_allow_html=True)
 
     # 2. --- THE HEADER & MESSAGE ---
-    st.markdown("""
+    st.markdown(f"""
         <div class="main-card">
             <div style="color: #ef4444; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 0.9em; margin-bottom: 10px;">
                 ⚠️ OFFICIAL SYSTEM MAINTENANCE
@@ -91,20 +118,29 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             <h1 style="color: white; font-size: 2.8em; margin: 0;">PORTAL <span style="color: #3b82f6;">OFFLINE</span></h1>
             <p style="color: #94a3b8; margin-top: 10px; font-size: 1.1em;">
                 Ruby Springfield College Portal is undergoing essential internal maintenance. 
-                The system will automatically restore access once the countdown completes.
+                Access will be automatically restored once the countdown completes.
             </p>
-            <div class="timer-container">""" + timer_display + """</div>
+            <div class="timer-container">{timer_display}</div>
         </div>
     """, unsafe_allow_html=True)
 
-    # 3. --- THE FOOTER & BYPASS ---
-    st.info("📩 For urgent administrative support: info@rubyspringfield.edu.ng")
-    with st.expander(" "):
-        secret = st.text_input("Bypass Key", type="password")
-        if st.button("Authorize"):
-            if secret == ADMIN_SECRET_KEY:
-                st.session_state.maintenance_bypass = True
-                st.rerun()
+    # 3. --- THE STEALTH BYPASS ---
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # This button is used by the JavaScript double-click but is normally ignored by users
+    if st.button("Unlock System", key="hidden_trigger", type="secondary", help="Restricted Area"):
+        st.session_state.ghost_unlocked = not st.session_state.ghost_unlocked
+
+    if st.session_state.ghost_unlocked:
+        with st.container():
+            secret = st.text_input("Decrypt System Hash", type="password")
+            if st.button("Authorize"):
+                if secret == ADMIN_SECRET_KEY:
+                    st.session_state.maintenance_bypass = True
+                    st.rerun()
+                else:
+                    st.error("Invalid Hash")
+
     st.stop()
 # =================================================================
 
