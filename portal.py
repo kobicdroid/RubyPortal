@@ -23,7 +23,7 @@ import streamlit.components.v1 as components
 
 
 # =================================================================
-# --- GHOST PROTOCOL: TOTAL STEALTH MODE ---
+# --- GHOST PROTOCOL: BRANDING SENSOR MODE ---
 # =================================================================
 import streamlit as st
 from datetime import datetime
@@ -60,7 +60,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     minutes, seconds = divmod(remainder, 60)
     timer_display = f"{days:02d}d : {hours:02d}h : {minutes:02d}m : {seconds:02d}s"
 
-    # 1. --- THE STYLE BLOCK (HIDING THE VISIBLE BUTTON) ---
+    # 1. --- THE STYLE BLOCK ---
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
@@ -79,39 +79,21 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             border: 1px solid rgba(59, 130, 246, 0.3); margin: 25px auto; display: inline-block;
         }
 
-        /* HIDE THE TRIGGER BUTTON FROM HUMAN EYES */
-        div[data-testid="stButton"] button:has(div:contains("Unlock System")) {
+        /* HIDE THE TRIGGER BUTTON */
+        div[data-testid="stButton"] button:has(div:contains("SYS_ACTIVATE")) {
             display: none !important;
         }
         
-        /* THE GHOST SENSOR */
-        .ghost-sensor {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100px;
-            height: 100px;
-            background: transparent;
-            z-index: 99999;
+        .sumi-footer {
+            margin-top: 50px;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 0.8em;
+            letter-spacing: 2px;
+            text-align: center;
             cursor: default;
+            user-select: none;
         }
         </style>
-        
-        <div class="ghost-sensor" id="sensor"></div>
-
-        <script>
-            const sensor = window.parent.document.getElementById('sensor');
-            sensor.addEventListener('dblclick', function() {
-                // Find and click the hidden button
-                const buttons = window.parent.document.querySelectorAll('button');
-                for (const btn of buttons) {
-                    if (btn.innerText.includes("Unlock System")) {
-                        btn.click();
-                        break;
-                    }
-                }
-            });
-        </script>
     """, unsafe_allow_html=True)
 
     # 2. --- THE HEADER & MESSAGE ---
@@ -123,25 +105,43 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             <h1 style="color: white; font-size: 2.8em; margin: 0;">PORTAL <span style="color: #3b82f6;">OFFLINE</span></h1>
             <p style="color: #94a3b8; margin-top: 10px; font-size: 1.1em;">
                 Ruby Springfield College Portal is undergoing essential internal maintenance. 
-                Access will be automatically restored once the countdown completes.
+                Full access will be restored once the countdown expires.
             </p>
             <div class="timer-container">{timer_display}</div>
         </div>
     """, unsafe_allow_html=True)
 
-    # 3. --- THE STEALTH BYPASS (NOW HIDDEN VIA CSS) ---
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # This button is now 100% invisible because of the CSS rule above
-    if st.button("Unlock System", key="hidden_trigger"):
+    # 3. --- THE BRANDED SENSOR ---
+    st.markdown("""
+        <div class="sumi-footer" id="sumi-trigger">
+            Powered by SumiLogics(NJA)
+        </div>
+
+        <script>
+            const brand = window.parent.document.getElementById('sumi-trigger');
+            brand.addEventListener('dblclick', function() {
+                const buttons = window.parent.document.querySelectorAll('button');
+                for (const btn of buttons) {
+                    if (btn.innerText.includes("SYS_ACTIVATE")) {
+                        btn.click();
+                        break;
+                    }
+                }
+            });
+        </script>
+    """, unsafe_allow_html=True)
+
+    # Hidden logical trigger
+    if st.button("SYS_ACTIVATE", key="hidden_trigger"):
         st.session_state.ghost_unlocked = not st.session_state.ghost_unlocked
 
-    # The password field ONLY appears after you double-click the top-left corner
+    # Password field appears only after double-clicking the branding
     if st.session_state.ghost_unlocked:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            secret = st.text_input("System Decryption Key", type="password")
-            if st.button("Authorize Access"):
+            st.write("")
+            secret = st.text_input("Enter SumiLogics Master Key", type="password")
+            if st.button("Authenticate"):
                 if secret == ADMIN_SECRET_KEY:
                     st.session_state.maintenance_bypass = True
                     st.rerun()
