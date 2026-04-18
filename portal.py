@@ -29,18 +29,20 @@ import streamlit as st
 from datetime import datetime
 import time
 
-MAINTENANCE_MODE = True  # Set to False to go live
+# --- ADD THIS: LIVE TICKING ENGINE ---
+try:
+    from streamlit_autorefresh import st_autorefresh
+    # This pulses the app every 1000ms (1 second) to update the timer
+    st_autorefresh(interval=1000, key="maintenance_tick")
+except ImportError:
+    # If the library isn't there, it won't crash, but it won't tick live
+    pass
+
+MAINTENANCE_MODE = True  
 ADMIN_SECRET_KEY = "SUMI" 
 
 # 🛠️ SET YOUR RESUMPTION TIME HERE
 TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
-
-# Auto-refresh every 1 second to keep the clock ticking
-try:
-    from streamlit_autorefresh import st_autorefresh
-    st_autorefresh(interval=1000, key="maintenance_tick")
-except:
-    pass
 
 if 'maintenance_bypass' not in st.session_state:
     st.session_state.maintenance_bypass = False
@@ -48,7 +50,7 @@ if 'maintenance_bypass' not in st.session_state:
 if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     st.set_page_config(page_title="RSC | System Maintenance", page_icon="🚧", layout="centered")
     
-    # Calculate Timer
+    # Calculate Timer (Calculated every second because of st_autorefresh)
     now = datetime.now()
     diff = TARGET_DATE - now
     if diff.total_seconds() > 0:
@@ -59,7 +61,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     else:
         timer_display = "00d : 00h : 00m : 00s"
 
-   # 1. --- THE STYLE BLOCK ---
+    # 1. --- THE STYLE BLOCK ---
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
@@ -117,8 +119,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     """, unsafe_allow_html=True)
 
     # 3. --- THE SEPARATE TIMER ENGINE ---
-    # We use st.columns to center the timer block perfectly
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 4, 1])
     with col2:
         st.markdown(f"""
             <div style="text-align: center;">
