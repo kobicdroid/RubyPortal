@@ -23,7 +23,7 @@ import streamlit.components.v1 as components
 
 
 # =================================================================
-# --- GHOST PROTOCOL: FLOATING BRANDING SENSOR ---
+# --- GHOST PROTOCOL: SUMILOGICS SENSOR EDITION ---
 # =================================================================
 import streamlit as st
 from datetime import datetime
@@ -39,7 +39,7 @@ MAINTENANCE_MODE = True
 ADMIN_SECRET_KEY = "SUMI" 
 TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
 
-# --- SESSION STATE (The Brain of the Bypass) ---
+# --- SESSION STATE ---
 if 'maintenance_bypass' not in st.session_state:
     st.session_state.maintenance_bypass = False
 if 'ghost_unlocked' not in st.session_state:
@@ -87,14 +87,13 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             color: rgba(255, 255, 255, 0.1);
             font-size: 0.7em;
             letter-spacing: 2px;
-            font-family: 'Inter', sans-serif;
             z-index: 999999;
             cursor: pointer;
             user-select: none;
         }
 
         /* COMPLETELY HIDE THE MECHANICAL TRIGGER */
-        .stCheckbox {
+        div[data-testid="stCheckbox"] {
             display: none !important;
         }
         </style>
@@ -115,46 +114,53 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
         </div>
     """, unsafe_allow_html=True)
 
-    # 3. --- THE FLOATING BRANDING & JS SENSOR ---
+    # 3. --- THE FLOATING BRANDING & SENSOR ---
     st.markdown("""
         <div class="sumi-watermark" id="sumi-sensor">
             Powered by SumiLogics(NJA)
         </div>
 
         <script>
-            const brand = window.parent.document.getElementById('sumi-sensor');
-            brand.addEventListener('dblclick', function() {
-                // Find the hidden checkbox and click it to flip the state
-                const hiddenInput = window.parent.document.querySelector('input[type="checkbox"]');
-                if (hiddenInput) {
-                    hiddenInput.click();
+            // This waits for the watermark and attaches the double-click event
+            setTimeout(() => {
+                const brand = window.parent.document.getElementById('sumi-sensor');
+                if (brand) {
+                    brand.ondblclick = function() {
+                        // Locate the hidden checkbox inside Streamlit's iframe structure
+                        const hiddenInput = window.parent.document.querySelector('input[type="checkbox"]');
+                        if (hiddenInput) {
+                            hiddenInput.click();
+                        } else {
+                            console.log("Ghost Trigger Not Found");
+                        }
+                    };
                 }
-            });
+            }, 1000);
         </script>
     """, unsafe_allow_html=True)
 
-    # 4. --- THE HIDDEN BRIDGE ---
-    # This checkbox is invisible but controls the visibility of the panel below
-    reveal_panel = st.checkbox("Toggle", value=st.session_state.ghost_unlocked, key="trigger_box")
+    # 4. --- THE HIDDEN TRIGGER (Mechanical Bridge) ---
+    # This is hidden by CSS but toggles st.session_state.ghost_unlocked
+    reveal = st.checkbox("ghost_trigger", value=st.session_state.ghost_unlocked)
     
-    if reveal_panel != st.session_state.ghost_unlocked:
-        st.session_state.ghost_unlocked = reveal_panel
+    if reveal != st.session_state.ghost_unlocked:
+        st.session_state.ghost_unlocked = reveal
         st.rerun()
 
     # 5. --- THE CONDITIONAL BYPASS PANEL ---
-    # This block ONLY exists if ghost_unlocked is True
+    # This block ONLY appears after the double-click
     if st.session_state.ghost_unlocked:
         st.markdown("<br><br>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.warning("🔒 SumiLogics Admin Console")
-            master_key = st.text_input("Master Key", type="password")
-            if st.button("Unlock System"):
+            st.info("🔓 SumiLogics Master Console Active")
+            master_key = st.text_input("Enter Master Key", type="password")
+            if st.button("Access Portal"):
                 if master_key == ADMIN_SECRET_KEY:
                     st.session_state.maintenance_bypass = True
                     st.rerun()
                 else:
-                    st.error("Invalid Authentication")
+                    st.error("Access Denied: Invalid Authentication")
 
     st.stop()
 # =================================================================
