@@ -22,13 +22,22 @@ import requests
 import streamlit.components.v1 as components 
 
 # =================================================================
-# --- ADVANCED UI WITH DYNAMIC COUNTDOWN ---
+# --- ADVANCED UI WITH DYNAMIC COUNTDOWN & AUTO-TICK ---
 # =================================================================
+# --- ADD THIS: Requirements for Auto-Refresh ---
+# Note: You can also use the built-in st.empty() loop, but this is cleaner
+try:
+    from streamlit_autorefresh import st_autorefresh
+    # This refreshes the app every 1000ms (1 second) to make the clock tick
+    st_autorefresh(interval=1000, key="countdown_tick")
+except ImportError:
+    # If the library isn't installed, the timer stays static until refresh
+    pass
+
 MAINTENANCE_MODE = True 
-ADMIN_SECRET_KEY = "SHUTDOWN2026"
+ADMIN_SECRET_KEY = "SUMI"
 
 # 🛠️ MANUAL TIMER SETTING: (Year, Month, Day, Hour, Minute)
-# Change this date to whenever you want the countdown to end.
 TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
 
 if 'maintenance_bypass' not in st.session_state:
@@ -46,8 +55,12 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
         hours, remainder = divmod(diff.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
         timer_display = f"{days:02d}d : {hours:02d}h : {minutes:02d}m : {seconds:02d}s"
+        status_msg = "● System Optimization Active"
+        status_color = "#22c55e" # Green
     else:
         timer_display = "00d : 00h : 00m : 00s"
+        status_msg = "● Uplink Stabilized - Reconnecting"
+        status_color = "#3b82f6" # Blue
 
     # --- ADVANCED GHOST UI ---
     st.markdown(f"""
@@ -87,7 +100,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
 
         .status-pill {{
             background: rgba(34, 197, 94, 0.1);
-            color: #22c55e;
+            color: {status_color};
             padding: 5px 15px;
             border-radius: 50px;
             font-size: 0.9em;
@@ -100,7 +113,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
         </style>
         
         <div class="maintenance-card">
-            <div class="status-pill">● System Optimization Active</div>
+            <div class="status-pill">{status_msg}</div>
             <h1 style="color: white; font-size: 3em; margin-bottom: 10px;">RUBY SPRINGFIELD</h1>
             <p style="color: #94a3b8; font-size: 1.2em;">Next Generation Academic Portal Deployment</p>
             
@@ -114,7 +127,6 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     """, unsafe_allow_html=True)
     
     # --- THE INVISIBLE ADMIN GATE ---
-    # To keep it hidden, I've placed the input in a tiny expander at the very bottom
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     with st.expander(" "):
         access_key = st.text_input("Decrypt", type="password")
