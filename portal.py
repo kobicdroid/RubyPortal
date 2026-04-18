@@ -79,28 +79,23 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             border: 1px solid rgba(59, 130, 246, 0.3); margin: 25px auto; display: inline-block;
         }
 
-        /* HIDE THE TRIGGER BUTTON */
-        div[data-testid="stButton"] button:has(div:contains("SYS_ACTIVATE")) {
-            display: none !important;
-        }
-        
         /* THE FLOATING WATERMARK */
         .sumi-watermark {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            color: rgba(255, 255, 255, 0.15); /* Very transparent */
+            color: rgba(255, 255, 255, 0.15);
             font-size: 0.75em;
             letter-spacing: 1.5px;
             font-family: 'Inter', sans-serif;
             z-index: 999999;
             cursor: pointer;
             user-select: none;
-            transition: color 0.3s ease;
         }
         
-        .sumi-watermark:hover {
-            color: rgba(59, 130, 246, 0.5); /* Slight glow on hover */
+        /* HIDE THE ACTUAL CHECKBOX USED FOR THE TRIGGER */
+        .element-container:has(#ghost-trigger) {
+            display: none !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -114,7 +109,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             <h1 style="color: white; font-size: 2.8em; margin: 0;">PORTAL <span style="color: #3b82f6;">OFFLINE</span></h1>
             <p style="color: #94a3b8; margin-top: 10px; font-size: 1.1em;">
                 Ruby Springfield College Portal is undergoing essential maintenance. 
-                Access will automatically restore when the countdown finishes.
+                Full access will restore automatically when the countdown finishes.
             </p>
             <div class="timer-container">{timer_display}</div>
         </div>
@@ -129,28 +124,25 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
         <script>
             const brand = window.parent.document.getElementById('sumi-gate');
             brand.addEventListener('dblclick', function() {
-                const buttons = window.parent.document.querySelectorAll('button');
-                for (const btn of buttons) {
-                    if (btn.innerText.includes("SYS_ACTIVATE")) {
-                        btn.click();
-                        break;
-                    }
-                }
+                // Find the hidden checkbox and click it
+                const checkbox = window.parent.document.querySelector('input[aria-label="ghost_check"]');
+                if (checkbox) checkbox.click();
             });
         </script>
     """, unsafe_allow_html=True)
 
-    # Hidden logical trigger (Invisible)
-    if st.button("SYS_ACTIVATE", key="hidden_trigger"):
-        st.session_state.ghost_unlocked = not st.session_state.ghost_unlocked
+    # This is the hidden mechanical trigger (A checkbox is easier to 'click' via JS than a button)
+    # We use the CSS above to make sure this is never seen
+    st.checkbox("ghost_check", value=st.session_state.ghost_unlocked, key="ghost_trigger", 
+                on_change=lambda: st.session_state.update({"ghost_unlocked": not st.session_state.ghost_unlocked}))
 
-    # Password field appears in a focused modal-style view
+    # 4. --- THE CONDITIONAL BYPASS PANEL ---
     if st.session_state.ghost_unlocked:
-        st.markdown("---")
+        st.markdown("<br><br>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            secret = st.text_input("SumiLogics Authentication", type="password", placeholder="Enter Master Key")
-            if st.button("Unlock Admin"):
+            secret = st.text_input("SumiLogics Authentication", type="password", placeholder="Master Key Required")
+            if st.button("Unlock Portal"):
                 if secret == ADMIN_SECRET_KEY:
                     st.session_state.maintenance_bypass = True
                     st.rerun()
