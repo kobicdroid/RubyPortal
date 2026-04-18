@@ -5,3 +5,4 @@ fpdf
 qrcode
 plotly
 numpy
+streamlit-autorefresh
