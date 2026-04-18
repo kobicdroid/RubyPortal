@@ -25,6 +25,10 @@ import streamlit.components.v1 as components
 # =================================================================
 # --- ADVANCED MAINTENANCE ENGINE (OFFLINE MODE) ---
 # =================================================================
+import streamlit as st
+from datetime import datetime
+import time
+
 MAINTENANCE_MODE = True  # Set to False to go live
 ADMIN_SECRET_KEY = "SUMI" 
 
@@ -55,6 +59,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     else:
         timer_display = "00d : 00h : 00m : 00s"
 
+    # --- ADVANCED UI INJECTION ---
     st.markdown(f"""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
@@ -75,7 +80,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
         }}
 
         .maint-header {{
-            color: #ef4444; /* Alert Red */
+            color: #ef4444;
             font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -94,6 +99,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             border: 1px solid rgba(59, 130, 246, 0.2);
             margin: 20px 0;
             display: inline-block;
+            text-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
         }}
         </style>
         
@@ -119,12 +125,12 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     # Secret Bypass (Invisible Expander)
     with st.expander(" "):
         secret = st.text_input("Bypass Key", type="password")
-        if st.button("Authenticate"):
+        if st.button("Authorize"):
             if secret == ADMIN_SECRET_KEY:
                 st.session_state.maintenance_bypass = True
                 st.rerun()
             else:
-                st.error("Access Denied")
+                st.error("Invalid Hash")
     st.stop()
 # =================================================================
 
