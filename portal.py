@@ -23,7 +23,7 @@ import streamlit.components.v1 as components
 
 
 # =================================================================
-# --- ADVANCED MAINTENANCE ENGINE (GHOST DOUBLE-CLICK MODE) ---
+# --- GHOST PROTOCOL: TOTAL STEALTH MODE ---
 # =================================================================
 import streamlit as st
 from datetime import datetime
@@ -37,11 +37,9 @@ except ImportError:
 
 MAINTENANCE_MODE = True  
 ADMIN_SECRET_KEY = "SUMI" 
-
-# 🛠️ SET YOUR RESUMPTION TIME HERE
 TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
 
-# --- SESSION STATE INITIALIZATION ---
+# --- SESSION STATE ---
 if 'maintenance_bypass' not in st.session_state:
     st.session_state.maintenance_bypass = False
 if 'ghost_unlocked' not in st.session_state:
@@ -50,8 +48,6 @@ if 'ghost_unlocked' not in st.session_state:
 # --- AUTO-UNLOCK LOGIC ---
 now = datetime.now()
 diff = TARGET_DATE - now
-
-# Auto-open if time is up
 if diff.total_seconds() <= 0:
     st.session_state.maintenance_bypass = True
 
@@ -64,7 +60,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     minutes, seconds = divmod(remainder, 60)
     timer_display = f"{days:02d}d : {hours:02d}h : {minutes:02d}m : {seconds:02d}s"
 
-    # 1. --- THE STYLE BLOCK (WITH INVISIBLE SENSOR) ---
+    # 1. --- THE STYLE BLOCK (HIDING THE VISIBLE BUTTON) ---
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
@@ -83,13 +79,18 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             border: 1px solid rgba(59, 130, 246, 0.3); margin: 25px auto; display: inline-block;
         }
 
-        /* THE GHOST SENSOR: Invisible box in the top-left corner */
+        /* HIDE THE TRIGGER BUTTON FROM HUMAN EYES */
+        div[data-testid="stButton"] button:has(div:contains("Unlock System")) {
+            display: none !important;
+        }
+        
+        /* THE GHOST SENSOR */
         .ghost-sensor {
             position: fixed;
             top: 0;
             left: 0;
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             background: transparent;
             z-index: 99999;
             cursor: default;
@@ -99,12 +100,16 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
         <div class="ghost-sensor" id="sensor"></div>
 
         <script>
-            // JS to detect double click on the invisible sensor
             const sensor = window.parent.document.getElementById('sensor');
             sensor.addEventListener('dblclick', function() {
-                // This triggers the hidden Streamlit element
-                const btn = window.parent.document.querySelector('button[kind="secondary"]');
-                if (btn) btn.click();
+                // Find and click the hidden button
+                const buttons = window.parent.document.querySelectorAll('button');
+                for (const btn of buttons) {
+                    if (btn.innerText.includes("Unlock System")) {
+                        btn.click();
+                        break;
+                    }
+                }
             });
         </script>
     """, unsafe_allow_html=True)
@@ -124,22 +129,24 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
         </div>
     """, unsafe_allow_html=True)
 
-    # 3. --- THE STEALTH BYPASS ---
+    # 3. --- THE STEALTH BYPASS (NOW HIDDEN VIA CSS) ---
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # This button is used by the JavaScript double-click but is normally ignored by users
-    if st.button("Unlock System", key="hidden_trigger", type="secondary", help="Restricted Area"):
+    # This button is now 100% invisible because of the CSS rule above
+    if st.button("Unlock System", key="hidden_trigger"):
         st.session_state.ghost_unlocked = not st.session_state.ghost_unlocked
 
+    # The password field ONLY appears after you double-click the top-left corner
     if st.session_state.ghost_unlocked:
-        with st.container():
-            secret = st.text_input("Decrypt System Hash", type="password")
-            if st.button("Authorize"):
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            secret = st.text_input("System Decryption Key", type="password")
+            if st.button("Authorize Access"):
                 if secret == ADMIN_SECRET_KEY:
                     st.session_state.maintenance_bypass = True
                     st.rerun()
                 else:
-                    st.error("Invalid Hash")
+                    st.error("Access Denied")
 
     st.stop()
 # =================================================================
