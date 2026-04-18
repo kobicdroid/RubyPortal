@@ -23,10 +23,11 @@ import streamlit.components.v1 as components
 
 
 # =================================================================
-# --- GHOST PROTOCOL: SUMILOGICS SENSOR EDITION ---
+# --- GHOST PROTOCOL: SUMILOGICS SENSOR (FIXED) ---
 # =================================================================
 import streamlit as st
 from datetime import datetime
+import time
 
 # --- LIVE TICKING ENGINE ---
 try:
@@ -44,6 +45,8 @@ if 'maintenance_bypass' not in st.session_state:
     st.session_state.maintenance_bypass = False
 if 'ghost_unlocked' not in st.session_state:
     st.session_state.ghost_unlocked = False
+if 'last_click_time' not in st.session_state:
+    st.session_state.last_click_time = 0
 
 # --- AUTO-UNLOCK LOGIC ---
 now = datetime.now()
@@ -60,7 +63,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     minutes, seconds = divmod(remainder, 60)
     timer_display = f"{days:02d}d : {hours:02d}h : {minutes:02d}m : {seconds:02d}s"
 
-    # 1. --- THE STYLE BLOCK ---
+    # 1. --- THE STYLE BLOCK (INVISIBILITY CLOAK) ---
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
@@ -79,22 +82,30 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             border: 1px solid rgba(59, 130, 246, 0.3); margin: 25px auto; display: inline-block;
         }
 
-        /* THE FLOATING WATERMARK */
+        /* WATERMARK TEXT */
         .sumi-watermark {
             position: fixed;
-            bottom: 15px;
+            bottom: 20px;
             right: 20px;
-            color: rgba(255, 255, 255, 0.1);
-            font-size: 0.7em;
-            letter-spacing: 2px;
-            z-index: 999999;
-            cursor: pointer;
-            user-select: none;
+            color: rgba(255, 255, 255, 0.12);
+            font-size: 0.75em;
+            letter-spacing: 1.5px;
+            z-index: 999998;
+            pointer-events: none;
         }
 
-        /* COMPLETELY HIDE THE MECHANICAL TRIGGER */
-        div[data-testid="stCheckbox"] {
-            display: none !important;
+        /* THE INVISIBLE OVERLAY BUTTON */
+        div[data-testid="stButton"] button:has(div:contains("GHOST_ACTIVATE")) {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            width: 180px;
+            height: 40px;
+            background: transparent !important;
+            border: none !important;
+            color: transparent !important;
+            z-index: 999999;
+            box-shadow: none !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -114,53 +125,31 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
         </div>
     """, unsafe_allow_html=True)
 
-    # 3. --- THE FLOATING BRANDING & SENSOR ---
-    st.markdown("""
-        <div class="sumi-watermark" id="sumi-sensor">
-            Powered by SumiLogics(NJA)
-        </div>
-
-        <script>
-            // This waits for the watermark and attaches the double-click event
-            setTimeout(() => {
-                const brand = window.parent.document.getElementById('sumi-sensor');
-                if (brand) {
-                    brand.ondblclick = function() {
-                        // Locate the hidden checkbox inside Streamlit's iframe structure
-                        const hiddenInput = window.parent.document.querySelector('input[type="checkbox"]');
-                        if (hiddenInput) {
-                            hiddenInput.click();
-                        } else {
-                            console.log("Ghost Trigger Not Found");
-                        }
-                    };
-                }
-            }, 1000);
-        </script>
-    """, unsafe_allow_html=True)
-
-    # 4. --- THE HIDDEN TRIGGER (Mechanical Bridge) ---
-    # This is hidden by CSS but toggles st.session_state.ghost_unlocked
-    reveal = st.checkbox("ghost_trigger", value=st.session_state.ghost_unlocked)
+    # 3. --- THE FLOATING TRIGGER ---
+    st.markdown('<div class="sumi-watermark">Powered by SumiLogics(NJA)</div>', unsafe_allow_html=True)
     
-    if reveal != st.session_state.ghost_unlocked:
-        st.session_state.ghost_unlocked = reveal
+    # This button sits ON TOP of the watermark but is invisible
+    if st.button("GHOST_ACTIVATE"):
+        current_time = time.time()
+        # Double Click detection (clicks within 0.5 seconds)
+        if current_time - st.session_state.last_click_time < 0.5:
+            st.session_state.ghost_unlocked = not st.session_state.ghost_unlocked
+        st.session_state.last_click_time = current_time
         st.rerun()
 
-    # 5. --- THE CONDITIONAL BYPASS PANEL ---
-    # This block ONLY appears after the double-click
+    # 4. --- THE CONDITIONAL BYPASS PANEL ---
     if st.session_state.ghost_unlocked:
         st.markdown("<br><br>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.info("🔓 SumiLogics Master Console Active")
-            master_key = st.text_input("Enter Master Key", type="password")
+            st.info("🔓 SumiLogics Admin Console Active")
+            master_key = st.text_input("Master Key", type="password")
             if st.button("Access Portal"):
                 if master_key == ADMIN_SECRET_KEY:
                     st.session_state.maintenance_bypass = True
                     st.rerun()
                 else:
-                    st.error("Access Denied: Invalid Authentication")
+                    st.error("Invalid Authentication")
 
     st.stop()
 # =================================================================
