@@ -23,7 +23,7 @@ import streamlit.components.v1 as components
 
 
 # =================================================================
-# --- GHOST PROTOCOL: BRANDING SENSOR MODE ---
+# --- GHOST PROTOCOL: FLOATING BRANDING SENSOR ---
 # =================================================================
 import streamlit as st
 from datetime import datetime
@@ -84,14 +84,23 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             display: none !important;
         }
         
-        .sumi-footer {
-            margin-top: 50px;
-            color: rgba(255, 255, 255, 0.2);
-            font-size: 0.8em;
-            letter-spacing: 2px;
-            text-align: center;
-            cursor: default;
+        /* THE FLOATING WATERMARK */
+        .sumi-watermark {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.15); /* Very transparent */
+            font-size: 0.75em;
+            letter-spacing: 1.5px;
+            font-family: 'Inter', sans-serif;
+            z-index: 999999;
+            cursor: pointer;
             user-select: none;
+            transition: color 0.3s ease;
+        }
+        
+        .sumi-watermark:hover {
+            color: rgba(59, 130, 246, 0.5); /* Slight glow on hover */
         }
         </style>
     """, unsafe_allow_html=True)
@@ -104,21 +113,21 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             </div>
             <h1 style="color: white; font-size: 2.8em; margin: 0;">PORTAL <span style="color: #3b82f6;">OFFLINE</span></h1>
             <p style="color: #94a3b8; margin-top: 10px; font-size: 1.1em;">
-                Ruby Springfield College Portal is undergoing essential internal maintenance. 
-                Full access will be restored once the countdown expires.
+                Ruby Springfield College Portal is undergoing essential maintenance. 
+                Access will automatically restore when the countdown finishes.
             </p>
             <div class="timer-container">{timer_display}</div>
         </div>
     """, unsafe_allow_html=True)
 
-    # 3. --- THE BRANDED SENSOR ---
+    # 3. --- THE FLOATING BRANDING SENSOR ---
     st.markdown("""
-        <div class="sumi-footer" id="sumi-trigger">
+        <div class="sumi-watermark" id="sumi-gate">
             Powered by SumiLogics(NJA)
         </div>
 
         <script>
-            const brand = window.parent.document.getElementById('sumi-trigger');
+            const brand = window.parent.document.getElementById('sumi-gate');
             brand.addEventListener('dblclick', function() {
                 const buttons = window.parent.document.querySelectorAll('button');
                 for (const btn of buttons) {
@@ -131,17 +140,17 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
         </script>
     """, unsafe_allow_html=True)
 
-    # Hidden logical trigger
+    # Hidden logical trigger (Invisible)
     if st.button("SYS_ACTIVATE", key="hidden_trigger"):
         st.session_state.ghost_unlocked = not st.session_state.ghost_unlocked
 
-    # Password field appears only after double-clicking the branding
+    # Password field appears in a focused modal-style view
     if st.session_state.ghost_unlocked:
+        st.markdown("---")
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.write("")
-            secret = st.text_input("Enter SumiLogics Master Key", type="password")
-            if st.button("Authenticate"):
+            secret = st.text_input("SumiLogics Authentication", type="password", placeholder="Enter Master Key")
+            if st.button("Unlock Admin"):
                 if secret == ADMIN_SECRET_KEY:
                     st.session_state.maintenance_bypass = True
                     st.rerun()
@@ -150,7 +159,6 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
 
     st.stop()
 # =================================================================
-
 # --- NEW: HELPER FUNCTION TO FIX NAMEERROR ---
 def get_local_img(file_path):
     try:
