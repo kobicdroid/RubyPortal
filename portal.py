@@ -32,14 +32,14 @@ from datetime import datetime
 try:
     from streamlit_autorefresh import st_autorefresh
     st_autorefresh(interval=1000, key="maintenance_tick")
-except ImportError:
+except:
     pass
 
 MAINTENANCE_MODE = True  
 ADMIN_SECRET_KEY = "SUMI" 
 TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
 
-# --- SESSION STATE ---
+# --- SESSION STATE (The Brain of the Bypass) ---
 if 'maintenance_bypass' not in st.session_state:
     st.session_state.maintenance_bypass = False
 if 'ghost_unlocked' not in st.session_state:
@@ -82,19 +82,19 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
         /* THE FLOATING WATERMARK */
         .sumi-watermark {
             position: fixed;
-            bottom: 20px;
+            bottom: 15px;
             right: 20px;
-            color: rgba(255, 255, 255, 0.15);
-            font-size: 0.75em;
-            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.1);
+            font-size: 0.7em;
+            letter-spacing: 2px;
             font-family: 'Inter', sans-serif;
             z-index: 999999;
             cursor: pointer;
             user-select: none;
         }
-        
-        /* HIDE THE ACTUAL CHECKBOX USED FOR THE TRIGGER */
-        .element-container:has(#ghost-trigger) {
+
+        /* COMPLETELY HIDE THE MECHANICAL TRIGGER */
+        .stCheckbox {
             display: none !important;
         }
         </style>
@@ -108,49 +108,57 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             </div>
             <h1 style="color: white; font-size: 2.8em; margin: 0;">PORTAL <span style="color: #3b82f6;">OFFLINE</span></h1>
             <p style="color: #94a3b8; margin-top: 10px; font-size: 1.1em;">
-                Ruby Springfield College Portal is undergoing essential maintenance. 
-                Full access will restore automatically when the countdown finishes.
+                Ruby Springfield College Portal is undergoing essential internal maintenance. 
+                Access will automatically restore when the countdown finishes.
             </p>
             <div class="timer-container">{timer_display}</div>
         </div>
     """, unsafe_allow_html=True)
 
-    # 3. --- THE FLOATING BRANDING SENSOR ---
+    # 3. --- THE FLOATING BRANDING & JS SENSOR ---
     st.markdown("""
-        <div class="sumi-watermark" id="sumi-gate">
+        <div class="sumi-watermark" id="sumi-sensor">
             Powered by SumiLogics(NJA)
         </div>
 
         <script>
-            const brand = window.parent.document.getElementById('sumi-gate');
+            const brand = window.parent.document.getElementById('sumi-sensor');
             brand.addEventListener('dblclick', function() {
-                // Find the hidden checkbox and click it
-                const checkbox = window.parent.document.querySelector('input[aria-label="ghost_check"]');
-                if (checkbox) checkbox.click();
+                // Find the hidden checkbox and click it to flip the state
+                const hiddenInput = window.parent.document.querySelector('input[type="checkbox"]');
+                if (hiddenInput) {
+                    hiddenInput.click();
+                }
             });
         </script>
     """, unsafe_allow_html=True)
 
-    # This is the hidden mechanical trigger (A checkbox is easier to 'click' via JS than a button)
-    # We use the CSS above to make sure this is never seen
-    st.checkbox("ghost_check", value=st.session_state.ghost_unlocked, key="ghost_trigger", 
-                on_change=lambda: st.session_state.update({"ghost_unlocked": not st.session_state.ghost_unlocked}))
+    # 4. --- THE HIDDEN BRIDGE ---
+    # This checkbox is invisible but controls the visibility of the panel below
+    reveal_panel = st.checkbox("Toggle", value=st.session_state.ghost_unlocked, key="trigger_box")
+    
+    if reveal_panel != st.session_state.ghost_unlocked:
+        st.session_state.ghost_unlocked = reveal_panel
+        st.rerun()
 
-    # 4. --- THE CONDITIONAL BYPASS PANEL ---
+    # 5. --- THE CONDITIONAL BYPASS PANEL ---
+    # This block ONLY exists if ghost_unlocked is True
     if st.session_state.ghost_unlocked:
         st.markdown("<br><br>", unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            secret = st.text_input("SumiLogics Authentication", type="password", placeholder="Master Key Required")
-            if st.button("Unlock Portal"):
-                if secret == ADMIN_SECRET_KEY:
+            st.warning("🔒 SumiLogics Admin Console")
+            master_key = st.text_input("Master Key", type="password")
+            if st.button("Unlock System"):
+                if master_key == ADMIN_SECRET_KEY:
                     st.session_state.maintenance_bypass = True
                     st.rerun()
                 else:
-                    st.error("Access Denied")
+                    st.error("Invalid Authentication")
 
     st.stop()
 # =================================================================
+
 # --- NEW: HELPER FUNCTION TO FIX NAMEERROR ---
 def get_local_img(file_path):
     try:
