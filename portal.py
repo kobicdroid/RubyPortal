@@ -24,14 +24,15 @@ import streamlit.components.v1 as components
 # =================================================================
 # --- ADVANCED UI WITH DYNAMIC COUNTDOWN & AUTO-TICK ---
 # =================================================================
-# --- ADD THIS: Requirements for Auto-Refresh ---
-# Note: You can also use the built-in st.empty() loop, but this is cleaner
+import streamlit as st
+from datetime import datetime # Crucial for the timer
+import time
+
+# --- AUTO-REFRESH ENGINE ---
 try:
     from streamlit_autorefresh import st_autorefresh
-    # This refreshes the app every 1000ms (1 second) to make the clock tick
     st_autorefresh(interval=1000, key="countdown_tick")
 except ImportError:
-    # If the library isn't installed, the timer stays static until refresh
     pass
 
 MAINTENANCE_MODE = True 
@@ -139,7 +140,6 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
 
     st.stop()
 # =================================================================
-
 
 # --- NEW: HELPER FUNCTION TO FIX NAMEERROR ---
 def get_local_img(file_path):
