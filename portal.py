@@ -23,19 +23,17 @@ import streamlit.components.v1 as components
 
 
 # =================================================================
-# --- ADVANCED MAINTENANCE ENGINE (OFFLINE MODE) ---
+# --- ADVANCED MAINTENANCE ENGINE (AUTO-LAUNCH MODE) ---
 # =================================================================
 import streamlit as st
 from datetime import datetime
 import time
 
-# --- ADD THIS: LIVE TICKING ENGINE ---
+# --- LIVE TICKING ENGINE ---
 try:
     from streamlit_autorefresh import st_autorefresh
-    # This pulses the app every 1000ms (1 second) to update the timer
     st_autorefresh(interval=1000, key="maintenance_tick")
 except ImportError:
-    # If the library isn't there, it won't crash, but it won't tick live
     pass
 
 MAINTENANCE_MODE = True  
@@ -44,64 +42,42 @@ ADMIN_SECRET_KEY = "SUMI"
 # 🛠️ SET YOUR RESUMPTION TIME HERE
 TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
 
+# --- AUTO-UNLOCK LOGIC ---
 if 'maintenance_bypass' not in st.session_state:
     st.session_state.maintenance_bypass = False
+
+# Check if time has already passed
+now = datetime.now()
+diff = TARGET_DATE - now
+
+# If countdown is finished, automatically disable maintenance for the user
+if diff.total_seconds() <= 0:
+    st.session_state.maintenance_bypass = True
 
 if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     st.set_page_config(page_title="RSC | System Maintenance", page_icon="🚧", layout="centered")
     
-    # Calculate Timer (Calculated every second because of st_autorefresh)
-    now = datetime.now()
-    diff = TARGET_DATE - now
-    if diff.total_seconds() > 0:
-        days = diff.days
-        hours, remainder = divmod(diff.seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        timer_display = f"{days:02d}d : {hours:02d}h : {minutes:02d}m : {seconds:02d}s"
-    else:
-        timer_display = "00d : 00h : 00m : 00s"
+    # Calculate Timer Display
+    days = max(0, diff.days)
+    hours, remainder = divmod(max(0, diff.seconds), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    timer_display = f"{days:02d}d : {hours:02d}h : {minutes:02d}m : {seconds:02d}s"
 
     # 1. --- THE STYLE BLOCK ---
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
-        
-        .stApp {
-            background: radial-gradient(circle at top right, #1e3a8a, #0f172a, #020617) !important;
-        }
-        
+        .stApp { background: radial-gradient(circle at top right, #1e3a8a, #0f172a, #020617) !important; }
         .main-card {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 25px;
-            text-align: center;
-            margin-top: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            padding: 40px; border-radius: 25px; text-align: center; margin-top: 30px;
         }
-
-        .maint-header {
-            color: #ef4444;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            font-size: 0.9em;
-            margin-bottom: 10px;
-        }
-
         .timer-container {
-            font-family: 'JetBrains Mono', monospace;
-            color: #3b82f6;
-            font-size: 3em;
-            font-weight: 700;
-            padding: 20px;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 15px;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            margin: 25px auto;
-            display: inline-block;
-            text-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+            font-family: 'JetBrains Mono', monospace; color: #3b82f6; font-size: 3em; font-weight: 700;
+            padding: 20px; background: rgba(59, 130, 246, 0.1); border-radius: 15px;
+            border: 1px solid rgba(59, 130, 246, 0.3); margin: 25px auto; display: inline-block;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -109,45 +85,26 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     # 2. --- THE HEADER & MESSAGE ---
     st.markdown("""
         <div class="main-card">
-            <div class="maint-header">⚠️ OFFICIAL SYSTEM MAINTENANCE</div>
+            <div style="color: #ef4444; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 0.9em; margin-bottom: 10px;">
+                ⚠️ OFFICIAL SYSTEM MAINTENANCE
+            </div>
             <h1 style="color: white; font-size: 2.8em; margin: 0;">PORTAL <span style="color: #3b82f6;">OFFLINE</span></h1>
             <p style="color: #94a3b8; margin-top: 10px; font-size: 1.1em;">
                 Ruby Springfield College Portal is undergoing essential internal maintenance. 
-                Access is temporarily restricted.
+                The system will automatically restore access once the countdown completes.
             </p>
+            <div class="timer-container">""" + timer_display + """</div>
         </div>
     """, unsafe_allow_html=True)
 
-    # 3. --- THE SEPARATE TIMER ENGINE ---
-    col1, col2, col3 = st.columns([1, 4, 1])
-    with col2:
-        st.markdown(f"""
-            <div style="text-align: center;">
-                <div class="timer-container">{timer_display}</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    # 4. --- THE FOOTER ---
-    st.markdown("""
-        <div style="text-align: center;">
-            <p style="color: #cbd5e1; font-size: 0.9em; opacity: 0.8;">
-                Estimated systems restoration at the countdown completion.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
+    # 3. --- THE FOOTER & BYPASS ---
     st.info("📩 For urgent administrative support: info@rubyspringfield.edu.ng")
-    
-    # Secret Bypass (Invisible Expander)
     with st.expander(" "):
         secret = st.text_input("Bypass Key", type="password")
         if st.button("Authorize"):
             if secret == ADMIN_SECRET_KEY:
                 st.session_state.maintenance_bypass = True
                 st.rerun()
-            else:
-                st.error("Invalid Hash")
     st.stop()
 # =================================================================
 
