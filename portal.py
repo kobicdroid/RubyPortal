@@ -21,6 +21,48 @@ import time
 import requests 
 import streamlit.components.v1 as components 
 
+# =================================================================
+# --- MASTER MAINTENANCE SWITCH & BYPASS ---
+# =================================================================
+# Set MAINTENANCE_MODE to True to lock the site. Set to False to go live.
+MAINTENANCE_MODE = True 
+ADMIN_SECRET_KEY = "SUMI" 
+
+if 'maintenance_bypass' not in st.session_state:
+    st.session_state.maintenance_bypass = False
+
+if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
+    st.set_page_config(page_title="RSC Portal - Maintenance", page_icon="🚧")
+    
+    st.markdown("""
+        <div style="text-align: center; padding: 50px;">
+            <h1 style="font-size: 4em;">🚧</h1>
+            <h1 style="color: #1E3A8A;">Under Maintenance</h1>
+            <p style="font-size: 1.2em; color: #4B5563;">
+                The <b>Ruby Springfield College Portal</b> is currently undergoing scheduled updates.<br>
+                We'll be back online shortly to serve you better!
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.image("https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=500")
+    
+    st.divider()
+    st.info("📩 For urgent inquiries, please contact the Admin Office or email us at sumilogics@gmail.com")
+    
+    # Secret Bypass for you to work on the site while it's "down"
+    with st.expander("Admin Login"):
+        secret = st.text_input("Enter Secret Key", type="password")
+        if st.button("Access Portal"):
+            if secret == ADMIN_SECRET_KEY:
+                st.session_state.maintenance_bypass = True
+                st.rerun()
+            else:
+                st.error("Invalid Key")
+    st.stop() # Stops the rest of the code from loading
+# =================================================================
+
+
 # --- NEW: HELPER FUNCTION TO FIX NAMEERROR ---
 def get_local_img(file_path):
     try:
