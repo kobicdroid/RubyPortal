@@ -22,10 +22,14 @@ import requests
 import streamlit.components.v1 as components 
 
 # =================================================================
-# --- GHOST ARCHITECT UI (INVISIBLE ACCESS) ---
+# --- ADVANCED UI WITH DYNAMIC COUNTDOWN ---
 # =================================================================
 MAINTENANCE_MODE = True 
-ADMIN_SECRET_KEY = "SUMI" 
+ADMIN_SECRET_KEY = "SHUTDOWN2026"
+
+# 🛠️ MANUAL TIMER SETTING: (Year, Month, Day, Hour, Minute)
+# Change this date to whenever you want the countdown to end.
+TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
 
 if 'maintenance_bypass' not in st.session_state:
     st.session_state.maintenance_bypass = False
@@ -33,86 +37,94 @@ if 'maintenance_bypass' not in st.session_state:
 if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     st.set_page_config(page_title="RSC | System Upgrade", page_icon="⚡", layout="centered")
     
-    st.markdown("""
+    # --- COUNTDOWN CALCULATION ---
+    now = datetime.now()
+    diff = TARGET_DATE - now
+    
+    if diff.total_seconds() > 0:
+        days = diff.days
+        hours, remainder = divmod(diff.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        timer_display = f"{days:02d}d : {hours:02d}h : {minutes:02d}m : {seconds:02d}s"
+    else:
+        timer_display = "00d : 00h : 00m : 00s"
+
+    # --- ADVANCED GHOST UI ---
+    st.markdown(f"""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=JetBrains+Mono&display=swap');
         
-        .stApp {
+        .stApp {{
             background: radial-gradient(circle at top right, #1e3a8a, #0f172a, #020617) !important;
             font-family: 'Inter', sans-serif;
-        }
+        }}
         
-        .maintenance-card {
+        .maintenance-card {{
             background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 24px;
+            padding: 50px;
+            border-radius: 30px;
             text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
             margin-top: 50px;
-        }
+        }}
 
-        .pulse {
-            width: 12px; height: 12px; background: #22c55e; border-radius: 50%;
-            display: inline-block; margin-right: 8px;
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 1);
-            animation: pulse-green 2s infinite;
-        }
+        .countdown-box {{
+            font-family: 'JetBrains Mono', monospace;
+            color: #3b82f6;
+            font-size: 3em;
+            font-weight: 700;
+            margin: 30px 0;
+            letter-spacing: 3px;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            display: inline-block;
+            text-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+        }}
 
-        @keyframes pulse-green {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-
-        /* The Ghost Entrance Style */
-        .ghost-trigger {
-            color: rgba(255, 255, 255, 0.01); /* Almost 100% transparent */
-            font-size: 10px;
-            cursor: default;
-            user-select: none;
-            margin-top: 20px;
-        }
-        .ghost-trigger:hover {
-            color: rgba(255, 255, 255, 0.05); /* Barely visible on hover for you to find */
-        }
+        .status-pill {{
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.9em;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            display: inline-block;
+            margin-bottom: 20px;
+        }}
         </style>
         
         <div class="maintenance-card">
-            <div style="color: #94a3b8; font-size: 1.1em; letter-spacing: 1px; text-transform: uppercase; font-weight: 700;">
-                <span class="pulse"></span> Core System Optimization In Progress
-            </div>
-            <h1 style="color: white; font-size: 3.5em; margin: 20px 0;">RUBY <span style="color: #3b82f6;">SPRINGFIELD</span></h1>
-            <p style="color: #cbd5e1; font-size: 1.2em; line-height: 1.6;">
-                We are currently deploying <b>Advanced Neural Updates</b> to the Academic Portal. 
-                Our engineers are working to enhance your management experience.
-            </p>
-            <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                <p style="color: #64748b;">Estimated Uplink Time: <span style="color: #3b82f6;">Short Interval</span></p>
-            </div>
+            <div class="status-pill">● System Optimization Active</div>
+            <h1 style="color: white; font-size: 3em; margin-bottom: 10px;">RUBY SPRINGFIELD</h1>
+            <p style="color: #94a3b8; font-size: 1.2em;">Next Generation Academic Portal Deployment</p>
             
-            <div class="ghost-trigger">.</div> 
+            <div class="countdown-box">{timer_display}</div>
+            
+            <p style="color: #cbd5e1; font-size: 1.1em; max-width: 500px; margin: 0 auto;">
+                We are currently synchronizing academic records and upgrading security protocols. 
+                The portal will be live once the uplink is complete.
+            </p>
         </div>
     """, unsafe_allow_html=True)
     
-    # --- THE INVISIBLE CLICK LOGIC ---
-    # We use a simple button with no label or a tiny transparent one
-    col1, col2, col3 = st.columns([4, 2, 4])
-    with col2:
-        if st.button(" ", key="ghost_btn", help=None): # Just a space as label
-            st.session_state.show_ghost_login = True
-
-    if st.session_state.get('show_ghost_login'):
-        st.markdown("<br>", unsafe_allow_html=True)
-        secret = st.text_input("Enter Key", type="password")
-        if st.button("Unlock"):
-            if secret == ADMIN_SECRET_KEY:
+    # --- THE INVISIBLE ADMIN GATE ---
+    # To keep it hidden, I've placed the input in a tiny expander at the very bottom
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    with st.expander(" "):
+        access_key = st.text_input("Decrypt", type="password")
+        if st.button("Authorize"):
+            if access_key == ADMIN_SECRET_KEY:
                 st.session_state.maintenance_bypass = True
                 st.rerun()
             else:
-                st.error("Access Denied")
-    
+                st.error("Invalid Hash")
+
     st.stop()
 # =================================================================
 
