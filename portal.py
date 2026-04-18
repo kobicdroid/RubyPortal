@@ -38,7 +38,7 @@ except:
 
 MAINTENANCE_MODE = True  
 ADMIN_SECRET_KEY = "SUMI" 
-TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
+TARGET_DATE = datetime(2026, 4, 18, 16, 0) 
 
 # --- SESSION STATE ---
 if 'maintenance_bypass' not in st.session_state:
@@ -129,7 +129,7 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     st.markdown('<div class="sumi-watermark">Powered by SumiLogics(NJA)</div>', unsafe_allow_html=True)
     
     # This button sits ON TOP of the watermark but is invisible
-    if st.button("GHOST_ACTIVATE"):
+    if st.button("TOGGLE"):
         current_time = time.time()
         # Double Click detection (clicks within 0.5 seconds)
         if current_time - st.session_state.last_click_time < 0.5:
