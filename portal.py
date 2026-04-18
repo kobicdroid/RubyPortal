@@ -21,123 +21,110 @@ import time
 import requests 
 import streamlit.components.v1 as components 
 
-# =================================================================
-# --- ADVANCED UI WITH DYNAMIC COUNTDOWN & AUTO-TICK ---
-# =================================================================
-import streamlit as st
-from datetime import datetime # Crucial for the timer
-import time
 
-# --- AUTO-REFRESH ENGINE ---
+# =================================================================
+# --- ADVANCED MAINTENANCE ENGINE (OFFLINE MODE) ---
+# =================================================================
+MAINTENANCE_MODE = True  # Set to False to go live
+ADMIN_SECRET_KEY = "SUMI" 
+
+# 🛠️ SET YOUR RESUMPTION TIME HERE
+TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
+
+# Auto-refresh every 1 second to keep the clock ticking
 try:
     from streamlit_autorefresh import st_autorefresh
-    st_autorefresh(interval=1000, key="countdown_tick")
-except ImportError:
+    st_autorefresh(interval=1000, key="maintenance_tick")
+except:
     pass
-
-MAINTENANCE_MODE = True 
-ADMIN_SECRET_KEY = "SUMI"
-
-# 🛠️ MANUAL TIMER SETTING: (Year, Month, Day, Hour, Minute)
-TARGET_DATE = datetime(2026, 4, 20, 8, 0) 
 
 if 'maintenance_bypass' not in st.session_state:
     st.session_state.maintenance_bypass = False
 
 if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
-    st.set_page_config(page_title="RSC | System Upgrade", page_icon="⚡", layout="centered")
+    st.set_page_config(page_title="RSC | System Maintenance", page_icon="🚧", layout="centered")
     
-    # --- COUNTDOWN CALCULATION ---
+    # Calculate Timer
     now = datetime.now()
     diff = TARGET_DATE - now
-    
     if diff.total_seconds() > 0:
         days = diff.days
         hours, remainder = divmod(diff.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
         timer_display = f"{days:02d}d : {hours:02d}h : {minutes:02d}m : {seconds:02d}s"
-        status_msg = "● System Optimization Active"
-        status_color = "#22c55e" # Green
     else:
         timer_display = "00d : 00h : 00m : 00s"
-        status_msg = "● Uplink Stabilized - Reconnecting"
-        status_color = "#3b82f6" # Blue
 
-    # --- ADVANCED GHOST UI ---
     st.markdown(f"""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=JetBrains+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
         
         .stApp {{
             background: radial-gradient(circle at top right, #1e3a8a, #0f172a, #020617) !important;
-            font-family: 'Inter', sans-serif;
         }}
         
-        .maintenance-card {{
+        .main-card {{
             background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 50px;
-            border-radius: 30px;
+            padding: 40px;
+            border-radius: 25px;
             text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-            margin-top: 50px;
+            margin-top: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }}
 
-        .countdown-box {{
+        .maint-header {{
+            color: #ef4444; /* Alert Red */
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }}
+
+        .timer-box {{
             font-family: 'JetBrains Mono', monospace;
             color: #3b82f6;
-            font-size: 3em;
+            font-size: 2.8em;
             font-weight: 700;
-            margin: 30px 0;
-            letter-spacing: 3px;
+            padding: 15px;
             background: rgba(59, 130, 246, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            margin: 20px 0;
             display: inline-block;
-            text-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
-        }}
-
-        .status-pill {{
-            background: rgba(34, 197, 94, 0.1);
-            color: {status_color};
-            padding: 5px 15px;
-            border-radius: 50px;
-            font-size: 0.9em;
-            font-weight: 700;
-            text-transform: uppercase;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            display: inline-block;
-            margin-bottom: 20px;
         }}
         </style>
         
-        <div class="maintenance-card">
-            <div class="status-pill">{status_msg}</div>
-            <h1 style="color: white; font-size: 3em; margin-bottom: 10px;">RUBY SPRINGFIELD</h1>
-            <p style="color: #94a3b8; font-size: 1.2em;">Next Generation Academic Portal Deployment</p>
+        <div class="main-card">
+            <div class="maint-header">⚠️ OFFICIAL SYSTEM MAINTENANCE</div>
+            <h1 style="color: white; font-size: 2.8em; margin: 0;">PORTAL <span style="color: #3b82f6;">OFFLINE</span></h1>
+            <p style="color: #94a3b8; margin-top: 10px; font-size: 1.1em;">
+                Ruby Springfield College Portal is undergoing essential internal maintenance. 
+                Access is temporarily restricted.
+            </p>
             
-            <div class="countdown-box">{timer_display}</div>
+            <div class="timer-box">{timer_display}</div>
             
-            <p style="color: #cbd5e1; font-size: 1.1em; max-width: 500px; margin: 0 auto;">
-                We are currently synchronizing academic records and upgrading security protocols. 
-                The portal will be live once the uplink is complete.
+            <p style="color: #cbd5e1; font-size: 0.9em; opacity: 0.8;">
+                Estimated systems restoration at the countdown completion.
             </p>
         </div>
     """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.info("📩 For urgent administrative support: info@rubyspringfield.edu.ng")
     
-    # --- THE INVISIBLE ADMIN GATE ---
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    # Secret Bypass (Invisible Expander)
     with st.expander(" "):
-        access_key = st.text_input("Decrypt", type="password")
-        if st.button("Authorize"):
-            if access_key == ADMIN_SECRET_KEY:
+        secret = st.text_input("Bypass Key", type="password")
+        if st.button("Authenticate"):
+            if secret == ADMIN_SECRET_KEY:
                 st.session_state.maintenance_bypass = True
                 st.rerun()
             else:
-                st.error("Invalid Hash")
-
+                st.error("Access Denied")
     st.stop()
 # =================================================================
 
