@@ -22,9 +22,8 @@ import requests
 import streamlit.components.v1 as components 
 
 # =================================================================
-# --- MASTER MAINTENANCE SWITCH & BYPASS ---
+# --- GHOST ARCHITECT UI (INVISIBLE ACCESS) ---
 # =================================================================
-# Set MAINTENANCE_MODE to True to lock the site. Set to False to go live.
 MAINTENANCE_MODE = True 
 ADMIN_SECRET_KEY = "SUMI" 
 
@@ -32,34 +31,89 @@ if 'maintenance_bypass' not in st.session_state:
     st.session_state.maintenance_bypass = False
 
 if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
-    st.set_page_config(page_title="RSC Portal - Maintenance", page_icon="🚧")
+    st.set_page_config(page_title="RSC | System Upgrade", page_icon="⚡", layout="centered")
     
     st.markdown("""
-        <div style="text-align: center; padding: 50px;">
-            <h1 style="font-size: 4em;">🚧</h1>
-            <h1 style="color: #1E3A8A;">Under Maintenance</h1>
-            <p style="font-size: 1.2em; color: #4B5563;">
-                The <b>Ruby Springfield College Portal</b> is currently undergoing scheduled updates.<br>
-                We'll be back online shortly to serve you better!
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+        
+        .stApp {
+            background: radial-gradient(circle at top right, #1e3a8a, #0f172a, #020617) !important;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .maintenance-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            margin-top: 50px;
+        }
+
+        .pulse {
+            width: 12px; height: 12px; background: #22c55e; border-radius: 50%;
+            display: inline-block; margin-right: 8px;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 1);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* The Ghost Entrance Style */
+        .ghost-trigger {
+            color: rgba(255, 255, 255, 0.01); /* Almost 100% transparent */
+            font-size: 10px;
+            cursor: default;
+            user-select: none;
+            margin-top: 20px;
+        }
+        .ghost-trigger:hover {
+            color: rgba(255, 255, 255, 0.05); /* Barely visible on hover for you to find */
+        }
+        </style>
+        
+        <div class="maintenance-card">
+            <div style="color: #94a3b8; font-size: 1.1em; letter-spacing: 1px; text-transform: uppercase; font-weight: 700;">
+                <span class="pulse"></span> Core System Optimization In Progress
+            </div>
+            <h1 style="color: white; font-size: 3.5em; margin: 20px 0;">RUBY <span style="color: #3b82f6;">SPRINGFIELD</span></h1>
+            <p style="color: #cbd5e1; font-size: 1.2em; line-height: 1.6;">
+                We are currently deploying <b>Advanced Neural Updates</b> to the Academic Portal. 
+                Our engineers are working to enhance your management experience.
             </p>
+            <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <p style="color: #64748b;">Estimated Uplink Time: <span style="color: #3b82f6;">Short Interval</span></p>
+            </div>
+            
+            <div class="ghost-trigger">.</div> 
         </div>
     """, unsafe_allow_html=True)
     
-    st.image("https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=500")
-    
-    st.divider()
-    st.info("📩 For urgent inquiries, please contact the Admin Office or email us at sumilogics@gmail.com")
-    
-    # Secret Bypass for you to work on the site while it's "down"
-    with st.expander("Admin Login"):
-        secret = st.text_input("Enter Secret Key", type="password")
-        if st.button("Access Portal"):
+    # --- THE INVISIBLE CLICK LOGIC ---
+    # We use a simple button with no label or a tiny transparent one
+    col1, col2, col3 = st.columns([4, 2, 4])
+    with col2:
+        if st.button(" ", key="ghost_btn", help=None): # Just a space as label
+            st.session_state.show_ghost_login = True
+
+    if st.session_state.get('show_ghost_login'):
+        st.markdown("<br>", unsafe_allow_html=True)
+        secret = st.text_input("Enter Key", type="password")
+        if st.button("Unlock"):
             if secret == ADMIN_SECRET_KEY:
                 st.session_state.maintenance_bypass = True
                 st.rerun()
             else:
-                st.error("Invalid Key")
-    st.stop() # Stops the rest of the code from loading
+                st.error("Access Denied")
+    
+    st.stop()
 # =================================================================
 
 
