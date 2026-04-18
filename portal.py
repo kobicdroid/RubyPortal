@@ -59,16 +59,16 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
     else:
         timer_display = "00d : 00h : 00m : 00s"
 
-    # --- ADVANCED UI INJECTION ---
-    st.markdown(f"""
+   # 1. --- THE STYLE BLOCK ---
+    st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
         
-        .stApp {{
+        .stApp {
             background: radial-gradient(circle at top right, #1e3a8a, #0f172a, #020617) !important;
-        }}
+        }
         
-        .main-card {{
+        .main-card {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -77,32 +77,35 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
             text-align: center;
             margin-top: 30px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-        }}
+        }
 
-        .maint-header {{
+        .maint-header {
             color: #ef4444;
             font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
             font-size: 0.9em;
             margin-bottom: 10px;
-        }}
+        }
 
-        .timer-box {{
+        .timer-container {
             font-family: 'JetBrains Mono', monospace;
             color: #3b82f6;
-            font-size: 2.8em;
+            font-size: 3em;
             font-weight: 700;
-            padding: 15px;
+            padding: 20px;
             background: rgba(59, 130, 246, 0.1);
-            border-radius: 12px;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            margin: 20px 0;
+            border-radius: 15px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            margin: 25px auto;
             display: inline-block;
             text-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
-        }}
+        }
         </style>
-        
+    """, unsafe_allow_html=True)
+
+    # 2. --- THE HEADER & MESSAGE ---
+    st.markdown("""
         <div class="main-card">
             <div class="maint-header">⚠️ OFFICIAL SYSTEM MAINTENANCE</div>
             <h1 style="color: white; font-size: 2.8em; margin: 0;">PORTAL <span style="color: #3b82f6;">OFFLINE</span></h1>
@@ -110,9 +113,22 @@ if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
                 Ruby Springfield College Portal is undergoing essential internal maintenance. 
                 Access is temporarily restricted.
             </p>
-            
-            <div class="timer-box">{timer_display}</div>
-            
+        </div>
+    """, unsafe_allow_html=True)
+
+    # 3. --- THE SEPARATE TIMER ENGINE ---
+    # We use st.columns to center the timer block perfectly
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown(f"""
+            <div style="text-align: center;">
+                <div class="timer-container">{timer_display}</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # 4. --- THE FOOTER ---
+    st.markdown("""
+        <div style="text-align: center;">
             <p style="color: #cbd5e1; font-size: 0.9em; opacity: 0.8;">
                 Estimated systems restoration at the countdown completion.
             </p>
