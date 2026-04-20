@@ -36,7 +36,7 @@ try:
 except:
     pass
 
-MAINTENANCE_MODE = True  
+MAINTENANCE_MODE = False  
 ADMIN_SECRET_KEY = "SUMI" 
 TARGET_DATE = datetime(2026, 4, 18, 16, 10) 
 
