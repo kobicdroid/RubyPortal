@@ -1,1 +1,132 @@
 
+# =================================================================
+# --- GHOST PROTOCOL: SUMILOGICS SENSOR (FIXED) ---
+# =================================================================
+import streamlit as st
+from datetime import datetime
+import time
+
+# --- LIVE TICKING ENGINE ---
+try:
+    from streamlit_autorefresh import st_autorefresh
+    st_autorefresh(interval=1000, key="maintenance_tick")
+except:
+    pass
+
+MAINTENANCE_MODE = False  
+ADMIN_SECRET_KEY = "SUMI" 
+TARGET_DATE = datetime(2026, 4, 18, 16, 10) 
+
+# --- SESSION STATE ---
+if 'maintenance_bypass' not in st.session_state:
+    st.session_state.maintenance_bypass = False
+if 'ghost_unlocked' not in st.session_state:
+    st.session_state.ghost_unlocked = False
+if 'last_click_time' not in st.session_state:
+    st.session_state.last_click_time = 0
+
+# --- AUTO-UNLOCK LOGIC ---
+now = datetime.now()
+diff = TARGET_DATE - now
+if diff.total_seconds() <= 0:
+    st.session_state.maintenance_bypass = True
+
+if MAINTENANCE_MODE and not st.session_state.maintenance_bypass:
+    st.set_page_config(page_title="RSC | System Maintenance", page_icon="🚧", layout="centered")
+    
+    # Calculate Timer Display
+    days = max(0, diff.days)
+    hours, remainder = divmod(max(0, diff.seconds), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    timer_display = f"{days:02d}d : {hours:02d}h : {minutes:02d}m : {seconds:02d}s"
+
+    # 1. --- THE STYLE BLOCK (INVISIBILITY CLOAK) ---
+    st.markdown("""
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
+        .stApp { background: radial-gradient(circle at top right, #1e3a8a, #0f172a, #020617) !important; }
+        
+        .main-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px; border-radius: 25px; text-align: center; margin-top: 30px;
+        }
+        
+        .timer-container {
+            font-family: 'JetBrains Mono', monospace; color: #3b82f6; font-size: 3em; font-weight: 700;
+            padding: 20px; background: rgba(59, 130, 246, 0.1); border-radius: 15px;
+            border: 1px solid rgba(59, 130, 246, 0.3); margin: 25px auto; display: inline-block;
+        }
+
+        /* WATERMARK TEXT */
+        .sumi-watermark {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.12);
+            font-size: 0.75em;
+            letter-spacing: 1.5px;
+            z-index: 999998;
+            pointer-events: none;
+        }
+
+        /* THE INVISIBLE OVERLAY BUTTON */
+        div[data-testid="stButton"] button:has(div:contains("GHOST_ACTIVATE")) {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            width: 180px;
+            height: 40px;
+            background: transparent !important;
+            border: none !important;
+            color: transparent !important;
+            z-index: 999999;
+            box-shadow: none !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # 2. --- THE HEADER & MESSAGE ---
+    st.markdown(f"""
+        <div class="main-card">
+            <div style="color: #ef4444; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 0.9em; margin-bottom: 10px;">
+                ⚠️ OFFICIAL SYSTEM MAINTENANCE
+            </div>
+            <h1 style="color: white; font-size: 2.8em; margin: 0;">PORTAL <span style="color: #3b82f6;">OFFLINE</span></h1>
+            <p style="color: #94a3b8; margin-top: 10px; font-size: 1.1em;">
+                Ruby Springfield College Portal is undergoing essential internal maintenance. 
+                Access will automatically restore when the countdown finishes.
+            </p>
+            <div class="timer-container">{timer_display}</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # 3. --- THE FLOATING TRIGGER ---
+    st.markdown('<div class="sumi-watermark">Powered by SumiLogics(NJA)</div>', unsafe_allow_html=True)
+    
+    # This button sits ON TOP of the watermark but is invisible
+    if st.button("TOGGLE"):
+        current_time = time.time()
+        # Double Click detection (clicks within 0.5 seconds)
+        if current_time - st.session_state.last_click_time < 0.5:
+            st.session_state.ghost_unlocked = not st.session_state.ghost_unlocked
+        st.session_state.last_click_time = current_time
+        st.rerun()
+
+    # 4. --- THE CONDITIONAL BYPASS PANEL ---
+    if st.session_state.ghost_unlocked:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.info("🔓 SumiLogics Admin Console Active")
+            master_key = st.text_input("Master Key", type="password")
+            if st.button("Access Portal"):
+                if master_key == ADMIN_SECRET_KEY:
+                    st.session_state.maintenance_bypass = True
+                    st.rerun()
+                else:
+                    st.error("Invalid Authentication")
+
+    st.stop()
+# =================================================================
