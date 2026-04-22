@@ -703,16 +703,19 @@ class ResultPDF(FPDF):
             self.cell(40, 6, 'Obtained Score:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
             self.cell(30, 6, f"{summary.get('obtained', 0)}", 1, 1, 'C')
+            
             self.set_x(130)
             self.set_text_color(40, 70, 120)
             self.cell(40, 6, 'Average / Pos:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
             self.cell(30, 6, f"{summary.get('avg', 0)}% / {summary.get('pos', '-')}", 1, 1, 'C')
+            
             self.set_x(130)
             self.set_text_color(40, 70, 120)
             self.cell(40, 6, 'Total Possible:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
-            self.cell(30, 6, f"{summary.get('max', 0)}", 1, 1, 'C')
+            # Updated to 1700
+            self.cell(30, 6, "1700", 1, 1, 'C') 
         self.ln(6)
 
     def draw_scores_table(self, subject_data, s_class):
