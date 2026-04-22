@@ -906,7 +906,8 @@ class ResultPDF(FPDF):
             self.set_font('Arial', 'B', f_size)
             self.cell(w[5], row_h, str(scores.get('Total_CA', 0)), 1, 1, 'C', 1)
             self.set_font('Arial', '', f_size)
-            fill = not fill#--- SIDEBAR ---#
+            fill = not fill
+#--- SIDEBAR ---#
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
         logo_base64 = get_base64_of_bin_file(LOGO_PATH)
@@ -947,7 +948,15 @@ if page == "🎓 Result Portal":
     @st.dialog("📥 Report Ready")
     def show_download_popup(pdf_bytes, filename):
         st.success("Your PDF has been generated successfully!")
-        st.download_button("Click here to Download PDF", data=pdf_bytes, file_name=filename, use_container_width=True)
+        # Use a unique key to prevent rerun issues
+        st.download_button(
+            label="Click here to Download PDF", 
+            data=pdf_bytes, 
+            file_name=filename, 
+            mime="application/pdf",
+            use_container_width=True,
+            key="pdf_download_final"
+        )
         if st.button("Close"):
             st.rerun()
 
@@ -975,7 +984,7 @@ if page == "🎓 Result Portal":
                         student_name = str(student.get(name_col, 'Student')).upper()
                         term = student.get('Term', 'N/A')
                         
-                        log_activity("Student", "Login", f"Success: {student_name} ({adm_clean})")
+                        # Data processing helpers
                         sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
                         data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
 
@@ -1023,33 +1032,32 @@ if page == "🎓 Result Portal":
                             
                             st.table(pd.DataFrame(test_results).T)
                             
-                            try:
-                                pdf = ResultPDF()
-                                pdf.is_test = True 
-                                pdf.set_margins(left=10, top=10, right=10)
-                                pdf.add_page()
-                                _ = pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0})
-                                _ = pdf.draw_test_table(test_results) # Works now!
-                                pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
-                                show_download_popup(pdf_bytes, f"Test_{student_name}.pdf")
-                            except Exception as e:
-                                st.error(f"PDF Error: {e}")
+                            # PDF Generation
+                            pdf = ResultPDF()
+                            pdf.is_test = True 
+                            pdf.add_page()
+                            pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0})
+                            pdf.draw_test_table(test_results)
+                            pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
+                            show_download_popup(pdf_bytes, f"Test_{student_name}.pdf")
 
                         # --- BRANCH 2: FULL TERM RESULTS ---
                         else:
-                            # ... (Full Term Logic remains the same) ...
                             bs_n, beh_n, sk_n, com_n = find_s('Bsheet'), find_s('Behaviour'), find_s('Skill'), find_s('Comment')
                             pos_val = "N/A"
                             if bs_n:
                                 df_bs = data_sheets[bs_n]
-                                df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
                                 match = df_bs[df_bs.iloc[:,0].astype(str).str.strip() == adm_clean]
-                                if not match.empty: pos_val = match.iloc[0].get('Position', 'N/A')
+                                if not match.empty: 
+                                    # Assuming 'Position' is in the columns after cleaning
+                                    df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
+                                    pos_val = match.iloc[0].get('Position', 'N/A')
 
                             processed_results, total_sum = {}, 0
+                            is_3rd = "3rd" in str(sc_n).lower()
+                            disp_term = "3RD TERM" if is_3rd else "2ND TERM"
+                            
                             if sc_n:
-                                is_3rd = "3rd" in sc_n.lower()
-                                disp_term = "3RD TERM" if is_3rd else "2ND TERM"
                                 df_sc = data_sheets[sc_n]
                                 header_mask = df_sc.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
                                 header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
@@ -1063,11 +1071,9 @@ if page == "🎓 Result Portal":
                                             for j in range(i, -1, -1):
                                                 val = str(r1.iloc[j]).strip()
                                                 if val.lower() != 'nan' and val != '': sub = val; break
-                                            try:
-                                                ca, ex, tot = clean_score(s_vals.iloc[i-2]), clean_score(s_vals.iloc[i-1]), clean_score(s_vals.iloc[i])
-                                                processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
-                                                total_sum += tot
-                                            except: continue
+                                            ca, ex, tot = clean_score(s_vals.iloc[i-2]), clean_score(s_vals.iloc[i-1]), clean_score(s_vals.iloc[i])
+                                            processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
+                                            total_sum += tot
 
                             def get_row(sn):
                                 if not sn: return {}
@@ -1078,41 +1084,27 @@ if page == "🎓 Result Portal":
 
                             beh, sk, comm = get_row(beh_n), get_row(sk_n), get_row(com_n)
                             active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
-                            summary = {'obtained': total_sum, 'avg': round(total_sum/max(1, len(active_subs)), 2), 'pos': pos_val, 'max': len(processed_results)*100}
+                            # Use 1700 or dynamic based on sub count
+                            summary = {'obtained': total_sum, 'avg': round(total_sum/max(1, len(active_subs)), 2), 'pos': pos_val, 'max': 1700}
                             
                             st.title(f"👋 Welcome, {student_name}")
-                            m1, m2, m3 = st.columns(3)
-                            m1.metric("Average", f"{summary['avg']}%")
-                            m2.metric("Position", summary['pos'])
-                            m3.metric("Total", f"{int(summary['obtained'])}/{summary['max']}")
                             st.table(pd.DataFrame(processed_results).T)
 
-                            try:
-                                pdf = ResultPDF()
-                                pdf.set_margins(left=10, top=10, right=10)
-                                pdf.set_auto_page_break(auto=True, margin=10)
-                                pdf.add_page()
-                                _ = pdf.student_info_box(student_name, adm_clean, selected_class, disp_term, summary)
-                                _ = pdf.draw_scores_table(processed_results, selected_class)
-                                if is_3rd: _ = pdf.draw_transcript_summary(summary, disp_term)
-                                _ = pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, disp_term)
-                                
-                                pdf.ln(8)
-                                pdf.set_font('Arial', 'B', 10)
-                                pdf.cell(0, 10, "NEXT TERM BEGINS: 20th APRIL, 2026", ln=1, align='C')
-                                
-                                pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
-                                show_download_popup(pdf_bytes, f"{student_name}.pdf")
-                            except Exception as e:
-                                st.error(f"PDF Error: {e}")
+                            # PDF Generation
+                            pdf = ResultPDF()
+                            pdf.add_page()
+                            pdf.student_info_box(student_name, adm_clean, selected_class, disp_term, summary)
+                            pdf.draw_scores_table(processed_results, selected_class)
+                            if is_3rd: pdf.draw_transcript_summary(summary, disp_term)
+                            pdf.draw_footer_sections(beh, sk, comm, summary, selected_class, disp_term)
+                            
+                            pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
+                            show_download_popup(pdf_bytes, f"{student_name}_Result.pdf")
                     else:
                         st.sidebar.error("❌ Invalid Login Credentials")
-                else:
-                    st.error("❌ 'Data' sheet not found in the file.")
             except Exception as e:
                 st.error(f"System Error: {e}")
-        else:
-            st.error(f"❌ Record for {selected_class} not found.")
+                
 # --- STAFF MANAGEMENT LOGIC ---
 elif page == "🛠️ Staff Management":
     import io  
