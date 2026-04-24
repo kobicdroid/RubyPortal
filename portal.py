@@ -961,7 +961,7 @@ if page == "🎓 Result Portal":
         if st.button("Close"):
             st.rerun()
 
-    if login_btn:
+if login_btn:
         file_path = f"Report {selected_class}.xlsx"
         if os.path.exists(file_path):
             try:
@@ -1048,11 +1048,10 @@ if page == "🎓 Result Portal":
                             pos_val = "N/A"
                             if bs_n:
                                 df_bs = data_sheets[bs_n]
-                                match = df_bs[df_bs.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
+                                match = df_bs[df_bs.iloc[:, 0].astype(str).str.strip() == adm_clean]
                                 if not match.empty: 
-                                    # Assuming 'Position' is in the columns after cleaning
-                                    df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
-                                    pos_val = match.iloc[0].get('Position', 'N/A')
+                                    pos_val = str(match.iloc[0].get('Position', 'N/A')).strip()
 
                             processed_results, total_sum = {}, 0
                             is_3rd = "3rd" in str(sc_n).lower()
@@ -1085,7 +1084,6 @@ if page == "🎓 Result Portal":
 
                             beh, sk, comm = get_row(beh_n), get_row(sk_n), get_row(com_n)
                             active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
-                            # Use 1700 or dynamic based on sub count
                             summary = {'obtained': total_sum, 'avg': round(total_sum/max(1, len(active_subs)), 2), 'pos': pos_val, 'max': 1700}
                             
                             st.title(f"👋 Welcome, {student_name}")
@@ -1103,8 +1101,12 @@ if page == "🎓 Result Portal":
                             show_download_popup(pdf_bytes, f"{student_name}_Result.pdf")
                     else:
                         st.sidebar.error("❌ Invalid Login Credentials")
+                else:
+                    st.error("❌ 'Data' sheet not found in the file.")
             except Exception as e:
                 st.error(f"System Error: {e}")
+        else:
+            st.error(f"❌ Record for {selected_class} not found.")
                 
 # --- STAFF MANAGEMENT LOGIC ---
 elif page == "🛠️ Staff Management":
