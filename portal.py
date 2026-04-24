@@ -917,6 +917,9 @@ with st.sidebar:
     user_role = st.selectbox("Select Access Type", ["Student Portal", "Staff Portal (Shutdown)"])
     page = st.radio("Navigation", ["📊 Dashboard", "🎓 Result Portal"] if user_role == "Student Portal" else ["🛠️ Staff Management"])
 
+# Initialize login_btn to prevent NameError
+login_btn = False
+
 # --- STUDENT LOGIN & PORTAL ---
 if page == "🎓 Result Portal":
     st.sidebar.markdown("---")
@@ -949,7 +952,6 @@ if page == "🎓 Result Portal":
     @st.dialog("📥 Report Ready")
     def show_download_popup(pdf_bytes, filename):
         st.success("Your PDF has been generated successfully!")
-        # Use a unique key to prevent rerun issues
         st.download_button(
             label="Click here to Download PDF", 
             data=pdf_bytes, 
@@ -961,7 +963,8 @@ if page == "🎓 Result Portal":
         if st.button("Close"):
             st.rerun()
 
-if login_btn:
+    # Move logic inside the page conditional to ensure variables like selected_class exist
+    if login_btn:
         file_path = f"Report {selected_class}.xlsx"
         if os.path.exists(file_path):
             try:
@@ -985,7 +988,6 @@ if login_btn:
                         student_name = str(student.get(name_col, 'Student')).upper()
                         term = student.get('Term', 'N/A')
                         
-                        # Data processing helpers
                         sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
                         data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
 
@@ -1002,7 +1004,6 @@ if login_btn:
 
                         sc_n = find_s('Scoresheet')
                         
-                        # --- BRANCH 1: TEST RESULTS (C.A) ---
                         if portal_type == "📝 Test Results (C.A)":
                             st.title(f"📝 Test Records: {student_name}")
                             test_results = {}
@@ -1032,8 +1033,6 @@ if login_btn:
                                             except: continue
                             
                             st.table(pd.DataFrame(test_results).T)
-                            
-                            # PDF Generation
                             pdf = ResultPDF()
                             pdf.is_test = True 
                             pdf.add_page()
@@ -1042,7 +1041,6 @@ if login_btn:
                             pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
                             show_download_popup(pdf_bytes, f"Test_{student_name}.pdf")
 
-                        # --- BRANCH 2: FULL TERM RESULTS ---
                         else:
                             bs_n, beh_n, sk_n, com_n = find_s('Bsheet'), find_s('Behaviour'), find_s('Skill'), find_s('Comment')
                             pos_val = "N/A"
@@ -1089,7 +1087,6 @@ if login_btn:
                             st.title(f"👋 Welcome, {student_name}")
                             st.table(pd.DataFrame(processed_results).T)
 
-                            # PDF Generation
                             pdf = ResultPDF()
                             pdf.add_page()
                             pdf.student_info_box(student_name, adm_clean, selected_class, disp_term, summary)
@@ -1107,7 +1104,7 @@ if login_btn:
                 st.error(f"System Error: {e}")
         else:
             st.error(f"❌ Record for {selected_class} not found.")
-                
+            
 # --- STAFF MANAGEMENT LOGIC ---
 elif page == "🛠️ Staff Management":
     import io  
