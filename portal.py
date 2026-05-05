@@ -1357,7 +1357,6 @@ with tab_bulk:
                         label_row = df_sc_raw.iloc[header_idx] 
 
                         for index, adm_val in enumerate(adm_list):
-                            # CLEAN ADMISSION NUMBER (Remove .0)
                             adm_clean = str(adm_val).split('.')[0].strip()
                             try:
                                 s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
@@ -1389,7 +1388,6 @@ with tab_bulk:
                                                 subject_name = val
                                                 break
                                         try:
-                                            # Using portal method to clean and grab scores
                                             ca = float(student_vals.iloc[i-2]) if pd.notna(student_vals.iloc[i-2]) else 0
                                             ex = float(student_vals.iloc[i-1]) if pd.notna(student_vals.iloc[i-1]) else 0
                                             tot = float(student_vals.iloc[i]) if pd.notna(student_vals.iloc[i]) else 0
@@ -1406,18 +1404,11 @@ with tab_bulk:
                                     m = df[df.iloc[:,0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
                                     return m.iloc[0].to_dict() if not m.empty else {}
 
-                                # Requirement: Get Average and Position from Bsheet directly
                                 bsheet_data = get_meta('Bsheet')
                                 pos_val = str(bsheet_data.get('Position', 'N/A')).strip()
-                                # Pull average from Excel if it exists, otherwise use calculated total_marks
                                 avg_val = bsheet_data.get('Average', round(total_marks/max(1, len(processed_results)), 2))
 
-                                summary = {
-                                    'obtained': total_marks, 
-                                    'avg': avg_val, 
-                                    'pos': pos_val, 
-                                    'max': 1700
-                                }
+                                summary = {'obtained': total_marks, 'avg': avg_val, 'pos': pos_val, 'max': 1700}
                                 
                                 pdf.student_info_box(student_name, adm_clean, bulk_class, current_term, summary)
                                 pdf.draw_scores_table(processed_results, bulk_class)
@@ -1439,7 +1430,7 @@ with tab_bulk:
 
                             progress_bar.progress((index + 1) / len(adm_list))
 
-                    status_window.success(f"✅ READY! All {len(adm_list)} reports formatted for A4 printing.")
+                    status_window.success(f"✅ READY! All {len(adm_list)} reports formatted.")
                     st.balloons()
                     
                     button_placeholder.download_button(
@@ -1481,8 +1472,6 @@ with tab_bulk:
                                     p_email = str(row.get('Email', '')).strip()
                                     p_name = str(row.get('Names', row.get('Names ', 'Parent'))).strip()
                                     p_class = str(row.get('Class', row.get('Class ', bulk_class))).strip()
-                                    
-                                    # FIX: Remove .0 from Admission and Password
                                     p_reg = str(row.get('Admission_No', '')).split('.')[0].strip()
                                     p_pass = str(row.get('Password', '')).split('.')[0].strip()
                                     
@@ -1494,7 +1483,8 @@ with tab_bulk:
                             st.success(f"🏁 Blast complete! {success_count} emails sent.")
                         else: st.error("❌ Sheet 'Data' not found.")
                     except Exception as e: st.error(f"❌ Error during blast: {e}")
-            else: st.error("❌ File not found.")
+            else:
+                st.error("❌ File not found.")
 
 # --- 5. CONTENT MANAGER (NOW CORRECTLY OUTSIDE TAB_BULK) ---
     with tab_content:
