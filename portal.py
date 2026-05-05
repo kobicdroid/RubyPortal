@@ -677,6 +677,9 @@ class ResultPDF(FPDF):
         self.set_font('Arial', 'B', 12)
         start_y = self.get_y()
         
+        # CLEAN ADMISSION NUMBER FOR PDF DISPLAY[cite: 1]
+        clean_adm = str(adm).split('.')[0].strip()
+        
         # Left side info (All Size 12)
         self.cell(40, 6, 'Name of student:', 0, 0) 
         self.set_text_color(0, 0, 0)
@@ -686,7 +689,7 @@ class ResultPDF(FPDF):
         self.cell(40, 6, 'Admission No:', 0, 0) 
         self.set_font('Arial', '', 12)
         self.set_text_color(0, 0, 0)
-        self.cell(75, 6, f" {adm}", 'B', 1)
+        self.cell(75, 6, f" {clean_adm}", 'B', 1)
         
         self.set_text_color(40, 70, 120)
         self.set_font('Arial', 'B', 12)
@@ -703,24 +706,27 @@ class ResultPDF(FPDF):
             self.set_text_color(40, 70, 120)
             self.cell(40, 6, 'Obtained Score:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
-            self.cell(30, 6, f"{summary.get('obtained', 0)}", 1, 1, 'C')
+            
+            # Clean summary values from .0[cite: 1]
+            obtained = str(summary.get('obtained', 0)).split('.')[0]
+            self.cell(30, 6, obtained, 1, 1, 'C')
             
             self.set_x(130)
             self.set_text_color(40, 70, 120)
             self.cell(40, 6, 'Average / Pos:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
-            self.cell(30, 6, f"{summary.get('avg', 0)}% / {summary.get('pos', '-')}", 1, 1, 'C')
+            
+            clean_pos = str(summary.get('pos', '-')).split('.')[0]
+            self.cell(30, 6, f"{summary.get('avg', 0)}% / {clean_pos}", 1, 1, 'C')
             
             self.set_x(130)
             self.set_text_color(40, 70, 120)
             self.cell(40, 6, 'Total Possible:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
-            # Updated to 1700
             self.cell(30, 6, "1700", 1, 1, 'C') 
         self.ln(6)
 
     def draw_scores_table(self, subject_data, s_class):
-        # Increased f_size to 12 as requested
         f_size = 12
         row_h = 7 
         
@@ -730,7 +736,6 @@ class ResultPDF(FPDF):
         
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         
-        # --- FIXED WIDTHS TO PREVENT OVERLAP ---
         if is_ss:
             w = [60, 22, 22, 22, 64] # Total 190mm
         else:
@@ -747,24 +752,24 @@ class ResultPDF(FPDF):
         
         fill = False
         for sub, scores in subject_data.items():
-            total = scores.get('Total', 0)
-            if total > 0:
+            # Clean scores from .0[cite: 1]
+            total_val = scores.get('Total', 0)
+            ca_val = str(scores.get('CA', '')).split('.')[0]
+            ex_val = str(scores.get('Exam', '')).split('.')[0]
+            tot_str = str(total_val).split('.')[0]
+
+            if total_val > 0:
                 self.set_fill_color(242, 244, 248) if fill else self.set_fill_color(255, 255, 255)
-                
-                # Subject Name
                 self.cell(w[0], row_h, f" {sub}", 1, 0, 'L', 1)
-                # CA & Exam
-                self.cell(w[1], row_h, str(scores.get('CA', '')), 1, 0, 'C', 1)
-                self.cell(w[2], row_h, str(scores.get('Exam', '')), 1, 0, 'C', 1)
+                self.cell(w[1], row_h, ca_val, 1, 0, 'C', 1)
+                self.cell(w[2], row_h, ex_val, 1, 0, 'C', 1)
                 
-                # Bold Total
                 self.set_font('Arial', 'B', f_size)
-                self.cell(w[3], row_h, str(total), 1, 0, 'C', 1)
+                self.cell(w[3], row_h, tot_str, 1, 0, 'C', 1)
                 self.set_font('Arial', '', f_size)
                 
-                # --- GRADING LOGIC ---
                 g = ""
-                t = total
+                t = total_val
                 if is_ss:
                     if t >= 75: g = "EXCELLENT"
                     elif t >= 70: g = "V-GOOD"
@@ -783,7 +788,6 @@ class ResultPDF(FPDF):
                     elif t >= 40: g = "PASS"
                     else: g = "FAIL"
                 
-                # Render Grade without overlap
                 self.cell(w[4], row_h, g, 1, 1, 'C', 1)
                 fill = not fill
         self.ln(2)
@@ -817,15 +821,16 @@ class ResultPDF(FPDF):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         curr_y = self.get_y()
         
-        # All sections headers and text updated to Size 11
         self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(55, 6, 'AFFECTIVE DOMAIN (A)', 1, 1, 'C', 1)
         
         self.set_text_color(0, 0, 0); self.set_font('Arial', '', 12)
         fill = False
         for k, v in list(beh.items())[1:9]: 
+            # Remove .0 from domain scores[cite: 1]
+            v_clean = str(v).split('.')[0]
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
-            self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, str(v), 1, 1, 'C', 1)
+            self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, v_clean, 1, 1, 'C', 1)
             fill = not fill
             
         self.ln(1)
@@ -833,18 +838,18 @@ class ResultPDF(FPDF):
         self.cell(55, 5, 'POSITION OF RESPONSIBILITY', 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_font('Arial', '', 10); self.cell(55, 6, f" {comm.get('Position', 'None')}", 1, 1, 'L')
         
-        # Psychomotor Skills (Size 10)
         self.set_xy(75, curr_y)
         self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
         self.cell(55, 6, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
         self.set_text_color(0,0,0); self.set_font('Arial', '', 10)
         fill = False
         for k, v in list(sk.items())[1:6]:
+            # Remove .0 from psychomotor scores[cite: 1]
+            v_clean = str(v).split('.')[0]
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
-            self.set_x(75); self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, str(v), 1, 1, 'C', 1)
+            self.set_x(75); self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, v_clean, 1, 1, 'C', 1)
             fill = not fill
             
-        # Comments Section (Size 11)
         self.set_xy(140, curr_y)
         self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
         self.cell(60, 6, "HOUSE MASTER'S REPORT", 1, 1, 'L', 1)
@@ -876,16 +881,13 @@ class ResultPDF(FPDF):
         self.set_x(140); self.cell(60, 0, '', 'T', 1, 'C')
         self.set_x(140); self.set_font('Arial', 'B', 12); self.set_text_color(40,70,120); self.cell(60, 5, "Principal's Signature & Stamp", 0, 1, 'C')
 
-    # --- MISSING PART ADDED BELOW ---
     def draw_test_table(self, test_results):
-        """Specifically for the C.A / Test Results portal"""
         f_size = 11
         row_h = 8
         self.set_fill_color(40, 70, 120)
         self.set_text_color(255, 255, 255)
         self.set_font('Arial', 'B', f_size)
         
-        # Column widths (Total 190mm)
         w = [60, 26, 26, 26, 26, 26]
         headers = ['Subject', 'CA 1', 'CA 2', 'CA 3', 'CA 4', 'Total CA']
         
@@ -900,12 +902,20 @@ class ResultPDF(FPDF):
         for sub, scores in test_results.items():
             self.set_fill_color(242, 244, 248) if fill else self.set_fill_color(255, 255, 255)
             self.cell(w[0], row_h, f" {sub}", 1, 0, 'L', 1)
-            self.cell(w[1], row_h, str(scores.get('CA1', 0)), 1, 0, 'C', 1)
-            self.cell(w[2], row_h, str(scores.get('CA2', 0)), 1, 0, 'C', 1)
-            self.cell(w[3], row_h, str(scores.get('CA3', 0)), 1, 0, 'C', 1)
-            self.cell(w[4], row_h, str(scores.get('CA4', 0)), 1, 0, 'C', 1)
+            
+            # Clean CA scores from .0[cite: 1]
+            c1 = str(scores.get('CA1', 0)).split('.')[0]
+            c2 = str(scores.get('CA2', 0)).split('.')[0]
+            c3 = str(scores.get('CA3', 0)).split('.')[0]
+            c4 = str(scores.get('CA4', 0)).split('.')[0]
+            tc = str(scores.get('Total_CA', 0)).split('.')[0]
+            
+            self.cell(w[1], row_h, c1, 1, 0, 'C', 1)
+            self.cell(w[2], row_h, c2, 1, 0, 'C', 1)
+            self.cell(w[3], row_h, c3, 1, 0, 'C', 1)
+            self.cell(w[4], row_h, c4, 1, 0, 'C', 1)
             self.set_font('Arial', 'B', f_size)
-            self.cell(w[5], row_h, str(scores.get('Total_CA', 0)), 1, 1, 'C', 1)
+            self.cell(w[5], row_h, tc, 1, 1, 'C', 1)
             self.set_font('Arial', '', f_size)
             fill = not fill
 #--- SIDEBAR ---#
