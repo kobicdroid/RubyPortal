@@ -1328,8 +1328,6 @@ elif page == "🛠️ Staff Management":
                     if not sc_n:
                         st.error("❌ 'Scoresheet' not found.")
                     else:
-                        # --- SMART TERM DETECTION ---
-                        # Checks if '3rd' is in the sheet name or the filename
                         is_third_term = "3rd" in sc_n or "3rd" in target_file
                         current_term = "3rd Term" if is_third_term else " 2ND TERM"
 
@@ -1349,9 +1347,10 @@ elif page == "🛠️ Staff Management":
                             label_row = df_sc_raw.iloc[header_idx] 
 
                             for index, adm_val in enumerate(adm_list):
-                                adm_clean = str(adm_val).strip()
+                                # CLEAN ADMISSION NUMBER (Remove .0)
+                                adm_clean = str(adm_val).split('.')[0].strip()
                                 try:
-                                    s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip() == adm_clean]
+                                    s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
                                     if s_row_data.empty: continue
                                     
                                     student_vals = s_row_data.iloc[0]
@@ -1364,9 +1363,7 @@ elif page == "🛠️ Staff Management":
                                         </div>
                                     """, unsafe_allow_html=True)
 
-                                    # --- FULL PAGE PDF CONFIGURATION ---
                                     pdf = ResultPDF()
-                                    # Set margins to 10mm to maximize A4 width (210mm)
                                     pdf.set_margins(left=10, top=10, right=10)
                                     pdf.set_auto_page_break(auto=True, margin=10)
                                     pdf.add_page()
@@ -1395,7 +1392,8 @@ elif page == "🛠️ Staff Management":
                                         if not sh: return {}
                                         df = data_sheets[sh].copy()
                                         df.columns = [str(c).strip() for c in df.iloc[0]]
-                                        m = df[df.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                        # Use strip and replace .0 to match properly
+                                        m = df[df.iloc[:,0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
                                         return m.iloc[0].to_dict() if not m.empty else {}
 
                                     summary = {
@@ -1405,20 +1403,14 @@ elif page == "🛠️ Staff Management":
                                         'max': len(processed_results) * 100
                                     }
                                     
-                                    # --- DRAWING LOGIC WITH CONDITIONAL TRANSCRIPT ---
                                     pdf.student_info_box(student_name, adm_clean, bulk_class, current_term, summary)
-                                    
-                                    # Table now fills 190mm (Standard A4 width minus margins)
                                     pdf.draw_scores_table(processed_results, bulk_class)
                                     
-                                    # ONLY draw cumulative summary if it is 3rd Term
                                     if is_third_term:
                                         pdf.draw_transcript_summary(summary, current_term)
                                     
-                                    # Adjusted footer to stay at the bottom of a single page
                                     pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, bulk_class, current_term)
                                     
-                                    # --- ADD RESUMPTION DATE TO PDF ---
                                     pdf.ln(10)
                                     pdf.set_font('Arial', 'B', 11)
                                     pdf.cell(0, 10, "NEXT TERM BEGINS: 20th APRIL, 2026", ln=1, align='C')                        
@@ -1443,6 +1435,7 @@ elif page == "🛠️ Staff Management":
                         )
                 else:
                     st.error(f"❌ File {target_file} not found.")
+
         with col_notif:
             st.markdown("#### 🔔 Parent Notifications")
             test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
@@ -1462,16 +1455,21 @@ elif page == "🛠️ Staff Management":
                             target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
                             if target_sheet:
                                 df_bulk = pd.read_excel(f_path, sheet_name=target_sheet)
+                                df_bulk.columns = [str(c).strip() for c in df_bulk.columns]
+                                
                                 st.info(f"🚀 Found {len(df_bulk)} parents. Starting blast...")
                                 p_bar = st.progress(0)
                                 success_count = 0
                                 for i, row in df_bulk.iterrows():
                                     try:
-                                        p_email = str(row['Email']).strip()
-                                        p_name = str(row['Names ']).strip()
-                                        p_class = str(row['Class ']).strip()
-                                        p_reg = str(row['Admission_No']).strip()
-                                        p_pass = str(row['Password']).strip()
+                                        p_email = str(row.get('Email', '')).strip()
+                                        p_name = str(row.get('Names', row.get('Names ', 'Parent'))).strip()
+                                        p_class = str(row.get('Class', row.get('Class ', bulk_class))).strip()
+                                        
+                                        # FIX: Remove .0 from Admission and Password
+                                        p_reg = str(row.get('Admission_No', '')).split('.')[0].strip()
+                                        p_pass = str(row.get('Password', '')).split('.')[0].strip()
+                                        
                                         if "@" in p_email:
                                             if send_email_notification(p_email, p_name, p_class, p_reg, p_pass):
                                                 success_count += 1
