@@ -1309,7 +1309,7 @@ elif page == "🛠️ Staff Management":
         else:
             st.info("Please select a database file from the dropdown above to begin analysis.")
 
-    # --- 4. BULK GENERATOR & NOTIFICATIONS ---
+   # --- 4. BULK GENERATOR & NOTIFICATIONS ---
     with tab_bulk:
         st.subheader("📦 Bulk Action Suite")
         bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
@@ -1401,7 +1401,10 @@ elif page == "🛠️ Staff Management":
 
                                     bsheet_data = get_meta('Bsheet')
                                     pos_val = str(bsheet_data.get('Position', 'N/A')).strip()
-                                    avg_val = bsheet_data.get('Average', round(total_marks/max(1, len(processed_results)), 2))
+                                    
+                                    # FIXED: Added float conversion and rounding to 2 decimal places
+                                    raw_avg = bsheet_data.get('Average', (total_marks/max(1, len(processed_results))))
+                                    avg_val = round(float(raw_avg), 2)
 
                                     summary = {'obtained': total_marks, 'avg': avg_val, 'pos': pos_val, 'max': 1700}
                                     
