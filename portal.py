@@ -649,11 +649,6 @@ class ResultPDF(FPDF):
         self.set_font('Arial', 'I', 10)
         self.cell(0, 5, f'Generated on: {curr_date}', 0, 1, 'R')
         
-        # Developer Credit (Small)
-        self.set_font('Arial', 'B', 10)
-        self.set_text_color(150, 150, 150)
-        self.cell(0, 4, 'Developed by: Adam Usman | Powered by SumiLogics(NJA)', 0, 1, 'R')
-        
         self.ln(2)
         # --- STYLED HEADER BOX (Size 12) ---
         self.set_fill_color(40, 70, 120) 
@@ -668,7 +663,7 @@ class ResultPDF(FPDF):
         self.set_y(-15)
         self.set_font('Arial', 'I', 10)
         self.set_text_color(128, 128, 128)
-        footer_note = "Copyright @2026 Ruby Springfield College - Dev: Adam Usman (SumiLogics NJA)"
+        footer_note = "Copyright @2026 Ruby Springfield College Powered by SumiLogics"
         self.cell(0, 10, footer_note, 0, 0, 'L')
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'R')
 
