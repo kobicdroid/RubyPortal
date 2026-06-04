@@ -38,7 +38,7 @@ except:
 
 MAINTENANCE_MODE = True  
 ADMIN_SECRET_KEY = "SUMI" 
-TARGET_DATE = datetime(2026, 6, 10, 21, 10) 
+TARGET_DATE = datetime(2026, 7, 10, 21, 10) 
 
 # --- SESSION STATE ---
 if 'maintenance_bypass' not in st.session_state:
