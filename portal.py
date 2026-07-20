@@ -666,7 +666,7 @@ class ResultPDF(FPDF):
         self.set_y(-15)
         self.set_font('Arial', 'I', 10)
         self.set_text_color(128, 128, 128)
-        footer_note = "Copyright @2026 Ruby Springfield College (Citadel of Excellence)"
+        footer_note = "Copyright @2026 Ruby Springfield College (A Citadel of Supreme Excellence) Powered by SumiLogics(NJA)"
         self.cell(0, 10, footer_note, 0, 0, 'L')
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'R')
 
