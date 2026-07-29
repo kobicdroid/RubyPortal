@@ -1332,7 +1332,7 @@ elif page == "🛠️ Staff Management":
                         st.error("❌ 'Scoresheet' not found.")
                     else:
                         is_third_term = "3rd" in sc_n or "3rd" in target_file
-                        current_term = "3rd Term" if is_third_term else " 2ND TERM"
+                        current_term = "3rd Term" if is_third_term else "3RD TERM"
 
                         df_sc_raw = data_sheets[sc_n]
                         adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
@@ -1416,7 +1416,7 @@ elif page == "🛠️ Staff Management":
                                     
                                     pdf.ln(10)
                                     pdf.set_font('Arial', 'B', 11)
-                                    pdf.cell(0, 10, "NEXT TERM BEGINS: 20th APRIL, 2026", ln=1, align='C')                        
+                                    pdf.cell(0, 10, "NEXT TERM BEGINS: 7TH SEPTEMBER, 2026", ln=1, align='C')                        
                                     
                                     pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
                                     zf.writestr(f"{student_name.replace(' ', '_')}.pdf", pdf_bytes)
