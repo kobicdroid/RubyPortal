@@ -1061,7 +1061,7 @@ if page == "🎓 Result Portal":
 
                             processed_results, total_sum = {}, 0
                             is_3rd = "3rd" in str(sc_n).lower()
-                            disp_term = "3RD TERM" if is_3rd else "2ND TERM"
+                            disp_term = "3RD TERM" if is_3rd else "3RD TERM"
                             
                             if sc_n:
                                 df_sc = data_sheets[sc_n]
