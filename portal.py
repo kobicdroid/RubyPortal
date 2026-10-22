@@ -272,6 +272,8 @@ SIG_PATH = os.path.join(BASE_DIR, "signature.png")
 STAMP_PATH = os.path.join(BASE_DIR, "Stamp.jpg") 
 
 STAFF_MASTER_KEY = "MGTRSC2026" 
+EXAM_OFFICE_KEY = "EXAM2026"
+CONTENT_EDITOR_KEY = "MEDIA2026"
 
 def log_activity(user_type, action, details):
     try:
@@ -671,7 +673,6 @@ class ResultPDF(FPDF):
             self.cell(40, 6, 'Total Possible:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
             
-            # Dynamic Total Possible based on number of subjects
             tot_possible = str(summary.get('max_possible', 1000 if 'SS' in str(s_class).upper() else 1700))
             self.cell(30, 6, tot_possible, 1, 1, 'C') 
         self.ln(6)
@@ -985,7 +986,6 @@ if page == "🎓 Result Portal":
                                                 }
                                             except: continue
                             
-                            # Limit SS classes to 10 subjects
                             if "SS" in str(selected_class).upper() and "JSS" not in str(selected_class).upper():
                                 test_results = dict(list(test_results.items())[:10])
 
@@ -1030,7 +1030,6 @@ if page == "🎓 Result Portal":
                                             processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
                                             total_sum += tot
 
-                            # Limit SS classes to 10 subjects max
                             is_ss_class = "SS" in str(selected_class).upper() and "JSS" not in str(selected_class).upper()
                             if is_ss_class:
                                 processed_results = dict(list(processed_results.items())[:10])
@@ -1073,8 +1072,8 @@ if page == "🎓 Result Portal":
                 st.error(f"System Error: {e}")
         else:
             st.error(f"❌ Record for {selected_class} not found.")
-            
-# --- STAFF MANAGEMENT LOGIC ---
+
+# --- STAFF MANAGEMENT LOGIC (SPLIT INTO TWO SEPARATE PANELS) ---
 elif page == "🛠️ Staff Management":
     import io  
     import smtplib
@@ -1083,6 +1082,7 @@ elif page == "🛠️ Staff Management":
 
     st.title("🛠️ Staff Administrative Console")
     
+    # 1. PRIMARY MASTER KEY BARRIER
     st.sidebar.markdown("### 🔐 Admin Access")
     master_auth = st.sidebar.text_input("Enter Master Authentication Key", type="password")
     
@@ -1092,356 +1092,385 @@ elif page == "🛠️ Staff Management":
 
     if master_auth != STAFF_MASTER_KEY:
         log_activity("Unauthorized", "Login Attempt", "Failed Master Key entry")
-        st.error("❌ Invalid Authentication Key. Access Denied.")
+        st.error("❌ Invalid Master Authentication Key. Access Denied.")
         st.stop() 
 
     if 'logged_in' not in st.session_state:
         log_activity("Admin", "Login", "Shutdown accessed the Staff Console")
         st.session_state['logged_in'] = True
 
-    st.success("✅ Authentication Successful. Welcome, Management.")
-     
-    tab_up, tab_db, tab_analytics, tab_bulk, tab_content = st.tabs([
-        "📤 Upload/Update", "📂 Database & Logs", "📈 Class Insights", 
-        "📦 Bulk & Notifications", "📢 Content Manager"
-    ])
+    # 2. SELECT PANEL ROUTE
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🏢 Select Admin Section")
+    admin_section = st.sidebar.radio("Choose Section", ["📝 Exam Office Panel", "📢 Content Editing Panel"])
 
-    # --- 1. UPLOAD TAB ---
-    with tab_up:
-        st.subheader("📤 Results Management")
-        st.info("Upload class results here. Format: 'Report ClassName.xlsx' (e.g. Report SS 1A.xlsx)")
-        target_class = st.text_input("Target Class Name (e.g., JSS 1A, SS 1A, SS 2B)", key="upload_target")
-        new_file = st.file_uploader("Select Excel Spreadsheet", type=['xlsx'])
-        
-        if st.button("Deploy to System") and new_file and target_class:
-            save_filename = f"Report {target_class}.xlsx"
-            file_bytes = new_file.getvalue() 
-            with open(save_filename, "wb") as f:
-                f.write(file_bytes)
+    # -------------------------------------------------------------
+    # SECTION A: EXAM OFFICE PANEL
+    # -------------------------------------------------------------
+    if admin_section == "📝 Exam Office Panel":
+        exam_passkey = st.sidebar.text_input("Enter Exam Office Passkey", type="password")
+        if not exam_passkey:
+            st.warning("🔒 Please enter the Exam Office Passkey in the sidebar to unlock academic controls.")
+            st.stop()
             
-            with st.spinner(f"🚀 Syncing {save_filename} with GitHub..."):
-                status = upload_notice_to_github(file_bytes, save_filename)
-            
-            if status in [200, 201]:
-                st.balloons()
-                st.success(f"✅ {save_filename} is now live!")
-            else:
-                st.warning(f"⚠️ Sync Error: {status}")
+        if exam_passkey != EXAM_OFFICE_KEY:
+            st.error("❌ Invalid Exam Office Passkey. Access Denied.")
+            st.stop()
 
-    # --- 2. DATABASE TAB ---
-    with tab_db:
-        col_db, col_log = st.columns(2)
-        
-        with col_db:
-            st.subheader("📂 Live Databases")
-            live_files = glob.glob("Report *.xlsx")
-            
-            if not live_files:
-                st.info("No active databases found.")
-            
-            for file in live_files:
-                db_col1, db_col2 = st.columns([3, 1])
-                with db_col1:
-                    st.code(file)
-                with db_col2:
-                    if st.button(f"🗑️ Delete", key=f"del_{file}", use_container_width=True):
-                        try:
-                            os.remove(file)
-                            st.toast(f"🔥 {file} removed successfully!")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Error: {e}")
+        st.success("✅ Exam Office Credentials Authenticated. Welcome.")
 
-        with col_log:
-            st.subheader("🕵️ Security Audit")
-            log_file = "system_audit.log"
+        tab_up, tab_db, tab_analytics, tab_bulk = st.tabs([
+            "📤 Upload/Update", "📂 Database & Logs", "📈 Class Insights", "📦 Bulk & Notifications"
+        ])
+
+        # --- 1. UPLOAD TAB ---
+        with tab_up:
+            st.subheader("📤 Results Management")
+            st.info("Upload class results here. Format: 'Report ClassName.xlsx' (e.g. Report SS 1A.xlsx)")
+            target_class = st.text_input("Target Class Name (e.g., JSS 1A, SS 1A, SS 2B)", key="upload_target")
+            new_file = st.file_uploader("Select Excel Spreadsheet", type=['xlsx'])
             
-            if os.path.exists(log_file):
-                with open(log_file, "r") as f:
-                    logs = f.readlines()
+            if st.button("Deploy to System") and new_file and target_class:
+                save_filename = f"Report {target_class}.xlsx"
+                file_bytes = new_file.getvalue() 
+                with open(save_filename, "wb") as f:
+                    f.write(file_bytes)
                 
-                st.text_area("Recent Activity", "".join(logs[-15:]), height=200)
+                with st.spinner(f"🚀 Syncing {save_filename} with GitHub..."):
+                    status = upload_notice_to_github(file_bytes, save_filename)
                 
-                if st.button("🧨 Clear Audit Log", use_container_width=True):
-                    with open(log_file, "w") as f:
-                        f.write(f"[{datetime.now()}] LOG CLEARED BY ADMIN\n")
-                    st.success("Audit log wiped clean.")
-                    st.rerun()
-            else:
-                st.info("No audit log found.")
+                if status in [200, 201]:
+                    st.balloons()
+                    st.success(f"✅ {save_filename} is now live!")
+                else:
+                    st.warning(f"⚠️ Sync Error: {status}")
 
-    # --- 3. ANALYTICS TAB ---
-    with tab_analytics:
-        st.subheader("📈 Professional Performance Analytics")
-        
-        analysis_target = st.selectbox("Select Database for Analysis", glob.glob("Report *.xlsx"), key="analysis_selector")
-        
-        if analysis_target and os.path.exists(analysis_target):
-            xl = pd.ExcelFile(analysis_target)
-            sc_sheet = next((s for s in xl.sheet_names if 'scoresheet' in s.lower()), None)
+        # --- 2. DATABASE TAB ---
+        with tab_db:
+            col_db, col_log = st.columns(2)
             
-            if sc_sheet:
-                df_analysis = xl.parse(sc_sheet, header=None)
-                header_mask = df_analysis.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
-                header_idx = df_analysis[header_mask].index[0] if any(header_mask) else 1
+            with col_db:
+                st.subheader("📂 Live Databases")
+                live_files = glob.glob("Report *.xlsx")
                 
-                subject_labels = df_analysis.iloc[header_idx - 1]
-                data_rows = df_analysis.iloc[header_idx + 1:]
+                if not live_files:
+                    st.info("No active databases found.")
                 
-                col1, col2, col3 = st.columns(3)
-                total_students = len(data_rows.iloc[:, 0].dropna())
-                
-                all_totals = []
-                for i, label in enumerate(df_analysis.iloc[header_idx]):
-                    if str(label).strip().lower() == 'total':
-                        all_totals.extend(pd.to_numeric(data_rows.iloc[:, i], errors='coerce').dropna().tolist())
-                
-                class_avg = round(sum(all_totals)/len(all_totals), 2) if all_totals else 0
-                
-                with col1:
-                    st.metric("Total Enrollment", f"{total_students} Students", border=True)
-                with col2:
-                    st.metric("Class Mean Score", f"{class_avg}%", delta=f"{round(class_avg - 50, 1)}% vs Pass", border=True)
-                with col3:
-                    st.metric("Current Term", "3RD TERM", border=True)
+                for file in live_files:
+                    db_col1, db_col2 = st.columns([3, 1])
+                    with db_col1:
+                        st.code(file)
+                    with db_col2:
+                        if st.button(f"🗑️ Delete", key=f"del_{file}", use_container_width=True):
+                            try:
+                                os.remove(file)
+                                st.toast(f"🔥 {file} removed successfully!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error: {e}")
 
-                st.divider()
-
-                chart_col, list_col = st.columns([2, 1])
+            with col_log:
+                st.subheader("🕵️ Security Audit")
+                log_file = "system_audit.log"
                 
-                with chart_col:
-                    st.markdown("#### 📊 Grade Distribution")
-                    grades = {"A (75+)": 0, "B (65-74)": 0, "C (50-64)": 0, "P (40-49)": 0, "F (<40)": 0}
-                    for score in all_totals:
-                        if score >= 75: grades["A (75+)"] += 1
-                        elif score >= 65: grades["B (65-74)"] += 1
-                        elif score >= 50: grades["C (50-64)"] += 1
-                        elif score >= 40: grades["P (40-49)"] += 1
-                        else: grades["F (<40)"] += 1
+                if os.path.exists(log_file):
+                    with open(log_file, "r") as f:
+                        logs = f.readlines()
                     
-                    st.bar_chart(pd.Series(grades), color="#1E3A8A")
+                    st.text_area("Recent Activity", "".join(logs[-15:]), height=200)
+                    
+                    if st.button("🧨 Clear Audit Log", use_container_width=True):
+                        with open(log_file, "w") as f:
+                            f.write(f"[{datetime.now()}] LOG CLEARED BY ADMIN\n")
+                        st.success("Audit log wiped clean.")
+                        st.rerun()
+                else:
+                    st.info("No audit log found.")
 
-                with list_col:
-                    st.markdown("#### 🏆 Subject Ranking")
-                    subject_performance = {}
+        # --- 3. ANALYTICS TAB ---
+        with tab_analytics:
+            st.subheader("📈 Professional Performance Analytics")
+            
+            analysis_target = st.selectbox("Select Database for Analysis", glob.glob("Report *.xlsx"), key="analysis_selector")
+            
+            if analysis_target and os.path.exists(analysis_target):
+                xl = pd.ExcelFile(analysis_target)
+                sc_sheet = next((s for s in xl.sheet_names if 'scoresheet' in s.lower()), None)
+                
+                if sc_sheet:
+                    df_analysis = xl.parse(sc_sheet, header=None)
+                    header_mask = df_analysis.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                    header_idx = df_analysis[header_mask].index[0] if any(header_mask) else 1
+                    
+                    subject_labels = df_analysis.iloc[header_idx - 1]
+                    data_rows = df_analysis.iloc[header_idx + 1:]
+                    
+                    col1, col2, col3 = st.columns(3)
+                    total_students = len(data_rows.iloc[:, 0].dropna())
+                    
+                    all_totals = []
                     for i, label in enumerate(df_analysis.iloc[header_idx]):
                         if str(label).strip().lower() == 'total':
-                            sub_name = str(subject_labels.iloc[i-1]).strip()
-                            if sub_name == 'nan' or sub_name == '': 
-                                sub_name = str(subject_labels.iloc[i]).strip()
-                            
-                            sub_scores = pd.to_numeric(data_rows.iloc[:, i], errors='coerce').dropna()
-                            if not sub_scores.empty:
-                                subject_performance[sub_name] = round(sub_scores.mean(), 1)
+                            all_totals.extend(pd.to_numeric(data_rows.iloc[:, i], errors='coerce').dropna().tolist())
                     
-                    perf_df = pd.DataFrame(list(subject_performance.items()), columns=['Subject', 'Avg %'])
-                    st.dataframe(perf_df.sort_values(by='Avg %', ascending=False), hide_index=True, use_container_width=True)
-
-                st.divider()
-                
-                st.markdown("#### 🔍 Quick Student Insight")
-                search_name = st.text_input("Enter Student Name to see Trend")
-                if search_name:
-                    student_match = data_rows[data_rows.iloc[:, 1].astype(str).str.contains(search_name, case=False)]
-                    if not student_match.empty:
-                        st.success(f"Student Found: {student_match.iloc[0, 1]}")
-                    else:
-                        st.warning("No student matches that name.")
-            else:
-                st.error("No Scoresheet detected in this file.")
-        else:
-            st.info("Please select a database file from the dropdown above to begin analysis.")
-
-    # --- 4. BULK GENERATOR & NOTIFICATIONS ---
-    with tab_bulk:
-        st.subheader("📦 Bulk Action Suite")
-        bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
-        col_pdf, col_notif = st.columns(2)
-
-        with col_pdf:
-            st.markdown("#### 📄 Document Export")
-            
-            if st.button("🚀 GENERATE & PACKAGE ALL PDFs", use_container_width=True):
-                target_file = f"Report {bulk_class}.xlsx"
-                
-                if os.path.exists(target_file):
-                    xl = pd.ExcelFile(target_file)
-                    sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
-                    data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
+                    class_avg = round(sum(all_totals)/len(all_totals), 2) if all_totals else 0
                     
-                    def find_s(key):
-                        return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
+                    with col1:
+                        st.metric("Total Enrollment", f"{total_students} Students", border=True)
+                    with col2:
+                        st.metric("Class Mean Score", f"{class_avg}%", delta=f"{round(class_avg - 50, 1)}% vs Pass", border=True)
+                    with col3:
+                        st.metric("Current Term", "3RD TERM", border=True)
 
-                    sc_n = find_s('Scoresheet')
-                    if not sc_n:
-                        st.error("❌ 'Scoresheet' not found.")
-                    else:
-                        is_third_term = True
-                        current_term = "3RD TERM"
+                    st.divider()
 
-                        df_sc_raw = data_sheets[sc_n]
-                        adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
-
-                        status_window = st.empty() 
-                        progress_bar = st.progress(0)
-                        button_placeholder = st.empty() 
+                    chart_col, list_col = st.columns([2, 1])
+                    
+                    with chart_col:
+                        st.markdown("#### 📊 Grade Distribution")
+                        grades = {"A (75+)": 0, "B (65-74)": 0, "C (50-64)": 0, "P (40-49)": 0, "F (<40)": 0}
+                        for score in all_totals:
+                            if score >= 75: grades["A (75+)"] += 1
+                            elif score >= 65: grades["B (65-74)"] += 1
+                            elif score >= 50: grades["C (50-64)"] += 1
+                            elif score >= 40: grades["P (40-49)"] += 1
+                            else: grades["F (<40)"] += 1
                         
-                        zip_buffer = BytesIO()
-                        with zipfile.ZipFile(zip_buffer, "w") as zf:
-                            header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
-                            header_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
-                            
-                            subject_row = df_sc_raw.iloc[header_idx - 1]
-                            label_row = df_sc_raw.iloc[header_idx] 
+                        st.bar_chart(pd.Series(grades), color="#1E3A8A")
 
-                            for index, adm_val in enumerate(adm_list):
-                                adm_clean = str(adm_val).split('.')[0].strip()
-                                try:
-                                    s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
-                                    if s_row_data.empty: continue
-                                    
-                                    student_vals = s_row_data.iloc[0]
-                                    student_name = str(student_vals.iloc[1]).upper()
-
-                                    status_window.markdown(f"""
-                                        <div style="padding:15px; border-radius:10px; background-color:#f8f9fa; border-left: 5px solid #1E3A8A;">
-                                            <span style="color:#1E3A8A; font-weight:bold; font-size:12px;">GENERATING PHYSICAL REPORT...</span><br>
-                                            <span style="font-size:18px; color:#333;">📄 <b>{student_name}</b></span>
-                                        </div>
-                                    """, unsafe_allow_html=True)
-
-                                    pdf = ResultPDF()
-                                    pdf.set_margins(left=10, top=10, right=10)
-                                    pdf.set_auto_page_break(auto=True, margin=10)
-                                    pdf.add_page()
-
-                                    processed_results = {}
-                                    total_marks = 0
-                                    for i, label in enumerate(label_row):
-                                        if str(label).strip().lower() == 'total':
-                                            subject_name = "Unknown"
-                                            for j in range(i, -1, -1):
-                                                val = str(subject_row.iloc[j]).strip()
-                                                if val.lower() != 'nan' and val != '':
-                                                    subject_name = val
-                                                    break
-                                            try:
-                                                ca = float(student_vals.iloc[i-2]) if pd.notna(student_vals.iloc[i-2]) else 0
-                                                ex = float(student_vals.iloc[i-1]) if pd.notna(student_vals.iloc[i-1]) else 0
-                                                tot = float(student_vals.iloc[i]) if pd.notna(student_vals.iloc[i]) else 0
-                                                if subject_name != "Unknown":
-                                                    processed_results[subject_name] = {"CA": ca, "Exam": ex, "Total": tot}
-                                                    total_marks += tot
-                                            except: continue
-
-                                    # SS CLASS LOGIC: Limit to 10 subjects only
-                                    is_ss_class = "SS" in str(bulk_class).upper() and "JSS" not in str(bulk_class).upper()
-                                    if is_ss_class:
-                                        processed_results = dict(list(processed_results.items())[:10])
-                                        total_marks = sum(v['Total'] for v in processed_results.values())
-
-                                    def get_meta(key):
-                                        sh = find_s(key)
-                                        if not sh: return {}
-                                        df = data_sheets[sh].copy()
-                                        df.columns = [str(c).strip() for c in df.iloc[0]]
-                                        m = df[df.iloc[:,0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
-                                        return m.iloc[0].to_dict() if not m.empty else {}
-
-                                    bsheet_data = get_meta('Bsheet')
-                                    pos_val = str(bsheet_data.get('Position', 'N/A')).strip()
-                                    
-                                    student_class = bsheet_data.get('Class', bulk_class)
-
-                                    raw_avg = bsheet_data.get('Average', (total_marks/max(1, len(processed_results))))
-                                    avg_val = round(float(raw_avg), 2)
-
-                                    max_possible = 1000 if is_ss_class else 1700
-                                    summary = {
-                                        'obtained': total_marks, 
-                                        'avg': avg_val, 
-                                        'pos': pos_val, 
-                                        'max_possible': max_possible
-                                    }
-                                    
-                                    pdf.student_info_box(student_name, adm_clean, student_class, current_term, summary)
-                                    pdf.draw_scores_table(processed_results, student_class)
-                                    
-                                    if is_third_term:
-                                        pdf.draw_transcript_summary(summary, current_term)
-                                    
-                                    pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, student_class, current_term)
-                                    
-                                    pdf.ln(10)
-                                    pdf.set_font('Arial', 'B', 11)
-                                    pdf.cell(0, 10, "NEXT TERM BEGINS: 7TH SEPTEMBER, 2026", ln=1, align='C')                        
-                                    
-                                    pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
-                                    zf.writestr(f"{student_name.replace(' ', '_')}.pdf", pdf_bytes)
-
-                                except Exception as e:
-                                    st.error(f"Error for {adm_clean}: {e}")
-
-                                progress_bar.progress((index + 1) / len(adm_list))
-
-                        status_window.success(f"✅ READY! All {len(adm_list)} reports formatted.")
-                        st.balloons()
-                        
-                        button_placeholder.download_button(
-                            label="📥 DOWNLOAD ZIP PACKAGE NOW",
-                            data=zip_buffer.getvalue(),
-                            file_name=f"Reports_{bulk_class}.zip",
-                            mime="application/zip",
-                            use_container_width=True
-                        )
-                else:
-                    st.error(f"❌ File {target_file} not found.")
-
-        with col_notif:
-            st.markdown("#### 🔔 Parent Notifications")
-            test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
-            
-            if st.button("🧪 Send Test Email"):
-                success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
-                if success: st.success("✅ Test Email Sent!")
-                else: st.error("❌ Email Failed.")
-
-            st.markdown("---")
-            if st.button("📢 BLAST NOTIFY ALL PARENTS"):
-                f_path = f"Report {bulk_class}.xlsx"
-                if os.path.exists(f_path):
-                    with st.spinner(f"Reading {bulk_class} Data..."):
-                        try:
-                            xls = pd.ExcelFile(f_path)
-                            target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
-                            if target_sheet:
-                                df_bulk = pd.read_excel(f_path, sheet_name=target_sheet)
-                                df_bulk.columns = [str(c).strip() for c in df_bulk.columns]
+                    with list_col:
+                        st.markdown("#### 🏆 Subject Ranking")
+                        subject_performance = {}
+                        for i, label in enumerate(df_analysis.iloc[header_idx]):
+                            if str(label).strip().lower() == 'total':
+                                sub_name = str(subject_labels.iloc[i-1]).strip()
+                                if sub_name == 'nan' or sub_name == '': 
+                                    sub_name = str(subject_labels.iloc[i]).strip()
                                 
-                                st.info(f"🚀 Found {len(df_bulk)} parents. Starting blast...")
-                                p_bar = st.progress(0)
-                                success_count = 0
-                                for i, row in df_bulk.iterrows():
-                                    try:
-                                        p_email = str(row.get('Email', '')).strip()
-                                        p_name = str(row.get('Names', row.get('Names ', 'Parent'))).strip()
-                                        p_class = str(row.get('Class', row.get('Class ', bulk_class))).strip()
-                                        p_reg = str(row.get('Admission_No', '')).split('.')[0].strip()
-                                        p_pass = str(row.get('Password', '')).split('.')[0].strip()
-                                        
-                                        if "@" in p_email:
-                                            if send_email_notification(p_email, p_name, p_class, p_reg, p_pass):
-                                                success_count += 1
-                                    except: pass
-                                    p_bar.progress((i + 1) / len(df_bulk))
-                                st.success(f"🏁 Blast complete! {success_count} emails sent.")
-                            else: st.error("❌ Sheet 'Data' not found.")
-                        except Exception as e: st.error(f"❌ Error during blast: {e}")
-                else:
-                    st.error("❌ File not found.")
+                                sub_scores = pd.to_numeric(data_rows.iloc[:, i], errors='coerce').dropna()
+                                if not sub_scores.empty:
+                                    subject_performance[sub_name] = round(sub_scores.mean(), 1)
+                        
+                        perf_df = pd.DataFrame(list(subject_performance.items()), columns=['Subject', 'Avg %'])
+                        st.dataframe(perf_df.sort_values(by='Avg %', ascending=False), hide_index=True, use_container_width=True)
 
-    # --- 5. CONTENT MANAGER ---
-    with tab_content:
+                    st.divider()
+                    
+                    st.markdown("#### 🔍 Quick Student Insight")
+                    search_name = st.text_input("Enter Student Name to see Trend")
+                    if search_name:
+                        student_match = data_rows[data_rows.iloc[:, 1].astype(str).str.contains(search_name, case=False)]
+                        if not student_match.empty:
+                            st.success(f"Student Found: {student_match.iloc[0, 1]}")
+                        else:
+                            st.warning("No student matches that name.")
+                else:
+                    st.error("No Scoresheet detected in this file.")
+            else:
+                st.info("Please select a database file from the dropdown above to begin analysis.")
+
+        # --- 4. BULK GENERATOR & NOTIFICATIONS ---
+        with tab_bulk:
+            st.subheader("📦 Bulk Action Suite")
+            bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
+            col_pdf, col_notif = st.columns(2)
+
+            with col_pdf:
+                st.markdown("#### 📄 Document Export")
+                
+                if st.button("🚀 GENERATE & PACKAGE ALL PDFs", use_container_width=True):
+                    target_file = f"Report {bulk_class}.xlsx"
+                    
+                    if os.path.exists(target_file):
+                        xl = pd.ExcelFile(target_file)
+                        sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
+                        data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
+                        
+                        def find_s(key):
+                            return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
+
+                        sc_n = find_s('Scoresheet')
+                        if not sc_n:
+                            st.error("❌ 'Scoresheet' not found.")
+                        else:
+                            is_third_term = True
+                            current_term = "3RD TERM"
+
+                            df_sc_raw = data_sheets[sc_n]
+                            adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
+
+                            status_window = st.empty() 
+                            progress_bar = st.progress(0)
+                            button_placeholder = st.empty() 
+                            
+                            zip_buffer = BytesIO()
+                            with zipfile.ZipFile(zip_buffer, "w") as zf:
+                                header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                                header_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
+                                
+                                subject_row = df_sc_raw.iloc[header_idx - 1]
+                                label_row = df_sc_raw.iloc[header_idx] 
+
+                                for index, adm_val in enumerate(adm_list):
+                                    adm_clean = str(adm_val).split('.')[0].strip()
+                                    try:
+                                        s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
+                                        if s_row_data.empty: continue
+                                        
+                                        student_vals = s_row_data.iloc[0]
+                                        student_name = str(student_vals.iloc[1]).upper()
+
+                                        status_window.markdown(f"""
+                                            <div style="padding:15px; border-radius:10px; background-color:#f8f9fa; border-left: 5px solid #1E3A8A;">
+                                                <span style="color:#1E3A8A; font-weight:bold; font-size:12px;">GENERATING PHYSICAL REPORT...</span><br>
+                                                <span style="font-size:18px; color:#333;">📄 <b>{student_name}</b></span>
+                                            </div>
+                                        """, unsafe_allow_html=True)
+
+                                        pdf = ResultPDF()
+                                        pdf.set_margins(left=10, top=10, right=10)
+                                        pdf.set_auto_page_break(auto=True, margin=10)
+                                        pdf.add_page()
+
+                                        processed_results = {}
+                                        total_marks = 0
+                                        for i, label in enumerate(label_row):
+                                            if str(label).strip().lower() == 'total':
+                                                subject_name = "Unknown"
+                                                for j in range(i, -1, -1):
+                                                    val = str(subject_row.iloc[j]).strip()
+                                                    if val.lower() != 'nan' and val != '':
+                                                        subject_name = val
+                                                        break
+                                                try:
+                                                    ca = float(student_vals.iloc[i-2]) if pd.notna(student_vals.iloc[i-2]) else 0
+                                                    ex = float(student_vals.iloc[i-1]) if pd.notna(student_vals.iloc[i-1]) else 0
+                                                    tot = float(student_vals.iloc[i]) if pd.notna(student_vals.iloc[i]) else 0
+                                                    if subject_name != "Unknown":
+                                                        processed_results[subject_name] = {"CA": ca, "Exam": ex, "Total": tot}
+                                                        total_marks += tot
+                                                except: continue
+
+                                        is_ss_class = "SS" in str(bulk_class).upper() and "JSS" not in str(bulk_class).upper()
+                                        if is_ss_class:
+                                            processed_results = dict(list(processed_results.items())[:10])
+                                            total_marks = sum(v['Total'] for v in processed_results.values())
+
+                                        def get_meta(key):
+                                            sh = find_s(key)
+                                            if not sh: return {}
+                                            df = data_sheets[sh].copy()
+                                            df.columns = [str(c).strip() for c in df.iloc[0]]
+                                            m = df[df.iloc[:,0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
+                                            return m.iloc[0].to_dict() if not m.empty else {}
+
+                                        bsheet_data = get_meta('Bsheet')
+                                        pos_val = str(bsheet_data.get('Position', 'N/A')).strip()
+                                        
+                                        student_class = bsheet_data.get('Class', bulk_class)
+
+                                        raw_avg = bsheet_data.get('Average', (total_marks/max(1, len(processed_results))))
+                                        avg_val = round(float(raw_avg), 2)
+
+                                        max_possible = 1000 if is_ss_class else 1700
+                                        summary = {
+                                            'obtained': total_marks, 
+                                            'avg': avg_val, 
+                                            'pos': pos_val, 
+                                            'max_possible': max_possible
+                                        }
+                                        
+                                        pdf.student_info_box(student_name, adm_clean, student_class, current_term, summary)
+                                        pdf.draw_scores_table(processed_results, student_class)
+                                        
+                                        if is_third_term:
+                                            pdf.draw_transcript_summary(summary, current_term)
+                                        
+                                        pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, student_class, current_term)
+                                        
+                                        pdf.ln(10)
+                                        pdf.set_font('Arial', 'B', 11)
+                                        pdf.cell(0, 10, "NEXT TERM BEGINS: 7TH SEPTEMBER, 2026", ln=1, align='C')                        
+                                        
+                                        pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
+                                        zf.writestr(f"{student_name.replace(' ', '_')}.pdf", pdf_bytes)
+
+                                    except Exception as e:
+                                        st.error(f"Error for {adm_clean}: {e}")
+
+                                    progress_bar.progress((index + 1) / len(adm_list))
+
+                            status_window.success(f"✅ READY! All {len(adm_list)} reports formatted.")
+                            st.balloons()
+                            
+                            button_placeholder.download_button(
+                                label="📥 DOWNLOAD ZIP PACKAGE NOW",
+                                data=zip_buffer.getvalue(),
+                                file_name=f"Reports_{bulk_class}.zip",
+                                mime="application/zip",
+                                use_container_width=True
+                            )
+                    else:
+                        st.error(f"❌ File {target_file} not found.")
+
+            with col_notif:
+                st.markdown("#### 🔔 Parent Notifications")
+                test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
+                
+                if st.button("🧪 Send Test Email"):
+                    success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
+                    if success: st.success("✅ Test Email Sent!")
+                    else: st.error("❌ Email Failed.")
+
+                st.markdown("---")
+                if st.button("📢 BLAST NOTIFY ALL PARENTS"):
+                    f_path = f"Report {bulk_class}.xlsx"
+                    if os.path.exists(f_path):
+                        with st.spinner(f"Reading {bulk_class} Data..."):
+                            try:
+                                xls = pd.ExcelFile(f_path)
+                                target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
+                                if target_sheet:
+                                    df_bulk = pd.read_excel(f_path, sheet_name=target_sheet)
+                                    df_bulk.columns = [str(c).strip() for c in df_bulk.columns]
+                                    
+                                    st.info(f"🚀 Found {len(df_bulk)} parents. Starting blast...")
+                                    p_bar = st.progress(0)
+                                    success_count = 0
+                                    for i, row in df_bulk.iterrows():
+                                        try:
+                                            p_email = str(row.get('Email', '')).strip()
+                                            p_name = str(row.get('Names', row.get('Names ', 'Parent'))).strip()
+                                            p_class = str(row.get('Class', row.get('Class ', bulk_class))).strip()
+                                            p_reg = str(row.get('Admission_No', '')).split('.')[0].strip()
+                                            p_pass = str(row.get('Password', '')).split('.')[0].strip()
+                                            
+                                            if "@" in p_email:
+                                                if send_email_notification(p_email, p_name, p_class, p_reg, p_pass):
+                                                    success_count += 1
+                                        except: pass
+                                        p_bar.progress((i + 1) / len(df_bulk))
+                                    st.success(f"🏁 Blast complete! {success_count} emails sent.")
+                                else: st.error("❌ Sheet 'Data' not found.")
+                            except Exception as e: st.error(f"❌ Error during blast: {e}")
+                    else:
+                        st.error("❌ File not found.")
+
+    # -------------------------------------------------------------
+    # SECTION B: CONTENT EDITING PANEL
+    # -------------------------------------------------------------
+    elif admin_section == "📢 Content Editing Panel":
+        content_passkey = st.sidebar.text_input("Enter Content Manager Passkey", type="password")
+        if not content_passkey:
+            st.warning("🔒 Please enter the Content Manager Passkey in the sidebar to unlock site content controls.")
+            st.stop()
+            
+        if content_passkey != CONTENT_EDITOR_KEY:
+            st.error("❌ Invalid Content Manager Passkey. Access Denied.")
+            st.stop()
+
+        st.success("✅ Content Manager Credentials Authenticated. Welcome.")
+
         st.markdown("### 📰 News & Protocol Control")
         if os.path.exists("news_event.jpg"):
             st.image("news_event.jpg", width=400)
