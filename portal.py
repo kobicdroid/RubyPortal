@@ -627,82 +627,97 @@ class ResultPDF(FPDF):
 
     def student_info_box(self, student_name, adm, s_class, term, summary):
         self.set_text_color(40, 70, 120)
-        self.set_font('Arial', 'B', 11)
+        self.set_font('Arial', 'B', 10)
         start_y = self.get_y()
         
         clean_adm = str(adm).split('.')[0].strip()
         
-        # Extended Metadata from Data Sheet & BSheet
-        age_val = str(summary.get('age', 'N/A')).split('.')[0].strip()
+        # EXTRACTED EXTRA METADATA
+        age_val = str(summary.get('age', 'N/A')).split('.')[0]
         state_val = str(summary.get('state', 'N/A')).strip()
         lga_val = str(summary.get('lga', 'N/A')).strip()
-        sub_offered = str(summary.get('sub_offered', '10' if 'SS' in str(s_class).upper() else '17')).split('.')[0].strip()
-        sub_registered = str(summary.get('sub_registered', '10' if 'SS' in str(s_class).upper() else '17')).split('.')[0].strip()
+        subs_offered = str(summary.get('subs_offered', 10 if 'SS' in str(s_class).upper() else 17))
+        subs_reg = str(summary.get('subs_reg', 10 if 'SS' in str(s_class).upper() else 17))
 
-        # Left Column (Demographics & Class Info)
-        self.cell(38, 5, 'Name of Student:', 0, 0) 
+        # ROW 1: Name, Admission No, Class & Term
+        self.cell(32, 5, 'Name of student:', 0, 0) 
         self.set_text_color(0, 0, 0)
-        self.cell(77, 5, f" {str(student_name).upper()}", 'B', 1)
+        self.cell(63, 5, f" {str(student_name).upper()}", 'B', 0)
         
         self.set_text_color(40, 70, 120)
-        self.cell(38, 5, 'Admission No:', 0, 0) 
-        self.set_font('Arial', '', 11)
-        self.set_text_color(0, 0, 0)
-        self.cell(77, 5, f" {clean_adm}", 'B', 1)
-        
-        self.set_text_color(40, 70, 120)
-        self.set_font('Arial', 'B', 11)
-        self.cell(38, 5, 'Class / Term:', 0, 0) 
-        self.set_font('Arial', '', 11)
-        self.set_text_color(0, 0, 0)
-        self.cell(77, 5, f" {s_class}   |   {term}", 'B', 1)
-
-        self.set_text_color(40, 70, 120)
-        self.set_font('Arial', 'B', 11)
-        self.cell(38, 5, 'Age / State / LGA:', 0, 0) 
+        self.cell(28, 5, 'Admission No:', 0, 0) 
         self.set_font('Arial', '', 10)
         self.set_text_color(0, 0, 0)
-        self.cell(77, 5, f" {age_val} Yrs | {state_val} | {lga_val}", 'B', 1)
-
+        self.cell(22, 5, f" {clean_adm}", 'B', 0)
+        
         self.set_text_color(40, 70, 120)
-        self.set_font('Arial', 'B', 11)
-        self.cell(38, 5, 'Subjects (Reg/Off):', 0, 0) 
-        self.set_font('Arial', '', 11)
+        self.set_font('Arial', 'B', 10)
+        self.cell(15, 5, 'Class:', 0, 0) 
+        self.set_font('Arial', '', 10)
         self.set_text_color(0, 0, 0)
-        self.cell(77, 5, f" Registered: {sub_registered}  |  Offered: {sub_offered}", 'B', 1)
+        self.cell(30, 5, f" {s_class} | {term}", 'B', 1)
 
-        # Right Column Summary Box
+        # ROW 2: Age, State of Origin, LGA, Subjects Offered / Registered
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(40, 70, 120)
+        self.cell(10, 5, 'Age:', 0, 0)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(0, 0, 0)
+        self.cell(15, 5, f" {age_val}", 'B', 0)
+
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(40, 70, 120)
+        self.cell(25, 5, 'State of Origin:', 0, 0)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(0, 0, 0)
+        self.cell(30, 5, f" {state_val}", 'B', 0)
+
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(40, 70, 120)
+        self.cell(12, 5, 'L.G.A:', 0, 0)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(0, 0, 0)
+        self.cell(28, 5, f" {lga_val}", 'B', 0)
+
+        self.set_font('Arial', 'B', 9)
+        self.set_text_color(40, 70, 120)
+        self.cell(38, 5, 'Subs Offered/Reg:', 0, 0)
+        self.set_font('Arial', '', 9)
+        self.set_text_color(0, 0, 0)
+        self.cell(32, 5, f" {subs_offered} / {subs_reg}", 'B', 1)
+
+        # Right side summary box (Compact Placement)
         if summary.get('avg') not in ["N/A", 0, "0", None]:
-            self.set_xy(130, start_y)
+            self.set_xy(135, start_y)
             self.set_fill_color(240, 242, 248) 
-            self.set_font('Arial', 'B', 11)
+            self.set_font('Arial', 'B', 10)
             self.set_text_color(40, 70, 120)
-            self.cell(40, 6, 'Obtained Score:', 1, 0, 'L', 1)
+            self.cell(32, 5, 'Obtained Score:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
             
             obtained = str(summary.get('obtained', 0)).split('.')[0]
-            self.cell(30, 6, obtained, 1, 1, 'C')
+            self.cell(23, 5, obtained, 1, 1, 'C')
             
-            self.set_x(130)
+            self.set_x(135)
             self.set_text_color(40, 70, 120)
-            self.cell(40, 6, 'Average / Pos:', 1, 0, 'L', 1)
+            self.cell(32, 5, 'Average / Pos:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
             
             clean_pos = str(summary.get('pos', '-')).split('.')[0]
-            self.cell(30, 6, f"{summary.get('avg', 0)}% / {clean_pos}", 1, 1, 'C')
+            self.cell(23, 5, f"{summary.get('avg', 0)}% / {clean_pos}", 1, 1, 'C')
             
-            self.set_x(130)
+            self.set_x(135)
             self.set_text_color(40, 70, 120)
-            self.cell(40, 6, 'Total Possible:', 1, 0, 'L', 1)
+            self.cell(32, 5, 'Total Possible:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
             
             tot_possible = str(summary.get('max_possible', 1000 if 'SS' in str(s_class).upper() else 1700))
-            self.cell(30, 6, tot_possible, 1, 1, 'C') 
-        self.ln(6)
+            self.cell(23, 5, tot_possible, 1, 1, 'C') 
+        self.ln(4)
 
     def draw_scores_table(self, subject_data, s_class):
-        f_size = 12
-        row_h = 7 
+        f_size = 11
+        row_h = 6.5 
         
         self.set_fill_color(40, 70, 120) 
         self.set_text_color(255, 255, 255) 
@@ -769,8 +784,8 @@ class ResultPDF(FPDF):
         if "3rd" in str(term).lower():
             self.set_fill_color(40, 70, 120)
             self.set_text_color(255, 255, 255)
-            self.set_font('Arial', 'B', 12)
-            self.cell(0, 6, 'ANNUAL CUMULATIVE TRANSCRIPT', 1, 1, 'C', 1)
+            self.set_font('Arial', 'B', 11)
+            self.cell(0, 5, 'ANNUAL CUMULATIVE TRANSCRIPT', 1, 1, 'C', 1)
             
             self.set_fill_color(230, 235, 245)
             self.set_text_color(0, 0, 0)
@@ -782,75 +797,75 @@ class ResultPDF(FPDF):
             self.cell(47, 5, '3rd Term Avg', 1, 0, 'C', 1)
             self.cell(49, 5, 'CUMULATIVE AVG (%)', 1, 1, 'C', 1)
             
-            self.set_font('Arial', '', 12)
-            self.cell(47, 6, f"{t1}%", 1, 0, 'C')
-            self.cell(47, 6, f"{t2}%", 1, 0, 'C')
-            self.cell(47, 6, f"{t3}%", 1, 0, 'C')
-            self.set_font('Arial', 'B', 12)
-            self.cell(49, 6, f"{cum}%", 1, 1, 'C')
+            self.set_font('Arial', '', 11)
+            self.cell(47, 5, f"{t1}%", 1, 0, 'C')
+            self.cell(47, 5, f"{t2}%", 1, 0, 'C')
+            self.cell(47, 5, f"{t3}%", 1, 0, 'C')
+            self.set_font('Arial', 'B', 11)
+            self.cell(49, 5, f"{cum}%", 1, 1, 'C')
             self.ln(1)
 
     def draw_footer_sections(self, beh, sk, comm, summary, s_class, term):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         curr_y = self.get_y()
         
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
-        self.cell(55, 6, 'AFFECTIVE DOMAIN (A)', 1, 1, 'C', 1)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
+        self.cell(55, 5, 'AFFECTIVE DOMAIN (A)', 1, 1, 'C', 1)
         
-        self.set_text_color(0, 0, 0); self.set_font('Arial', '', 12)
+        self.set_text_color(0, 0, 0); self.set_font('Arial', '', 10)
         fill = False
         for k, v in list(beh.items())[1:9]: 
             v_clean = str(v).split('.')[0]
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
-            self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, v_clean, 1, 1, 'C', 1)
+            self.cell(40, 4.5, k, 1, 0, 'L', 1); self.cell(15, 4.5, v_clean, 1, 1, 'C', 1)
             fill = not fill
             
         self.ln(1)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 9)
         self.cell(55, 5, 'POSITION OF RESPONSIBILITY', 1, 1, 'L', 1)
-        self.set_text_color(0,0,0); self.set_font('Arial', '', 10); self.cell(55, 6, f" {comm.get('Position', 'None')}", 1, 1, 'L')
+        self.set_text_color(0,0,0); self.set_font('Arial', '', 9); self.cell(55, 5, f" {comm.get('Position', 'None')}", 1, 1, 'L')
         
         self.set_xy(75, curr_y)
         self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
-        self.cell(55, 6, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
-        self.set_text_color(0,0,0); self.set_font('Arial', '', 10)
+        self.cell(55, 5, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
+        self.set_text_color(0,0,0); self.set_font('Arial', '', 9)
         fill = False
         for k, v in list(sk.items())[1:6]:
             v_clean = str(v).split('.')[0]
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
-            self.set_x(75); self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, v_clean, 1, 1, 'C', 1)
+            self.set_x(75); self.cell(40, 4.5, k, 1, 0, 'L', 1); self.cell(15, 4.5, v_clean, 1, 1, 'C', 1)
             fill = not fill
             
         self.set_xy(140, curr_y)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
-        self.cell(60, 6, "HOUSE MASTER'S REPORT", 1, 1, 'L', 1)
-        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 11); self.cell(60, 6, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
+        self.cell(60, 5, "HOUSE MASTER'S REPORT", 1, 1, 'L', 1)
+        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 9); self.cell(60, 5, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
         
-        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
-        self.cell(60, 6, "FORM MASTER'S COMMENT", 1, 1, 'L', 1)
-        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 11); self.cell(60, 6, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
+        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
+        self.cell(60, 5, "FORM MASTER'S COMMENT", 1, 1, 'L', 1)
+        self.set_text_color(0,0,0); self.set_x(140); self.set_font('Arial', '', 9); self.cell(60, 5, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
         
-        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 11)
-        self.cell(60, 6, "PRINCIPAL'S COMMENT", 1, 1, 'L', 1)
+        self.ln(1); self.set_x(140); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
+        self.cell(60, 5, "PRINCIPAL'S COMMENT", 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_x(140)
         avg = summary['avg']
         if is_ss:
             p_remark = "Outstanding performance." if avg >= 75 else "Average performance." if avg >= 50 else "Poor result."
         else:
             p_remark = "An Impressive performance!" if avg >= 75 else "A fair performance." if avg >= 50 else "Sit up."
-        self.set_font('Arial', 'I', 12); self.multi_cell(60, 6, f" {p_remark}", 1, 'L')
+        self.set_font('Arial', 'I', 10); self.multi_cell(60, 5, f" {p_remark}", 1, 'L')
         
         if "3rd" in str(term).lower():
-            self.ln(1.5); self.set_x(10); self.set_font('Arial', 'B', 12)
+            self.ln(1); self.set_x(10); self.set_font('Arial', 'B', 11)
             status = "PROMOTED TO NEXT CLASS" if avg >= 40 else "HELD BACK"
             self.set_fill_color(230, 245, 230) if avg >= 40 else self.set_fill_color(255, 230, 230)
-            self.cell(125, 7, f"PROMOTION STATUS: {status}", 1, 1, 'C', 1)
+            self.cell(125, 6, f"PROMOTION STATUS: {status}", 1, 1, 'C', 1)
             
-        self.ln(2.5); sig_y = self.get_y()
+        self.ln(2); sig_y = self.get_y()
         if os.path.exists(STAMP_PATH): self.image(STAMP_PATH, 145, sig_y - 4, 45) 
         if os.path.exists(SIG_PATH): self.image(SIG_PATH, 155, sig_y - 2, 22)
         self.set_x(140); self.cell(60, 0, '', 'T', 1, 'C')
-        self.set_x(140); self.set_font('Arial', 'B', 12); self.set_text_color(40,70,120); self.cell(60, 5, "Principal's Signature & Stamp", 0, 1, 'C')
+        self.set_x(140); self.set_font('Arial', 'B', 11); self.set_text_color(40,70,120); self.cell(60, 5, "Principal's Signature & Stamp", 0, 1, 'C')
 
     def draw_test_table(self, test_results):
         f_size = 11
@@ -965,11 +980,6 @@ if page == "🎓 Result Portal":
                         student_name = str(student.get(name_col, 'Student')).upper()
                         term = student.get('Term', 'N/A')
                         
-                        # Extra Demographics from Data Sheet
-                        age_val = student.get('Age', student.get('AGE', 'N/A'))
-                        state_val = student.get('State', student.get('STATE', 'N/A'))
-                        lga_val = student.get('LGA', student.get('L.G.A', student.get('Lga', 'N/A')))
-
                         sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
                         data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
 
@@ -1021,7 +1031,7 @@ if page == "🎓 Result Portal":
                             pdf = ResultPDF()
                             pdf.is_test = True 
                             pdf.add_page()
-                            pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0, 'age': age_val, 'state': state_val, 'lga': lga_val})
+                            pdf.student_info_box(student_name, adm_clean, selected_class, term, {'avg': 0})
                             pdf.draw_test_table(test_results)
                             pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
                             show_download_popup(pdf_bytes, f"Test_{student_name}.pdf")
@@ -1029,20 +1039,17 @@ if page == "🎓 Result Portal":
                         else:
                             bs_n, beh_n, sk_n, com_n = find_s('Bsheet'), find_s('Behaviour'), find_s('Skill'), find_s('Comment')
                             pos_val = "N/A"
-                            sub_offered, sub_registered = "N/A", "N/A"
-
                             if bs_n:
                                 df_bs = data_sheets[bs_n]
                                 df_bs.columns = [str(c).strip() for c in df_bs.iloc[0]]
                                 match = df_bs[df_bs.iloc[:, 0].astype(str).str.strip() == adm_clean]
                                 if not match.empty: 
                                     pos_val = str(match.iloc[0].get('Position', 'N/A')).strip()
-                                    sub_offered = str(match.iloc[0].get('Subjects Offered', match.iloc[0].get('No of Subjects Offered', 'N/A'))).strip()
-                                    sub_registered = str(match.iloc[0].get('Subjects Registered', match.iloc[0].get('No of Subjects Registered', 'N/A'))).strip()
 
                             processed_results, total_sum = {}, 0
                             is_3rd = True
                             disp_term = "3RD TERM"
+                            total_class_subjects = 0
                             
                             if sc_n:
                                 df_sc = data_sheets[sc_n]
@@ -1050,6 +1057,8 @@ if page == "🎓 Result Portal":
                                 header_idx = df_sc[header_mask].index[0] if any(header_mask) else 1
                                 r1, header_row = df_sc.iloc[header_idx-1], df_sc.iloc[header_idx]
                                 s_row = df_sc[df_sc.iloc[:,0].astype(str).str.strip() == adm_clean]
+                                total_class_subjects = sum(1 for col_val in header_row if str(col_val).strip().lower() == 'total')
+
                                 if not s_row.empty:
                                     s_vals = s_row.iloc[0]
                                     for i, col_val in enumerate(header_row):
@@ -1066,6 +1075,7 @@ if page == "🎓 Result Portal":
                             if is_ss_class:
                                 processed_results = dict(list(processed_results.items())[:10])
                                 total_sum = sum(v['Total'] for v in processed_results.values())
+                                total_class_subjects = min(10, total_class_subjects)
 
                             def get_row(sn):
                                 if not sn: return {}
@@ -1077,16 +1087,22 @@ if page == "🎓 Result Portal":
                             beh, sk, comm = get_row(beh_n), get_row(sk_n), get_row(com_n)
                             active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
                             max_possible = 1000 if is_ss_class else 1700
+                            
+                            # READ ADDITIONAL DATA METADATA
+                            s_age = student.get('Age', student.get('AGE', 'N/A'))
+                            s_state = student.get('State_of_Origin', student.get('State', 'N/A'))
+                            s_lga = student.get('LGA', student.get('L.G.A', 'N/A'))
+
                             summary = {
                                 'obtained': total_sum, 
                                 'avg': round(total_sum/max(1, len(active_subs)), 2), 
                                 'pos': pos_val, 
                                 'max_possible': max_possible,
-                                'age': age_val,
-                                'state': state_val,
-                                'lga': lga_val,
-                                'sub_offered': sub_offered,
-                                'sub_registered': sub_registered
+                                'age': s_age,
+                                'state': s_state,
+                                'lga': s_lga,
+                                'subs_offered': len(active_subs),
+                                'subs_reg': total_class_subjects
                             }
                             
                             st.title(f"👋 Welcome, {student_name}")
@@ -1318,15 +1334,13 @@ elif page == "🛠️ Staff Management":
                     
                     if os.path.exists(target_file):
                         xl = pd.ExcelFile(target_file)
-                        sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['data', 'bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
+                        sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment', 'data'])]
                         data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
                         
                         def find_s(key):
                             return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
 
                         sc_n = find_s('Scoresheet')
-                        dt_n = find_s('Data')
-
                         if not sc_n:
                             st.error("❌ 'Scoresheet' not found.")
                         else:
@@ -1335,13 +1349,6 @@ elif page == "🛠️ Staff Management":
 
                             df_sc_raw = data_sheets[sc_n]
                             adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
-
-                            # Prepare Data Sheet Lookup DataFrame
-                            df_dt_clean = pd.DataFrame()
-                            if dt_n:
-                                df_dt_clean = data_sheets[dt_n].copy()
-                                df_dt_clean.columns = [str(c).strip() for c in df_dt_clean.iloc[0]]
-                                df_dt_clean = df_dt_clean[1:]
 
                             status_window = st.empty() 
                             progress_bar = st.progress(0)
@@ -1354,6 +1361,7 @@ elif page == "🛠️ Staff Management":
                                 
                                 subject_row = df_sc_raw.iloc[header_idx - 1]
                                 label_row = df_sc_raw.iloc[header_idx] 
+                                total_class_subjects = sum(1 for col_val in label_row if str(col_val).strip().lower() == 'total')
 
                                 for index, adm_val in enumerate(adm_list):
                                     adm_clean = str(adm_val).split('.')[0].strip()
@@ -1370,16 +1378,6 @@ elif page == "🛠️ Staff Management":
                                                 <span style="font-size:18px; color:#333;">📄 <b>{student_name}</b></span>
                                             </div>
                                         """, unsafe_allow_html=True)
-
-                                        # Fetch Demographic Data from 'Data' sheet
-                                        age_val, state_val, lga_val = "N/A", "N/A", "N/A"
-                                        if not df_dt_clean.empty:
-                                            dt_match = df_dt_clean[df_dt_clean.iloc[:, 0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
-                                            if not dt_match.empty:
-                                                dt_row = dt_match.iloc[0]
-                                                age_val = dt_row.get('Age', dt_row.get('AGE', 'N/A'))
-                                                state_val = dt_row.get('State', dt_row.get('STATE', 'N/A'))
-                                                lga_val = dt_row.get('LGA', dt_row.get('L.G.A', dt_row.get('Lga', 'N/A')))
 
                                         pdf = ResultPDF()
                                         pdf.set_margins(left=10, top=10, right=10)
@@ -1409,6 +1407,9 @@ elif page == "🛠️ Staff Management":
                                         if is_ss_class:
                                             processed_results = dict(list(processed_results.items())[:10])
                                             total_marks = sum(v['Total'] for v in processed_results.values())
+                                            curr_total_subjects = min(10, total_class_subjects)
+                                        else:
+                                            curr_total_subjects = total_class_subjects
 
                                         def get_meta(key):
                                             sh = find_s(key)
@@ -1419,26 +1420,31 @@ elif page == "🛠️ Staff Management":
                                             return m.iloc[0].to_dict() if not m.empty else {}
 
                                         bsheet_data = get_meta('Bsheet')
+                                        data_tab_info = get_meta('Data')
                                         pos_val = str(bsheet_data.get('Position', 'N/A')).strip()
-                                        sub_offered = str(bsheet_data.get('Subjects Offered', bsheet_data.get('No of Subjects Offered', 'N/A'))).strip()
-                                        sub_registered = str(bsheet_data.get('Subjects Registered', bsheet_data.get('No of Subjects Registered', 'N/A'))).strip()
-
+                                        
                                         student_class = bsheet_data.get('Class', bulk_class)
 
                                         raw_avg = bsheet_data.get('Average', (total_marks/max(1, len(processed_results))))
                                         avg_val = round(float(raw_avg), 2)
 
                                         max_possible = 1000 if is_ss_class else 1700
+                                        active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
+                                        
+                                        s_age = data_tab_info.get('Age', data_tab_info.get('AGE', 'N/A'))
+                                        s_state = data_tab_info.get('State_of_Origin', data_tab_info.get('State', 'N/A'))
+                                        s_lga = data_tab_info.get('LGA', data_tab_info.get('L.G.A', 'N/A'))
+
                                         summary = {
                                             'obtained': total_marks, 
                                             'avg': avg_val, 
                                             'pos': pos_val, 
                                             'max_possible': max_possible,
-                                            'age': age_val,
-                                            'state': state_val,
-                                            'lga': lga_val,
-                                            'sub_offered': sub_offered,
-                                            'sub_registered': sub_registered
+                                            'age': s_age,
+                                            'state': s_state,
+                                            'lga': s_lga,
+                                            'subs_offered': len(active_subs),
+                                            'subs_reg': curr_total_subjects
                                         }
                                         
                                         pdf.student_info_box(student_name, adm_clean, student_class, current_term, summary)
@@ -1449,9 +1455,9 @@ elif page == "🛠️ Staff Management":
                                         
                                         pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, student_class, current_term)
                                         
-                                        pdf.ln(10)
-                                        pdf.set_font('Arial', 'B', 11)
-                                        pdf.cell(0, 10, "NEXT TERM BEGINS: 7TH SEPTEMBER, 2026", ln=1, align='C')                        
+                                        pdf.ln(8)
+                                        pdf.set_font('Arial', 'B', 10)
+                                        pdf.cell(0, 8, "NEXT TERM BEGINS: 7TH SEPTEMBER, 2026", ln=1, align='C')                        
                                         
                                         pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
                                         zf.writestr(f"{student_name.replace(' ', '_')}.pdf", pdf_bytes)
@@ -1599,7 +1605,7 @@ elif page == "🛠️ Staff Management":
         st.subheader("🗑️ Delete Pinned Notices")
         notice_dir = os.path.abspath("notices")
         if os.path.exists(notice_dir):
-            files = [f for f in os.listdir(notice_dir) if f.endswith(".pdf")]
+            files = [f for f in os.listdir(notice_dir) if f.endswith('.pdf')]
             if files:
                 to_delete = st.selectbox("Select notice to remove:", files)
                 if st.button("🔥 Delete Selected Notice"):
