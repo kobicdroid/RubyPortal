@@ -22,9 +22,7 @@ import requests
 import streamlit.components.v1 as components 
 
 
-
-
-# --- NEW: HELPER FUNCTION TO FIX NAMEERROR ---
+# --- HELPER FUNCTION TO FIX NAMEERROR ---
 def get_local_img(file_path):
     try:
         if os.path.exists(file_path):
@@ -80,7 +78,7 @@ def add_logo_watermark(image_file):
 # --- CALL THE LOGO ---
 add_logo_watermark("logo.jpg")
 
-# --- NEW: DESIGN & FONT FEATURES ---
+# --- DESIGN & FONT FEATURES ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
@@ -155,7 +153,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Motto and Bio (Correctly placed outside the previous string)
 st.markdown("""<h3 style='text-align:center; color:#2563eb; font-style:italic; margin-top:-15px;'>Motto: A Citadel of Supreme Excellence</h3>""", unsafe_allow_html=True)
 st.markdown('<div style="text-align:center; color: #374151; font-weight: 500; margin-bottom: 20px;">"We are building global leaders with integrity and academic brilliance."</div>', unsafe_allow_html=True)
 
@@ -194,19 +191,13 @@ def load_portal_data():
             return defaults
     return defaults 
 
-# --- UPDATED: SMART GLOBAL DATABASE LOADING ---
 def load_main_database():
     """ Automatically finds and loads the Report file, fixing column naming issues """
     report_files = glob.glob("Report *.xlsx")
     if report_files:
         try:
             temp_df = pd.read_excel(report_files[0])
-            
-            # --- SMART COLUMN CLEANER ---
-            # 1. Strip extra spaces from headers
             temp_df.columns = [str(c).strip() for c in temp_df.columns]
-            
-            # 2. Check for 'Class' (case-insensitive) and force it to be 'Class'
             col_map = {col.lower(): col for col in temp_df.columns}
             if 'class' in col_map:
                 temp_df = temp_df.rename(columns={col_map['class']: 'Class'})
@@ -225,7 +216,7 @@ df = load_main_database()
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
     
-# --- STEP 5: THE UPDATED EMAIL FUNCTION (PROFESSIONAL VERSION) ---
+# --- STEP 5: EMAIL FUNCTION ---
 def send_email_notification(receiver_email, student_name, class_name, reg_number, access_key):
     sender_email = "sumilogics247@gmail.com"
     sender_password = "upsw jbon rhoy aiai" 
@@ -236,7 +227,6 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
     message["To"] = receiver_email
     message["Subject"] = f"OFFICIAL: Academic Result Notification - {student_name}"
 
-    # Professional HTML Body
     body = f"""
     <html>
     <body>
@@ -281,7 +271,6 @@ LOGO_PATH = os.path.join(BASE_DIR, "logo.jpg")
 SIG_PATH = os.path.join(BASE_DIR, "signature.png") 
 STAMP_PATH = os.path.join(BASE_DIR, "Stamp.jpg") 
 
-# STAFF ACCESS CONFIGURATION
 STAFF_MASTER_KEY = "MGTRSC2026" 
 
 def log_activity(user_type, action, details):
@@ -295,7 +284,13 @@ def log_activity(user_type, action, details):
 
 def get_available_classes():
     files = glob.glob("Report *.xlsx")
-    return [f.replace("Report ", "").replace(".xlsx", "") for f in files]
+    classes = []
+    for f in files:
+        filename = os.path.basename(f)
+        class_name = filename.replace("Report ", "").replace(".xlsx", "").strip()
+        if class_name:
+            classes.append(class_name)
+    return sorted(list(set(classes))) if classes else ["JSS 1A", "SS 1A"]
 
 def show_analytics(selected_class):
     file_path = f"Report {selected_class}.xlsx"
@@ -332,9 +327,10 @@ def show_analytics(selected_class):
                         averages.append(round(score_col.mean(), 1))
             st.markdown(f"### 📊 Performance Overview: {selected_class}")
             
-            # --- STEP 3: MANAGEMENT SUMMARY LOGIC ---
             data_rows = df_sc.iloc[header_idx+1:, :]
             at_risk_list = []
+            
+            total_cols = [i for i in range(len(r2)) if str(r2.iloc[i]).strip().lower() == "total"]
             
             for _, row in data_rows.iterrows():
                 student_name = row.iloc[1]
@@ -349,7 +345,6 @@ def show_analytics(selected_class):
             m2.metric("Total Students", len(data_rows))
             m3.metric("At-Risk Students", len(at_risk_list), delta_color="inverse")
 
-            # --- VISUALS ---
             col1, col2 = st.columns([2, 1])
             with col1:
                 fig_bar = px.bar(
@@ -398,13 +393,7 @@ def get_base64_of_bin_file(bin_file):
         data = f.read()
     return base64.b64encode(data).decode()
 
-# --- INITIALIZE DYNAMIC CONTENT (UPDATED FOR PERSISTENCE) ---
-# Shutdown, this now pulls from st.session_state.portal_storage 
-# which we linked to the portal_data.xlsx file earlier.
-
 if 'news_content' not in st.session_state:
-    # We check if portal_storage exists (from our load_portal_data function)
-    # If it does, we use that. If not, we use the fallback "Grand Cultural Festival"
     storage = st.session_state.get('portal_storage', {})
     
     st.session_state.news_content = {
@@ -422,46 +411,27 @@ if 'protocols' not in st.session_state:
         "contact": storage.get("contact", "• **Phone:** 08131032577\n• **Location:** Old GRA, Maiduguri")
     }
 
-# This ensures that even if you refresh, the session_state 
-# is immediately repopulated from your Excel "Brain".
-
-def get_available_classes():
-    files = glob.glob("Report *.xlsx")
-    classes = []
-    for f in files:
-        filename = os.path.basename(f)
-        class_name = filename.replace("Report ", "").replace(".xlsx", "").strip()
-        if class_name:
-            classes.append(class_name)
-    return sorted(list(set(classes))) if classes else ["JSS 1A"]
-
-
-# Initialize session state for all toggles
 for key in ['show_students', 'show_subjects', 'show_cal', 'show_exam', 'show_contact']:
     if key not in st.session_state:
         st.session_state[key] = False
 
-# --- PROFESSIONAL ROYAL BLUE & CLEAN LIGHT THEME (MOBILE OPTIMIZED) ---
+# --- PROFESSIONAL THEME ---
 st.markdown("""
     <style>
-    /* Force the main app background to white regardless of system theme */
     .stApp { 
         background-color: #ffffff !important; 
         color: #1e293b !important; 
     }
     
-    /* SIDEBAR: Explicitly force light background and dark text */
     [data-testid="stSidebar"] {
         background-color: #f8fafc !important;
         border-right: 3px solid #2563eb !important;
     }
 
-    /* Target ALL text in sidebar to ensure readability on mobile dark mode */
     [data-testid="stSidebar"] * {
         color: #1e293b !important;
     }
 
-    /* Specifically target the navigation links/labels */
     [data-testid="stSidebarNav"] span {
         color: #1e293b !important;
         font-weight: 600 !important;
@@ -473,7 +443,6 @@ st.markdown("""
         padding: 20px 0;
     }
 
-    /* Logo Border: White with Blue Glow */
     .school-logo-border {
         width: 130px;
         height: 130px;
@@ -485,7 +454,6 @@ st.markdown("""
         box-shadow: 0px 4px 15px rgba(37, 99, 235, 0.2);
     }
     
-    /* Quote Box: Soft Blue Background for contrast */
     .principal-quote {
         background: #eff6ff !important;
         border-left: 5px solid #2563eb !important;
@@ -496,7 +464,6 @@ st.markdown("""
         color: #1e3a8a !important;
     }
 
-    /* Ticker: Blue with White Text */
     .ticker-wrap {
         width: 100%; overflow: hidden; height: 40px; 
         background-color: #2563eb !important; 
@@ -514,7 +481,6 @@ st.markdown("""
     }
     .ticker-item { display: inline-block; padding: 0 50px; }
 
-    /* Content Boxes: White with Blue Outlines */
     .statement-box {
         background: #ffffff !important;
         border: 2px solid #2563eb !important;
@@ -523,7 +489,6 @@ st.markdown("""
         color: #1e293b !important;
     }
 
-    /* Value Cards: Hover Effect preserved but colors lightened */
     .core-value-card {
         background: #f1f5f9 !important;
         border: 1px solid #2563eb !important;
@@ -554,7 +519,6 @@ st.markdown("""
         border: 1px solid #e2e8f0;
     }
 
-    /* Footer: Kept Formal Professional Dark Blue */
     .footer-section {
         margin-top: 60px; padding: 40px; background: #020617 !important;
         border-radius: 40px 40px 0 0; text-align: center; border-top: 3px solid #2563eb;
@@ -568,14 +532,12 @@ st.markdown("""
         color: rgba(37, 99, 235, 0.6) !important; font-size: 0.8em; letter-spacing: 2px; margin-top: 10px; font-weight: bold;
     }
 
-    /* Buttons: Strong Blue */
     div.stButton > button {
         background-color: #2563eb !important;
         color: white !important;
         border: 1px solid #ffffff !important;
     }
 
-    /* METRIC CARDS CSS */
     .metric-container {
         display: flex;
         justify-content: space-between;
@@ -593,7 +555,7 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     .metric-label {
-        color: #2563eb !important; /* Changed from gold to blue for readability on white */
+        color: #2563eb !important;
         font-size: 0.8rem;
         text-transform: uppercase;
         font-weight: bold;
@@ -609,51 +571,42 @@ st.markdown("""
 
 class ResultPDF(FPDF):
     def draw_watermark(self):
-        """Adds professional diagonal watermark using manual rotation"""
         try:
             self.set_font('Arial', 'B', 45)
-            self.set_text_color(240, 240, 240)  # Very light grey
+            self.set_text_color(240, 240, 240)
             self.rotate(45, 105, 148)
             self.text(35, 190, 'RUBY SPRINGFIELD COLLEGE')
-            self.rotate(0) # Reset to 0
+            self.rotate(0)
         except:
             pass 
 
     def header(self):
-        # --- PROFESSIONAL BACKGROUND COLOR ---
         self.set_fill_color(252, 252, 254) 
         self.rect(0, 0, 210, 297, 'F')
         
         self.draw_watermark()
         
-        # Logo handling
         if 'LOGO_PATH' in globals() and os.path.exists(LOGO_PATH):
             self.image(LOGO_PATH, 10, 8, 22) 
         
-        # School Name (Size 18)
         self.set_font('Arial', 'B', 18)
         self.set_text_color(40, 70, 120) 
         self.cell(0, 8, 'RUBY SPRINGFIELD COLLEGE', 0, 1, 'C') 
         
-        # Motto (Size 12)
         self.set_font('Arial', 'I', 12)
         self.set_text_color(100, 100, 100)
         self.cell(0, 4, 'Motto: A Citadel of Supreme Excellence', 0, 1, 'C') 
         
-        # Right Side Branding & Address (Size 12)
         self.set_font('Arial', '', 10)
         self.set_text_color(0, 0, 0)
         self.cell(0, 5, 'Opposite Polo Field, Old GRA, Maiduguri, Borno State', 0, 1, 'R') 
         self.cell(0, 5, 'Contact: 08131032577', 0, 1, 'R') 
         
-        # Current Date (Size 10)
         curr_date = datetime.now().strftime("%d %B, %Y")
         self.set_font('Arial', 'I', 10)
         self.cell(0, 5, f'Generated on: {curr_date}', 0, 1, 'R')
         
-        
         self.ln(2)
-        # --- STYLED HEADER BOX (Size 12) ---
         self.set_fill_color(40, 70, 120) 
         self.set_font('Arial', 'B', 12)
         self.set_text_color(255, 255, 255) 
@@ -675,10 +628,8 @@ class ResultPDF(FPDF):
         self.set_font('Arial', 'B', 12)
         start_y = self.get_y()
         
-        # CLEAN ADMISSION NUMBER FOR PDF DISPLAY[cite: 1]
         clean_adm = str(adm).split('.')[0].strip()
         
-        # Left side info (All Size 12)
         self.cell(40, 6, 'Name of student:', 0, 0) 
         self.set_text_color(0, 0, 0)
         self.cell(75, 6, f" {str(student_name).upper()}", 'B', 1)
@@ -696,7 +647,6 @@ class ResultPDF(FPDF):
         self.set_text_color(0, 0, 0)
         self.cell(75, 6, f" {s_class}   |   Term: {term}", 'B', 1)
 
-        # Right side summary box (Size 12)
         if summary.get('avg') not in ["N/A", 0, "0", None]:
             self.set_xy(130, start_y)
             self.set_fill_color(240, 242, 248) 
@@ -705,7 +655,6 @@ class ResultPDF(FPDF):
             self.cell(40, 6, 'Obtained Score:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
             
-            # Clean summary values from .0[cite: 1]
             obtained = str(summary.get('obtained', 0)).split('.')[0]
             self.cell(30, 6, obtained, 1, 1, 'C')
             
@@ -721,7 +670,10 @@ class ResultPDF(FPDF):
             self.set_text_color(40, 70, 120)
             self.cell(40, 6, 'Total Possible:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
-            self.cell(30, 6, "1700", 1, 1, 'C') 
+            
+            # Dynamic Total Possible based on number of subjects
+            tot_possible = str(summary.get('max_possible', 1000 if 'SS' in str(s_class).upper() else 1700))
+            self.cell(30, 6, tot_possible, 1, 1, 'C') 
         self.ln(6)
 
     def draw_scores_table(self, subject_data, s_class):
@@ -735,9 +687,9 @@ class ResultPDF(FPDF):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         
         if is_ss:
-            w = [60, 22, 22, 22, 64] # Total 190mm
+            w = [60, 22, 22, 22, 64]
         else:
-            w = [65, 22, 22, 21, 60] # Total 190mm
+            w = [65, 22, 22, 21, 60]
             
         headers = ['Subject', 'C.A (40)', 'Exam (60)', 'Total (100)', 'Grade & Remark' if is_ss else 'Grade']
         
@@ -750,7 +702,6 @@ class ResultPDF(FPDF):
         
         fill = False
         for sub, scores in subject_data.items():
-            # Clean scores from .0[cite: 1]
             total_val = scores.get('Total', 0)
             ca_val = str(scores.get('CA', '')).split('.')[0]
             ex_val = str(scores.get('Exam', '')).split('.')[0]
@@ -791,7 +742,7 @@ class ResultPDF(FPDF):
         self.ln(2)
 
     def draw_transcript_summary(self, summary, term):
-        if "3rd" in str(term):
+        if "3rd" in str(term).lower():
             self.set_fill_color(40, 70, 120)
             self.set_text_color(255, 255, 255)
             self.set_font('Arial', 'B', 12)
@@ -825,7 +776,6 @@ class ResultPDF(FPDF):
         self.set_text_color(0, 0, 0); self.set_font('Arial', '', 12)
         fill = False
         for k, v in list(beh.items())[1:9]: 
-            # Remove .0 from domain scores[cite: 1]
             v_clean = str(v).split('.')[0]
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
             self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, v_clean, 1, 1, 'C', 1)
@@ -842,7 +792,6 @@ class ResultPDF(FPDF):
         self.set_text_color(0,0,0); self.set_font('Arial', '', 10)
         fill = False
         for k, v in list(sk.items())[1:6]:
-            # Remove .0 from psychomotor scores[cite: 1]
             v_clean = str(v).split('.')[0]
             self.set_fill_color(245, 245, 245) if fill else self.set_fill_color(255, 255, 255)
             self.set_x(75); self.cell(40, 5, k, 1, 0, 'L', 1); self.cell(15, 5, v_clean, 1, 1, 'C', 1)
@@ -867,7 +816,7 @@ class ResultPDF(FPDF):
             p_remark = "An Impressive performance!" if avg >= 75 else "A fair performance." if avg >= 50 else "Sit up."
         self.set_font('Arial', 'I', 12); self.multi_cell(60, 6, f" {p_remark}", 1, 'L')
         
-        if "3rd" in str(term):
+        if "3rd" in str(term).lower():
             self.ln(1.5); self.set_x(10); self.set_font('Arial', 'B', 12)
             status = "PROMOTED TO NEXT CLASS" if avg >= 40 else "HELD BACK"
             self.set_fill_color(230, 245, 230) if avg >= 40 else self.set_fill_color(255, 230, 230)
@@ -901,7 +850,6 @@ class ResultPDF(FPDF):
             self.set_fill_color(242, 244, 248) if fill else self.set_fill_color(255, 255, 255)
             self.cell(w[0], row_h, f" {sub}", 1, 0, 'L', 1)
             
-            # Clean CA scores from .0[cite: 1]
             c1 = str(scores.get('CA1', 0)).split('.')[0]
             c2 = str(scores.get('CA2', 0)).split('.')[0]
             c3 = str(scores.get('CA3', 0)).split('.')[0]
@@ -916,6 +864,7 @@ class ResultPDF(FPDF):
             self.cell(w[5], row_h, tc, 1, 1, 'C', 1)
             self.set_font('Arial', '', f_size)
             fill = not fill
+
 #--- SIDEBAR ---#
 with st.sidebar:
     if os.path.exists(LOGO_PATH):
@@ -925,7 +874,6 @@ with st.sidebar:
     user_role = st.selectbox("Select Access Type", ["Student Portal", "Staff Portal (Shutdown)"])
     page = st.radio("Navigation", ["📊 Dashboard", "🎓 Result Portal"] if user_role == "Student Portal" else ["🛠️ Staff Management"])
 
-# Initialize login_btn to prevent NameError
 login_btn = False
 
 # --- STUDENT LOGIN & PORTAL ---
@@ -941,7 +889,6 @@ if page == "🎓 Result Portal":
 
     adm_no = st.sidebar.text_input("Admission Number").strip()
     
-    # --- SECRET CODE: SUMI ---
     if adm_no == "SUMI":
         st.balloons()
         st.title("MUM's Portal")
@@ -956,7 +903,6 @@ if page == "🎓 Result Portal":
     btn_label = "Generate Full Report" if portal_type == "📊 Full Term Results" else "View Test Scores"
     login_btn = st.sidebar.button(btn_label)
 
-    # --- POPUP DIALOG FOR DOWNLOAD ---
     @st.dialog("📥 Report Ready")
     def show_download_popup(pdf_bytes, filename):
         st.success("Your PDF has been generated successfully!")
@@ -971,7 +917,6 @@ if page == "🎓 Result Portal":
         if st.button("Close"):
             st.rerun()
 
-    # Move logic inside the page conditional to ensure variables like selected_class exist
     if login_btn:
         file_path = f"Report {selected_class}.xlsx"
         if os.path.exists(file_path):
@@ -1040,6 +985,10 @@ if page == "🎓 Result Portal":
                                                 }
                                             except: continue
                             
+                            # Limit SS classes to 10 subjects
+                            if "SS" in str(selected_class).upper() and "JSS" not in str(selected_class).upper():
+                                test_results = dict(list(test_results.items())[:10])
+
                             st.table(pd.DataFrame(test_results).T)
                             pdf = ResultPDF()
                             pdf.is_test = True 
@@ -1060,8 +1009,8 @@ if page == "🎓 Result Portal":
                                     pos_val = str(match.iloc[0].get('Position', 'N/A')).strip()
 
                             processed_results, total_sum = {}, 0
-                            is_3rd = "3rd" in str(sc_n).lower()
-                            disp_term = "3RD TERM" if is_3rd else "3RD TERM"
+                            is_3rd = True
+                            disp_term = "3RD TERM"
                             
                             if sc_n:
                                 df_sc = data_sheets[sc_n]
@@ -1081,6 +1030,12 @@ if page == "🎓 Result Portal":
                                             processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
                                             total_sum += tot
 
+                            # Limit SS classes to 10 subjects max
+                            is_ss_class = "SS" in str(selected_class).upper() and "JSS" not in str(selected_class).upper()
+                            if is_ss_class:
+                                processed_results = dict(list(processed_results.items())[:10])
+                                total_sum = sum(v['Total'] for v in processed_results.values())
+
                             def get_row(sn):
                                 if not sn: return {}
                                 df = data_sheets[sn]
@@ -1090,7 +1045,13 @@ if page == "🎓 Result Portal":
 
                             beh, sk, comm = get_row(beh_n), get_row(sk_n), get_row(com_n)
                             active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
-                            summary = {'obtained': total_sum, 'avg': round(total_sum/max(1, len(active_subs)), 2), 'pos': pos_val, 'max': 1700}
+                            max_possible = 1000 if is_ss_class else 1700
+                            summary = {
+                                'obtained': total_sum, 
+                                'avg': round(total_sum/max(1, len(active_subs)), 2), 
+                                'pos': pos_val, 
+                                'max_possible': max_possible
+                            }
                             
                             st.title(f"👋 Welcome, {student_name}")
                             st.table(pd.DataFrame(processed_results).T)
@@ -1122,7 +1083,6 @@ elif page == "🛠️ Staff Management":
 
     st.title("🛠️ Staff Administrative Console")
     
-# 1. SIDEBAR AUTHENTICATION BARRIER
     st.sidebar.markdown("### 🔐 Admin Access")
     master_auth = st.sidebar.text_input("Enter Master Authentication Key", type="password")
     
@@ -1135,14 +1095,12 @@ elif page == "🛠️ Staff Management":
         st.error("❌ Invalid Authentication Key. Access Denied.")
         st.stop() 
 
-    # Success Log
     if 'logged_in' not in st.session_state:
         log_activity("Admin", "Login", "Shutdown accessed the Staff Console")
         st.session_state['logged_in'] = True
 
     st.success("✅ Authentication Successful. Welcome, Management.")
      
-    # Define Tabs
     tab_up, tab_db, tab_analytics, tab_bulk, tab_content = st.tabs([
         "📤 Upload/Update", "📂 Database & Logs", "📈 Class Insights", 
         "📦 Bulk & Notifications", "📢 Content Manager"
@@ -1151,8 +1109,8 @@ elif page == "🛠️ Staff Management":
     # --- 1. UPLOAD TAB ---
     with tab_up:
         st.subheader("📤 Results Management")
-        st.info("Upload class results here. Format: 'Report ClassName.xlsx'")
-        target_class = st.text_input("Target Class Name (e.g., JSS 1A)", key="upload_target")
+        st.info("Upload class results here. Format: 'Report ClassName.xlsx' (e.g. Report SS 1A.xlsx)")
+        target_class = st.text_input("Target Class Name (e.g., JSS 1A, SS 1A, SS 2B)", key="upload_target")
         new_file = st.file_uploader("Select Excel Spreadsheet", type=['xlsx'])
         
         if st.button("Deploy to System") and new_file and target_class:
@@ -1170,7 +1128,7 @@ elif page == "🛠️ Staff Management":
             else:
                 st.warning(f"⚠️ Sync Error: {status}")
 
-   # --- 2. DATABASE TAB ---
+    # --- 2. DATABASE TAB ---
     with tab_db:
         col_db, col_log = st.columns(2)
         
@@ -1182,17 +1140,15 @@ elif page == "🛠️ Staff Management":
                 st.info("No active databases found.")
             
             for file in live_files:
-                # Use columns to put the file name and delete button side-by-side
                 db_col1, db_col2 = st.columns([3, 1])
                 with db_col1:
                     st.code(file)
                 with db_col2:
-                    # Unique key for each button based on filename
                     if st.button(f"🗑️ Delete", key=f"del_{file}", use_container_width=True):
                         try:
                             os.remove(file)
                             st.toast(f"🔥 {file} removed successfully!")
-                            st.rerun() # Refresh to update the list
+                            st.rerun()
                         except Exception as e:
                             st.error(f"Error: {e}")
 
@@ -1206,7 +1162,6 @@ elif page == "🛠️ Staff Management":
                 
                 st.text_area("Recent Activity", "".join(logs[-15:]), height=200)
                 
-                # Button to clear the log file
                 if st.button("🧨 Clear Audit Log", use_container_width=True):
                     with open(log_file, "w") as f:
                         f.write(f"[{datetime.now()}] LOG CLEARED BY ADMIN\n")
@@ -1214,13 +1169,11 @@ elif page == "🛠️ Staff Management":
                     st.rerun()
             else:
                 st.info("No audit log found.")
-                
 
-# --- 3. ANALYTICS TAB ---
+    # --- 3. ANALYTICS TAB ---
     with tab_analytics:
         st.subheader("📈 Professional Performance Analytics")
         
-        # Select Database to Analyze
         analysis_target = st.selectbox("Select Database for Analysis", glob.glob("Report *.xlsx"), key="analysis_selector")
         
         if analysis_target and os.path.exists(analysis_target):
@@ -1228,22 +1181,16 @@ elif page == "🛠️ Staff Management":
             sc_sheet = next((s for s in xl.sheet_names if 'scoresheet' in s.lower()), None)
             
             if sc_sheet:
-                # Load data (Header is usually row 1 or 2 based on your Excel structure)
                 df_analysis = xl.parse(sc_sheet, header=None)
-                
-                # Find the 'Total' columns to identify subjects
                 header_mask = df_analysis.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
                 header_idx = df_analysis[header_mask].index[0] if any(header_mask) else 1
                 
-                # Extract Student Names and Totals
                 subject_labels = df_analysis.iloc[header_idx - 1]
                 data_rows = df_analysis.iloc[header_idx + 1:]
                 
-                # 1. TOP METRICS ROW
                 col1, col2, col3 = st.columns(3)
                 total_students = len(data_rows.iloc[:, 0].dropna())
                 
-                # Calculate Grand Average
                 all_totals = []
                 for i, label in enumerate(df_analysis.iloc[header_idx]):
                     if str(label).strip().lower() == 'total':
@@ -1256,11 +1203,10 @@ elif page == "🛠️ Staff Management":
                 with col2:
                     st.metric("Class Mean Score", f"{class_avg}%", delta=f"{round(class_avg - 50, 1)}% vs Pass", border=True)
                 with col3:
-                    st.metric("Current Term", "2ND TERM", border=True)
+                    st.metric("Current Term", "3RD TERM", border=True)
 
                 st.divider()
 
-                # 2. VISUAL ANALYSIS SECTION
                 chart_col, list_col = st.columns([2, 1])
                 
                 with chart_col:
@@ -1293,7 +1239,6 @@ elif page == "🛠️ Staff Management":
 
                 st.divider()
                 
-                # 3. INDIVIDUAL SEARCH FEATURE
                 st.markdown("#### 🔍 Quick Student Insight")
                 search_name = st.text_input("Enter Student Name to see Trend")
                 if search_name:
@@ -1307,7 +1252,7 @@ elif page == "🛠️ Staff Management":
         else:
             st.info("Please select a database file from the dropdown above to begin analysis.")
 
-   # --- 4. BULK GENERATOR & NOTIFICATIONS ---
+    # --- 4. BULK GENERATOR & NOTIFICATIONS ---
     with tab_bulk:
         st.subheader("📦 Bulk Action Suite")
         bulk_class = st.selectbox("Select Class for Mass Action", get_available_classes(), key="bulk_action_selector")
@@ -1331,8 +1276,8 @@ elif page == "🛠️ Staff Management":
                     if not sc_n:
                         st.error("❌ 'Scoresheet' not found.")
                     else:
-                        is_third_term = "3rd" in sc_n or "3rd" in target_file
-                        current_term = "3rd Term" if is_third_term else "3RD TERM"
+                        is_third_term = True
+                        current_term = "3RD TERM"
 
                         df_sc_raw = data_sheets[sc_n]
                         adm_list = df_sc_raw.iloc[2:, 0].dropna().unique()
@@ -1389,6 +1334,12 @@ elif page == "🛠️ Staff Management":
                                                     total_marks += tot
                                             except: continue
 
+                                    # SS CLASS LOGIC: Limit to 10 subjects only
+                                    is_ss_class = "SS" in str(bulk_class).upper() and "JSS" not in str(bulk_class).upper()
+                                    if is_ss_class:
+                                        processed_results = dict(list(processed_results.items())[:10])
+                                        total_marks = sum(v['Total'] for v in processed_results.values())
+
                                     def get_meta(key):
                                         sh = find_s(key)
                                         if not sh: return {}
@@ -1400,19 +1351,26 @@ elif page == "🛠️ Staff Management":
                                     bsheet_data = get_meta('Bsheet')
                                     pos_val = str(bsheet_data.get('Position', 'N/A')).strip()
                                     
-                                    # FIXED: Added float conversion and rounding to 2 decimal places
+                                    student_class = bsheet_data.get('Class', bulk_class)
+
                                     raw_avg = bsheet_data.get('Average', (total_marks/max(1, len(processed_results))))
                                     avg_val = round(float(raw_avg), 2)
 
-                                    summary = {'obtained': total_marks, 'avg': avg_val, 'pos': pos_val, 'max': 1700}
+                                    max_possible = 1000 if is_ss_class else 1700
+                                    summary = {
+                                        'obtained': total_marks, 
+                                        'avg': avg_val, 
+                                        'pos': pos_val, 
+                                        'max_possible': max_possible
+                                    }
                                     
-                                    pdf.student_info_box(student_name, adm_clean, bulk_class, current_term, summary)
-                                    pdf.draw_scores_table(processed_results, bulk_class)
+                                    pdf.student_info_box(student_name, adm_clean, student_class, current_term, summary)
+                                    pdf.draw_scores_table(processed_results, student_class)
                                     
                                     if is_third_term:
                                         pdf.draw_transcript_summary(summary, current_term)
                                     
-                                    pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, bulk_class, current_term)
+                                    pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, student_class, current_term)
                                     
                                     pdf.ln(10)
                                     pdf.set_font('Arial', 'B', 11)
@@ -1482,7 +1440,7 @@ elif page == "🛠️ Staff Management":
                 else:
                     st.error("❌ File not found.")
 
-# --- 5. CONTENT MANAGER (NOW CORRECTLY OUTSIDE TAB_BULK) ---
+    # --- 5. CONTENT MANAGER ---
     with tab_content:
         st.markdown("### 📰 News & Protocol Control")
         if os.path.exists("news_event.jpg"):
@@ -1502,7 +1460,6 @@ elif page == "🛠️ Staff Management":
                 st.success("✅ News updated!")
                 st.rerun()
 
-# --- PROTOCOL & CONTACT UPDATES ---
         with st.form("protocol_updates_form"):
             st.subheader("📅 School Protocol & Contact Info")
             current_storage = st.session_state.get('portal_storage', {})
@@ -1514,7 +1471,6 @@ elif page == "🛠️ Staff Management":
             with col2:
                 new_guidelines = st.text_area("Exam Guidelines", value=current_storage.get('exams', ''))
 
-            # Buttons for Saving and Clearing
             btn_col1, btn_col2 = st.columns(2)
             if btn_col1.form_submit_button("💾 Save Protocols"):
                 st.session_state.portal_storage.update({'calendar': new_calendar, 'exams': new_guidelines, 'contact': new_contact})
@@ -1528,7 +1484,6 @@ elif page == "🛠️ Staff Management":
                 st.warning("🚨 Protocol text cleared!")
                 st.rerun()
 
-        # --- NOTICE BOARD WITH UPLOAD & DELETE ---
         st.markdown("---")
         with st.form("notice_board_form"):
             st.subheader("📌 Pin to Notice Board")
@@ -1551,7 +1506,6 @@ elif page == "🛠️ Staff Management":
                         st.rerun()
                     except Exception as e: st.error(f"Upload failed: {e}")
 
-        # --- DELETE NOTICE SECTION ---
         st.subheader("🗑️ Delete Pinned Notices")
         notice_dir = os.path.abspath("notices")
         if os.path.exists(notice_dir):
@@ -1569,12 +1523,9 @@ elif page == "🛠️ Staff Management":
 # --- 📊 DASHBOARD PAGE ---
 # ==========================================
 elif page == "📊 Dashboard":
-        
-    # 1. Assets & Initialization
     founder_path, lab_path, news_path = "founder.jpg", "lab.jpg", "news_event.jpg"
     lab_img_base64 = get_local_img(lab_path)
 
-    # --- 2. QUOTES SECTION (FIXED INDENTATION) ---
     quotes = [
         "Education is the most powerful weapon which you can use to change the world.",
         "The beautiful thing about learning is that no one can take it away from you.",
@@ -1585,7 +1536,6 @@ elif page == "📊 Dashboard":
     selected_quote = random.choice(quotes)
     st.markdown(f"> *{selected_quote}*")
      
-    # 2. TOP SECTION (Updated for Light Theme)
     st.markdown(f"""
         <div class="principal-quote">
             <small style="color:#2563eb; text-transform:uppercase; letter-spacing:1px;"><b>Principal's Quote of the Day</b></small><br>
@@ -1593,7 +1543,6 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-    # 3. TICKER
     announcement = st.session_state.news_content['title']
     st.markdown(f"""
         <div class="ticker-wrap">
@@ -1606,7 +1555,6 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-      # 4. VISION & MISSION
     v_col, m_col = st.columns(2)
     with v_col:
         st.markdown(f"""<div class="statement-box"><h3 style="color:#2563eb; text-align:center;">🔭 VISION STATEMENT</h3><p style="text-align:justify; line-height:1.6; color:#334155;">TO PROVIDE QUALITATIVE EDUCATION IN A SERENE AND SAFE LEARNING ENVIRONMENT, ENABLING US TO PRODUCE HIGHLY QUALIFIED AND POTENTIAL LEADERS OF TOMORROW.</p></div>""", unsafe_allow_html=True)
@@ -1621,7 +1569,6 @@ elif page == "📊 Dashboard":
     
     st.divider()
 
-   # 5. METRICS SECTION (Redesigned with light theme classes)
     st.markdown("""
         <div class="metric-container">
             <div class="metric-card">
@@ -1643,7 +1590,6 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-   # 6. HERITAGE & FOUNDER (Color Updates)
     col_hist, col_img = st.columns([2, 1])
     with col_hist:
         st.markdown('<div class="history-card"><h2 style="color:#1e3a8a;">A Heritage of Leadership</h2><p style="color:#334155;"> I give God all the Glory for Ruby Springfield College. Ruby Springfield started modestly as a standard bearer, introducing Secondary Education in a package completely different from what obtains in this part of the world. The school took off in 1998. Like a child it grew and waxed strong progressively to the fancy and admiration of all and sundry. Our watch words in this highly esteemed college is SUPREME EXCELLENCE.</p></div>', unsafe_allow_html=True)
@@ -1653,7 +1599,6 @@ elif page == "📊 Dashboard":
         else:
             st.error("Founder Image Missing")
 
-    # 7. PRACTICAL GALLERY
     st.markdown(f"""
         <div class="practical-gallery" style="background-image: url('data:image/jpeg;base64,{lab_img_base64}'); height: 250px; background-size: cover; border-radius: 15px; position: relative;">
             <div class="overlay-content" style="background: rgba(30, 58, 138, 0.7); position: absolute; bottom: 0; width: 100%; padding: 20px; border-radius: 0 0 15px 15px; color: white;">
@@ -1663,7 +1608,6 @@ elif page == "📊 Dashboard":
         </div>
     """, unsafe_allow_html=True)
 
-  # # 8. NEWS FEED & PROTOCOL (DASHBOARD SIDE)
     col_l, col_r = st.columns([2, 1])
     with col_l:
         st.markdown("<h3 style='color:#1e3a8a;'>🔔 RSC News Feed</h3>", unsafe_allow_html=True)
@@ -1678,7 +1622,6 @@ elif page == "📊 Dashboard":
         st.markdown("<h3 style='color:#1e3a8a;'>🛠️ Official Protocol</h3>", unsafe_allow_html=True)
         st.markdown("""<style>.protocol-box {background-color: #eff6ff; color: #1e3a8a; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #2563eb; border: 1px solid #e2e8f0; white-space: pre-wrap;}</style>""", unsafe_allow_html=True)
 
-        # Accessing the live storage
         storage = st.session_state.get('portal_storage', {})
 
         if st.button("📅 School Calendar", use_container_width=True): 
@@ -1699,7 +1642,6 @@ elif page == "📊 Dashboard":
             contact_data = storage.get('contact', 'School Office: Maiduguri, Borno State.')
             st.markdown(f'<div class="protocol-box"><b>📞 OFFICIAL CONTACT:</b><br>{contact_data}</div>', unsafe_allow_html=True)
 
-    # 9. NOTICE BOARD
     st.markdown("---")
     st.markdown("<h3 style='color:#1e3a8a;'>📂 School Notice Board</h3>", unsafe_allow_html=True)
     
@@ -1718,30 +1660,4 @@ elif page == "📊 Dashboard":
         else:
             st.info("The notice board is currently empty.")
     
-    # 10. FOOTER (Kept professional/solid as requested)
     st.markdown('<div class="footer-section"><p>© 2026 Ruby Springfield College • Developed by Adam Usman</p><div class="watermark-text">Powered by SumiLogics(NJA)</div></div>', unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
