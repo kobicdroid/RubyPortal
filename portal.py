@@ -844,16 +844,25 @@ class ResultPDF(FPDF):
         self.set_font('Arial', 'I', 8.5); self.multi_cell(60, 4.5, f" {p_remark}", 1, 'L')
         
         if "3rd" in str(term).lower():
-            self.ln(1); self.set_x(10); self.set_font('Arial', 'B', 9.5)
+            self.ln(1); self.set_x(10); self.set_font('Arial', 'B', 9)
             status = "PROMOTED TO NEXT CLASS" if avg >= 40 else "HELD BACK"
             self.set_fill_color(230, 245, 230) if avg >= 40 else self.set_fill_color(255, 230, 230)
-            self.cell(115, 5, f"PROMOTION STATUS: {status}", 1, 1, 'C', 1)
+            self.cell(115, 4.5, f"PROMOTION STATUS: {status}", 1, 1, 'C', 1)
             
         self.ln(1); sig_y = self.get_y()
         if os.path.exists(STAMP_PATH): self.image(STAMP_PATH, 140, sig_y - 2, 40) 
         if os.path.exists(SIG_PATH): self.image(SIG_PATH, 150, sig_y - 1, 20)
         self.set_x(135); self.cell(60, 0, '', 'T', 1, 'C')
-        self.set_x(135); self.set_font('Arial', 'B', 9); self.set_text_color(40,70,120); self.cell(60, 4, "Principal's Signature & Stamp", 0, 1, 'C')
+        self.set_x(135); self.set_font('Arial', 'B', 8.5); self.set_text_color(40,70,120); self.cell(60, 4, "Principal's Signature & Stamp", 0, 1, 'C')
+
+        # DYNAMIC NEXT TERM BEGINS BANNER
+        next_term_date = str(summary.get('next_term_begins', '7TH SEPTEMBER, 2026')).strip().upper()
+        self.ln(2.5)
+        self.set_x(10)
+        self.set_fill_color(240, 242, 248)
+        self.set_text_color(40, 70, 120)
+        self.set_font('Arial', 'B', 9)
+        self.cell(185, 5, f"NEXT TERM BEGINS: {next_term_date}", 1, 1, 'C', 1)
 
     def draw_test_table(self, test_results):
         f_size = 11
@@ -1079,6 +1088,7 @@ if page == "🎓 Result Portal":
                             s_age = student.get('Age', student.get('AGE', 'N/A'))
                             s_state = student.get('State_of_Origin', student.get('State', 'N/A'))
                             s_lga = student.get('LGA', student.get('L.G.A', 'N/A'))
+                            next_term_date = student.get('Next_Term_Begins', student.get('Next Term Begins', student.get('Next Term', '7TH SEPTEMBER, 2026')))
 
                             summary = {
                                 'obtained': total_sum, 
@@ -1089,7 +1099,8 @@ if page == "🎓 Result Portal":
                                 'state': s_state,
                                 'lga': s_lga,
                                 'subs_offered': len(active_subs),
-                                'subs_reg': total_class_subjects
+                                'subs_reg': total_class_subjects,
+                                'next_term_begins': next_term_date
                             }
                             
                             st.title(f"👋 Welcome, {student_name}")
@@ -1421,6 +1432,7 @@ elif page == "🛠️ Staff Management":
                                         s_age = data_tab_info.get('Age', data_tab_info.get('AGE', 'N/A'))
                                         s_state = data_tab_info.get('State_of_Origin', data_tab_info.get('State', 'N/A'))
                                         s_lga = data_tab_info.get('LGA', data_tab_info.get('L.G.A', 'N/A'))
+                                        next_term_date = data_tab_info.get('Next_Term_Begins', data_tab_info.get('Next Term Begins', data_tab_info.get('Next Term', '7TH SEPTEMBER, 2026')))
 
                                         summary = {
                                             'obtained': total_marks, 
@@ -1431,7 +1443,8 @@ elif page == "🛠️ Staff Management":
                                             'state': s_state,
                                             'lga': s_lga,
                                             'subs_offered': len(active_subs),
-                                            'subs_reg': curr_total_subjects
+                                            'subs_reg': curr_total_subjects,
+                                            'next_term_begins': next_term_date
                                         }
                                         
                                         pdf.student_info_box(student_name, adm_clean, student_class, current_term, summary)
@@ -1441,10 +1454,6 @@ elif page == "🛠️ Staff Management":
                                             pdf.draw_transcript_summary(summary, current_term)
                                         
                                         pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, student_class, current_term)
-                                        
-                                        pdf.ln(8)
-                                        pdf.set_font('Arial', 'B', 10)
-                                        pdf.cell(0, 8, "NEXT TERM BEGINS: 7TH SEPTEMBER, 2026", ln=1, align='C')                        
                                         
                                         pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
                                         zf.writestr(f"{student_name.replace(' ', '_')}.pdf", pdf_bytes)
