@@ -216,6 +216,22 @@ df = load_main_database()
 
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
+
+# --- HELPER FUNCTION FOR DYNAMIC MAX POSSIBLE SCORE CALCULATION ---
+def calculate_max_possible_score(s_class, active_subs_count):
+    class_str = str(s_class).upper().replace(" ", "")
+    if "JSS3" in class_str or "JSS 3" in str(s_class).upper():
+        return 1600
+    elif "SS3" in class_str or "SS 3" in str(s_class).upper():
+        return 900
+    elif "SS1" in class_str or "SS 1" in str(s_class).upper():
+        # SS1 students offer 10 or 11 subjects dynamically
+        return max(1000, active_subs_count * 100)
+    elif "SS" in class_str:
+        return 1000
+    else:
+        # Default JSS 1, JSS 2
+        return 1700
     
 # --- STEP 5: EMAIL FUNCTIONS ---
 def send_email_notification(receiver_email, student_name, class_name, reg_number, access_key):
@@ -683,8 +699,8 @@ class ResultPDF(FPDF):
         age_val = str(summary.get('age', 'N/A')).split('.')[0]
         state_val = str(summary.get('state', 'N/A')).strip()
         lga_val = str(summary.get('lga', 'N/A')).strip()
-        subs_offered = str(summary.get('subs_offered', 10 if 'SS' in str(s_class).upper() else 17))
-        subs_reg = str(summary.get('subs_reg', 10 if 'SS' in str(s_class).upper() else 17))
+        subs_offered = str(summary.get('subs_offered', summary.get('subs_reg', 10)))
+        subs_reg = str(summary.get('subs_reg', summary.get('subs_offered', 10)))
 
         self.set_font('Arial', 'B', 11)
         self.set_text_color(40, 70, 120)
@@ -752,7 +768,7 @@ class ResultPDF(FPDF):
             self.set_text_color(40, 70, 120)
             self.cell(35, 5.5, 'Total Possible:', 1, 0, 'L', 1)
             self.set_text_color(0, 0, 0)
-            tot_possible = str(summary.get('max_possible', 1000 if 'SS' in str(s_class).upper() else 1700))
+            tot_possible = str(summary.get('max_possible', 1000))
             self.cell(25, 5.5, tot_possible, 1, 1, 'C') 
             
         self.set_y(start_y + 22)
@@ -1074,8 +1090,10 @@ if page == "🎓 Result Portal":
                                                 }
                                             except: continue
                             
-                            if "SS" in str(selected_class).upper() and "JSS" not in str(selected_class).upper():
-                                test_results = dict(list(test_results.items())[:10])
+                            is_ss_class = "SS" in str(selected_class).upper() and "JSS" not in str(selected_class).upper()
+                            if is_ss_class:
+                                # For SS 1 check active subjects, otherwise trim to active subjects
+                                test_results = {k: v for k, v in test_results.items() if v['Total_CA'] > 0 or len(test_results) <= 11}
 
                             st.table(pd.DataFrame(test_results).T)
                             pdf = ResultPDF()
@@ -1121,11 +1139,12 @@ if page == "🎓 Result Portal":
                                             processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
                                             total_sum += tot
 
-                            is_ss_class = "SS" in str(selected_class).upper() and "JSS" not in str(selected_class).upper()
-                            if is_ss_class:
-                                processed_results = dict(list(processed_results.items())[:10])
-                                total_sum = sum(v['Total'] for v in processed_results.values())
-                                total_class_subjects = min(10, total_class_subjects)
+                            # Filter only active subjects offered by the student
+                            active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
+                            active_subs_count = len(active_subs) if len(active_subs) > 0 else len(processed_results)
+
+                            # Dynamic Max Possible Score Logic
+                            max_possible = calculate_max_possible_score(selected_class, active_subs_count)
 
                             def get_row(sn):
                                 if not sn: return {}
@@ -1135,8 +1154,6 @@ if page == "🎓 Result Portal":
                                 return m.iloc[0].to_dict() if not m.empty else {}
 
                             beh, sk, comm = get_row(beh_n), get_row(sk_n), get_row(com_n)
-                            active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
-                            max_possible = 1000 if is_ss_class else 1700
                             
                             s_age = student.get('Age', student.get('AGE', 'N/A'))
                             s_state = student.get('State_of_Origin', student.get('State of Origin', student.get('State', student.get('Origin', 'N/A'))))
@@ -1145,14 +1162,14 @@ if page == "🎓 Result Portal":
 
                             summary = {
                                 'obtained': total_sum, 
-                                'avg': round(total_sum/max(1, len(active_subs)), 2), 
+                                'avg': round(total_sum/max(1, active_subs_count), 2), 
                                 'pos': pos_val, 
                                 'max_possible': max_possible,
                                 'age': s_age,
                                 'state': s_state,
                                 'lga': s_lga,
-                                'subs_offered': len(active_subs),
-                                'subs_reg': total_class_subjects,
+                                'subs_offered': active_subs_count,
+                                'subs_reg': active_subs_count,
                                 'next_term_begins': next_term_date
                             }
                             
@@ -1412,7 +1429,6 @@ elif page == "🛠️ Staff Management":
                                 
                                 subject_row = df_sc_raw.iloc[header_idx - 1]
                                 label_row = df_sc_raw.iloc[header_idx] 
-                                total_class_subjects = sum(1 for col_val in label_row if str(col_val).strip().lower() == 'total')
 
                                 for index, adm_val in enumerate(adm_list):
                                     adm_clean = str(adm_val).split('.')[0].strip()
@@ -1454,13 +1470,11 @@ elif page == "🛠️ Staff Management":
                                                         total_marks += tot
                                                 except: continue
 
-                                        is_ss_class = "SS" in str(bulk_class).upper() and "JSS" not in str(bulk_class).upper()
-                                        if is_ss_class:
-                                            processed_results = dict(list(processed_results.items())[:10])
-                                            total_marks = sum(v['Total'] for v in processed_results.values())
-                                            curr_total_subjects = min(10, total_class_subjects)
-                                        else:
-                                            curr_total_subjects = total_class_subjects
+                                        active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
+                                        active_subs_count = len(active_subs) if len(active_subs) > 0 else len(processed_results)
+
+                                        # Dynamic Max Possible Score Calculation
+                                        max_possible = calculate_max_possible_score(bulk_class, active_subs_count)
 
                                         def get_meta(key):
                                             sh = find_s(key)
@@ -1475,13 +1489,9 @@ elif page == "🛠️ Staff Management":
                                         pos_val = str(bsheet_data.get('Position', 'N/A')).strip()
                                         
                                         student_class = bsheet_data.get('Class', bulk_class)
-
-                                        raw_avg = bsheet_data.get('Average', (total_marks/max(1, len(processed_results))))
+                                        raw_avg = bsheet_data.get('Average', (total_marks/max(1, active_subs_count)))
                                         avg_val = round(float(raw_avg), 2)
 
-                                        max_possible = 1000 if is_ss_class else 1700
-                                        active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
-                                        
                                         s_age = data_tab_info.get('Age', data_tab_info.get('AGE', 'N/A'))
                                         s_state = data_tab_info.get('State_of_Origin', data_tab_info.get('State of Origin', data_tab_info.get('State', data_tab_info.get('Origin', 'N/A'))))
                                         s_lga = data_tab_info.get('LGA', data_tab_info.get('L.G.A', 'N/A'))
@@ -1495,8 +1505,8 @@ elif page == "🛠️ Staff Management":
                                             'age': s_age,
                                             'state': s_state,
                                             'lga': s_lga,
-                                            'subs_offered': len(active_subs),
-                                            'subs_reg': curr_total_subjects,
+                                            'subs_offered': active_subs_count,
+                                            'subs_reg': active_subs_count,
                                             'next_term_begins': next_term_date
                                         }
                                         
@@ -1572,7 +1582,6 @@ elif page == "🛠️ Staff Management":
                                             
                                             subject_row = df_sc_raw.iloc[header_idx - 1]
                                             label_row = df_sc_raw.iloc[header_idx] 
-                                            total_class_subjects = sum(1 for col_val in label_row if str(col_val).strip().lower() == 'total')
 
                                             # Pick the first student in the class as a sample
                                             sample_row_data = df_sc_raw.iloc[2]
@@ -1603,13 +1612,11 @@ elif page == "🛠️ Staff Management":
                                                             total_marks += tot
                                                     except: continue
 
-                                            is_ss_class = "SS" in str(bulk_class).upper() and "JSS" not in str(bulk_class).upper()
-                                            if is_ss_class:
-                                                processed_results = dict(list(processed_results.items())[:10])
-                                                total_marks = sum(v['Total'] for v in processed_results.values())
-                                                curr_total_subjects = min(10, total_class_subjects)
-                                            else:
-                                                curr_total_subjects = total_class_subjects
+                                            active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
+                                            active_subs_count = len(active_subs) if len(active_subs) > 0 else len(processed_results)
+
+                                            # Dynamic Max Possible Score Calculation
+                                            max_possible = calculate_max_possible_score(bulk_class, active_subs_count)
 
                                             def get_meta(key):
                                                 sh = find_s(key)
@@ -1623,12 +1630,9 @@ elif page == "🛠️ Staff Management":
                                             data_tab_info = get_meta('Data')
                                             pos_val = str(bsheet_data.get('Position', '1st')).strip()
                                             student_class = bsheet_data.get('Class', bulk_class)
-                                            raw_avg = bsheet_data.get('Average', (total_marks/max(1, len(processed_results))))
+                                            raw_avg = bsheet_data.get('Average', (total_marks/max(1, active_subs_count)))
                                             avg_val = round(float(raw_avg), 2)
 
-                                            max_possible = 1000 if is_ss_class else 1700
-                                            active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
-                                            
                                             s_age = data_tab_info.get('Age', data_tab_info.get('AGE', '15'))
                                             s_state = data_tab_info.get('State_of_Origin', data_tab_info.get('State of Origin', data_tab_info.get('State', data_tab_info.get('Origin', 'Borno'))))
                                             s_lga = data_tab_info.get('LGA', data_tab_info.get('L.G.A', 'Maiduguri'))
@@ -1642,8 +1646,8 @@ elif page == "🛠️ Staff Management":
                                                 'age': s_age,
                                                 'state': s_state,
                                                 'lga': s_lga,
-                                                'subs_offered': len(active_subs),
-                                                'subs_reg': curr_total_subjects,
+                                                'subs_offered': active_subs_count,
+                                                'subs_reg': active_subs_count,
                                                 'next_term_begins': next_term_date
                                             }
                                             
@@ -1730,7 +1734,6 @@ elif page == "🛠️ Staff Management":
                                     
                                     subject_row = df_sc_raw.iloc[header_idx - 1]
                                     label_row = df_sc_raw.iloc[header_idx] 
-                                    total_class_subjects = sum(1 for col_val in label_row if str(col_val).strip().lower() == 'total')
 
                                     status_window = st.empty()
                                     p_bar = st.progress(0)
@@ -1756,7 +1759,7 @@ elif page == "🛠️ Staff Management":
                                             status_window.markdown(f"""
                                                 <div style="padding:10px; border-radius:8px; background-color:#eff6ff; border-left: 4px solid #2563eb;">
                                                     <span style="color:#1e3a8a; font-weight:bold; font-size:11px;">EMAILING RESULT PDF... ({index+1}/{total_students_count})</span><br>
-                                                    <span style="font-size:15px; color:#333;"><b>{student_name}</b> &rarr; {p_email}</span>
+                                                    <span style="font-size:15px; color:#333;"><b>{student_name}</b> &rrArr; {p_email}</span>
                                                 </div>
                                             """, unsafe_allow_html=True)
 
@@ -1790,13 +1793,11 @@ elif page == "🛠️ Staff Management":
                                                             total_marks += tot
                                                     except: continue
 
-                                            is_ss_class = "SS" in str(bulk_class).upper() and "JSS" not in str(bulk_class).upper()
-                                            if is_ss_class:
-                                                processed_results = dict(list(processed_results.items())[:10])
-                                                total_marks = sum(v['Total'] for v in processed_results.values())
-                                                curr_total_subjects = min(10, total_class_subjects)
-                                            else:
-                                                curr_total_subjects = total_class_subjects
+                                            active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
+                                            active_subs_count = len(active_subs) if len(active_subs) > 0 else len(processed_results)
+
+                                            # Dynamic Max Possible Score Calculation
+                                            max_possible = calculate_max_possible_score(bulk_class, active_subs_count)
 
                                             def get_meta(key):
                                                 sh = find_s(key)
@@ -1811,12 +1812,9 @@ elif page == "🛠️ Staff Management":
                                             pos_val = str(bsheet_data.get('Position', 'N/A')).strip()
                                             
                                             student_class = bsheet_data.get('Class', bulk_class)
-                                            raw_avg = bsheet_data.get('Average', (total_marks/max(1, len(processed_results))))
+                                            raw_avg = bsheet_data.get('Average', (total_marks/max(1, active_subs_count)))
                                             avg_val = round(float(raw_avg), 2)
 
-                                            max_possible = 1000 if is_ss_class else 1700
-                                            active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
-                                            
                                             s_age = data_tab_info.get('Age', data_tab_info.get('AGE', 'N/A'))
                                             s_state = data_tab_info.get('State_of_Origin', data_tab_info.get('State of Origin', data_tab_info.get('State', data_tab_info.get('Origin', 'N/A'))))
                                             s_lga = data_tab_info.get('LGA', data_tab_info.get('L.G.A', 'N/A'))
@@ -1830,8 +1828,8 @@ elif page == "🛠️ Staff Management":
                                                 'age': s_age,
                                                 'state': s_state,
                                                 'lga': s_lga,
-                                                'subs_offered': len(active_subs),
-                                                'subs_reg': curr_total_subjects,
+                                                'subs_offered': active_subs_count,
+                                                'subs_reg': active_subs_count,
                                                 'next_term_begins': next_term_date
                                             }
                                             
