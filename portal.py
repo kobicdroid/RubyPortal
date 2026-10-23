@@ -225,12 +225,10 @@ def calculate_max_possible_score(s_class, active_subs_count):
     elif "SS3" in class_str or "SS 3" in str(s_class).upper():
         return 900
     elif "SS1" in class_str or "SS 1" in str(s_class).upper():
-        # SS1 students offer 10 or 11 subjects dynamically
         return max(1000, active_subs_count * 100)
     elif "SS" in class_str:
         return 1000
     else:
-        # Default JSS 1, JSS 2
         return 1700
     
 # --- STEP 5: EMAIL FUNCTIONS ---
@@ -307,6 +305,54 @@ def send_email_with_pdf_attachment(receiver_email, student_name, class_name, reg
             </div>
 
             <p>You can also log in to the portal at any time using the credentials above to check history and updates.</p>
+            <br>
+            <p>Best Regards,</p>
+            <hr style="border: 0; border-top: 1px solid #ccc; width: 200px; margin-left: 0;">
+            <p><strong>School Management</strong><br>
+            Ruby Springfield College</p>
+        </div>
+    </body>
+    </html>
+    """
+    message.attach(MIMEText(body, "html"))
+
+    pdf_attachment = MIMEApplication(pdf_bytes, Name=filename)
+    pdf_attachment['Content-Disposition'] = f'attachment; filename="{filename}"'
+    message.attach(pdf_attachment)
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        return False
+
+def send_newsletter_email(receiver_email, notice_title, pdf_bytes, filename):
+    sender_email = "sumilogics247@gmail.com"
+    sender_password = "upsw jbon rhoy aiai" 
+    portal_link = "https://rubyspringfield-college.streamlit.app/" 
+
+    message = MIMEMultipart()
+    message["From"] = f"Ruby Springfield College Admin <{sender_email}>"
+    message["To"] = receiver_email
+    message["Subject"] = f"OFFICIAL NOTICE / NEWSLETTER: {notice_title}"
+
+    body = f"""
+    <html>
+    <body>
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2 style="color: #1e3a8a;">Ruby Springfield College, Maiduguri</h2>
+            <p>Dear Parent/Guardian,</p>
+            <p>Please find attached an official circular / newsletter from school management: <strong>{notice_title}</strong>.</p>
+            
+            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; border-left: 5px solid #2563eb;">
+                <p style="margin: 0;"><strong>Portal Link:</strong> <a href="{portal_link}">{portal_link}</a></p>
+            </div>
+
+            <p>You can review the attached document for full details and announcements.</p>
             <br>
             <p>Best Regards,</p>
             <hr style="border: 0; border-top: 1px solid #ccc; width: 200px; margin-left: 0;">
@@ -1092,7 +1138,6 @@ if page == "🎓 Result Portal":
                             
                             is_ss_class = "SS" in str(selected_class).upper() and "JSS" not in str(selected_class).upper()
                             if is_ss_class:
-                                # For SS 1 check active subjects, otherwise trim to active subjects
                                 test_results = {k: v for k, v in test_results.items() if v['Total_CA'] > 0 or len(test_results) <= 11}
 
                             st.table(pd.DataFrame(test_results).T)
@@ -1139,11 +1184,9 @@ if page == "🎓 Result Portal":
                                             processed_results[sub] = {"CA": ca, "Exam": ex, "Total": tot}
                                             total_sum += tot
 
-                            # Filter only active subjects offered by the student
                             active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
                             active_subs_count = len(active_subs) if len(active_subs) > 0 else len(processed_results)
 
-                            # Dynamic Max Possible Score Logic
                             max_possible = calculate_max_possible_score(selected_class, active_subs_count)
 
                             def get_row(sn):
@@ -1473,7 +1516,6 @@ elif page == "🛠️ Staff Management":
                                         active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
                                         active_subs_count = len(active_subs) if len(active_subs) > 0 else len(processed_results)
 
-                                        # Dynamic Max Possible Score Calculation
                                         max_possible = calculate_max_possible_score(bulk_class, active_subs_count)
 
                                         def get_meta(key):
@@ -1583,7 +1625,6 @@ elif page == "🛠️ Staff Management":
                                             subject_row = df_sc_raw.iloc[header_idx - 1]
                                             label_row = df_sc_raw.iloc[header_idx] 
 
-                                            # Pick the first student in the class as a sample
                                             sample_row_data = df_sc_raw.iloc[2]
                                             adm_clean = str(sample_row_data.iloc[0]).split('.')[0].strip()
                                             student_name = str(sample_row_data.iloc[1]).upper()
@@ -1615,7 +1656,6 @@ elif page == "🛠️ Staff Management":
                                             active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
                                             active_subs_count = len(active_subs) if len(active_subs) > 0 else len(processed_results)
 
-                                            # Dynamic Max Possible Score Calculation
                                             max_possible = calculate_max_possible_score(bulk_class, active_subs_count)
 
                                             def get_meta(key):
@@ -1759,7 +1799,7 @@ elif page == "🛠️ Staff Management":
                                             status_window.markdown(f"""
                                                 <div style="padding:10px; border-radius:8px; background-color:#eff6ff; border-left: 4px solid #2563eb;">
                                                     <span style="color:#1e3a8a; font-weight:bold; font-size:11px;">EMAILING RESULT PDF... ({index+1}/{total_students_count})</span><br>
-                                                    <span style="font-size:15px; color:#333;"><b>{student_name}</b> &rrArr; {p_email}</span>
+                                                    <span style="font-size:15px; color:#333;"><b>{student_name}</b> &rarr; {p_email}</span>
                                                 </div>
                                             """, unsafe_allow_html=True)
 
@@ -1796,7 +1836,6 @@ elif page == "🛠️ Staff Management":
                                             active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
                                             active_subs_count = len(active_subs) if len(active_subs) > 0 else len(processed_results)
 
-                                            # Dynamic Max Possible Score Calculation
                                             max_possible = calculate_max_possible_score(bulk_class, active_subs_count)
 
                                             def get_meta(key):
@@ -1947,6 +1986,62 @@ elif page == "🛠️ Staff Management":
                     st.rerun()
             else:
                 st.info("No notices found to delete.")
+
+        # --- 5TH UPDATE ADDITION: NEWSLETTER & NOTICE EMAIL BLAST ---
+        st.markdown("---")
+        st.subheader("📧 Broadcast Newsletter / Notice PDF to Parents")
+        st.info("Select any pinned notice or newsletter PDF below and blast it to parents in a chosen class or all classes.")
+
+        notice_dir = os.path.abspath("notices")
+        if os.path.exists(notice_dir):
+            pdf_notices = [f for f in os.listdir(notice_dir) if f.endswith('.pdf')]
+            if pdf_notices:
+                selected_notice_file = st.selectbox("Select Notice / Newsletter PDF to Send", pdf_notices)
+                newsletter_target_class = st.selectbox("Select Target Class for Newsletter Blast", get_available_classes(), key="newsletter_class_select")
+
+                if st.button("🚀 BLAST NEWSLETTER PDF TO PARENTS"):
+                    target_file = f"Report {newsletter_target_class}.xlsx"
+                    if os.path.exists(target_file):
+                        with st.spinner(f"Broadcasting newsletter to parents in {newsletter_target_class}..."):
+                            try:
+                                xls = pd.ExcelFile(target_file)
+                                target_sheet = next((s for s in xls.sheet_names if 'data' in s.lower()), None)
+                                if target_sheet:
+                                    df_parents = pd.read_excel(target_file, sheet_name=target_sheet)
+                                    df_parents.columns = [str(c).strip() for c in df_parents.columns]
+
+                                    notice_path = os.path.join(notice_dir, selected_notice_file)
+                                    with open(notice_path, "rb") as nf:
+                                        notice_bytes = nf.read()
+
+                                    clean_notice_title = selected_notice_file.replace("notice_", "").replace(".pdf", "").replace("_", " ").upper()
+
+                                    p_bar = st.progress(0)
+                                    sent_count = 0
+                                    total_p = len(df_parents)
+
+                                    for i, row in df_parents.iterrows():
+                                        try:
+                                            p_email = str(row.get('Email', '')).strip()
+                                            if "@" in p_email:
+                                                if send_newsletter_email(p_email, clean_notice_title, notice_bytes, selected_notice_file):
+                                                    sent_count += 1
+                                        except:
+                                            pass
+                                        p_bar.progress((i + 1) / total_p)
+
+                                    st.success(f"🏁 Newsletter successfully blasted! Emailed to {sent_count} parents.")
+                                    st.balloons()
+                                else:
+                                    st.error("❌ 'Data' sheet not found in the class file.")
+                            except Exception as e:
+                                st.error(f"❌ Error during newsletter blast: {e}")
+                    else:
+                        st.error(f"❌ Database file for {newsletter_target_class} not found.")
+            else:
+                st.info("No PDF notices available on the notice board to broadcast.")
+        else:
+            st.info("Notice board directory is empty.")
 
 # ==========================================
 # --- 📊 DASHBOARD PAGE ---
