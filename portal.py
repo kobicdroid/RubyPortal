@@ -589,41 +589,41 @@ class ResultPDF(FPDF):
         self.draw_watermark()
         
         if 'LOGO_PATH' in globals() and os.path.exists(LOGO_PATH):
-            self.image(LOGO_PATH, 10, 8, 20) 
+            self.image(LOGO_PATH, 10, 6, 18) 
         
-        self.set_font('Arial', 'B', 16)
+        self.set_font('Arial', 'B', 18)
         self.set_text_color(40, 70, 120) 
-        self.cell(0, 7, 'RUBY SPRINGFIELD COLLEGE', 0, 1, 'C') 
+        self.cell(0, 6, 'RUBY SPRINGFIELD COLLEGE', 0, 1, 'C') 
         
-        self.set_font('Arial', 'I', 10)
+        self.set_font('Arial', 'I', 11)
         self.set_text_color(100, 100, 100)
         self.cell(0, 4, 'Motto: A Citadel of Supreme Excellence', 0, 1, 'C') 
         
-        self.set_font('Arial', '', 9)
+        self.set_font('Arial', '', 10)
         self.set_text_color(0, 0, 0)
         self.cell(0, 4, 'Opposite Polo Field, Old GRA, Maiduguri, Borno State', 0, 1, 'R') 
         self.cell(0, 4, 'Contact: 08131032577', 0, 1, 'R') 
         
         curr_date = datetime.now().strftime("%d %B, %Y")
-        self.set_font('Arial', 'I', 8)
+        self.set_font('Arial', 'I', 9)
         self.cell(0, 4, f'Generated on: {curr_date}', 0, 1, 'R')
         
         self.ln(1)
         self.set_fill_color(40, 70, 120) 
-        self.set_font('Arial', 'B', 11)
+        self.set_font('Arial', 'B', 12)
         self.set_text_color(255, 255, 255) 
         
         title = "OFFICIAL CONTINUOUS ASSESSMENT RECORD" if hasattr(self, 'is_test') and self.is_test else "OFFICIAL TERMLY PERFORMANCE RECORD"
-        self.cell(0, 7, title, 0, 1, 'C', 1) 
-        self.ln(2)
+        self.cell(0, 6.5, title, 0, 1, 'C', 1) 
+        self.ln(1.5)
 
     def footer(self):
-        self.set_y(-12)
-        self.set_font('Arial', 'I', 8)
+        self.set_y(-10)
+        self.set_font('Arial', 'I', 8.5)
         self.set_text_color(128, 128, 128)
         footer_note = "Copyright @2026 Ruby Springfield College (A Citadel of Supreme Excellence) Powered by SumiLogics(NJA)"
-        self.cell(0, 8, footer_note, 0, 0, 'L')
-        self.cell(0, 8, f'Page {self.page_no()}', 0, 0, 'R')
+        self.cell(0, 6, footer_note, 0, 0, 'L')
+        self.cell(0, 6, f'Page {self.page_no()}', 0, 0, 'R')
 
     def student_info_box(self, student_name, adm, s_class, term, summary):
         start_y = self.get_y()
@@ -635,48 +635,56 @@ class ResultPDF(FPDF):
         subs_offered = str(summary.get('subs_offered', 10 if 'SS' in str(s_class).upper() else 17))
         subs_reg = str(summary.get('subs_reg', 10 if 'SS' in str(s_class).upper() else 17))
 
-        # FIXED ALIGNED LEFT INFO BLOCK (Width: 122mm)
-        self.set_font('Arial', 'B', 9)
+        # SCALED UP FONT SIZES BY 2 (11pt / 10.5pt)
+        self.set_font('Arial', 'B', 11)
         self.set_text_color(40, 70, 120)
-        self.cell(26, 4.5, 'Name of student:', 0, 0)
+        self.cell(30, 5, 'Name of student:', 0, 0)
         self.set_text_color(0, 0, 0)
-        self.cell(96, 4.5, f" {str(student_name).upper()}", 'B', 1)
+        self.cell(92, 5, f" {str(student_name).upper()}", 'B', 1)
 
         self.set_text_color(40, 70, 120)
-        self.cell(26, 4.5, 'Admission No:', 0, 0)
+        self.cell(30, 5, 'Admission No:', 0, 0)
         self.set_text_color(0, 0, 0)
-        self.cell(35, 4.5, f" {clean_adm}", 'B', 0)
+        self.cell(33, 5, f" {clean_adm}", 'B', 0)
 
         self.set_text_color(40, 70, 120)
-        self.cell(12, 4.5, 'Class:', 0, 0)
+        self.cell(14, 5, 'Class:', 0, 0)
         self.set_text_color(0, 0, 0)
-        self.cell(49, 4.5, f" {s_class}   |   Term: {term}", 'B', 1)
+        self.cell(45, 5, f" {s_class}   |   Term: {term}", 'B', 1)
 
+        self.set_font('Arial', 'B', 10.5)
         self.set_text_color(40, 70, 120)
-        self.cell(10, 4.5, 'Age:', 0, 0)
+        self.cell(10, 5, 'Age:', 0, 0)
+        self.set_font('Arial', '', 10.5)
         self.set_text_color(0, 0, 0)
-        self.cell(15, 4.5, f" {age_val}", 'B', 0)
+        self.cell(14, 5, f" {age_val}", 'B', 0)
 
+        self.set_font('Arial', 'B', 10.5)
         self.set_text_color(40, 70, 120)
-        self.cell(24, 4.5, 'State of Origin:', 0, 0)
+        self.cell(27, 5, 'State of Origin:', 0, 0)
+        self.set_font('Arial', '', 10.5)
         self.set_text_color(0, 0, 0)
-        self.cell(28, 4.5, f" {state_val}", 'B', 0)
+        self.cell(26, 5, f" {state_val}", 'B', 0)
 
+        self.set_font('Arial', 'B', 10.5)
         self.set_text_color(40, 70, 120)
-        self.cell(12, 4.5, 'L.G.A:', 0, 0)
+        self.cell(13, 5, 'L.G.A:', 0, 0)
+        self.set_font('Arial', '', 10.5)
         self.set_text_color(0, 0, 0)
-        self.cell(33, 4.5, f" {lga_val}", 'B', 1)
+        self.cell(32, 5, f" {lga_val}", 'B', 1)
 
+        self.set_font('Arial', 'B', 10.5)
         self.set_text_color(40, 70, 120)
-        self.cell(35, 4.5, 'Subs Offered / Reg:', 0, 0)
+        self.cell(38, 5, 'Subs Offered / Reg:', 0, 0)
+        self.set_font('Arial', '', 10.5)
         self.set_text_color(0, 0, 0)
-        self.cell(87, 4.5, f" {subs_offered} / {subs_reg}", 'B', 1)
+        self.cell(84, 5, f" {subs_offered} / {subs_reg}", 'B', 1)
 
-        # FIXED ALIGNED RIGHT SUMMARY BOX (Exact Absolute Set_XY to prevent overlapping)
+        # RIGHT SUMMARY BOX SCALED UP
         if summary.get('avg') not in ["N/A", 0, "0", None]:
             self.set_xy(135, start_y)
             self.set_fill_color(240, 242, 248) 
-            self.set_font('Arial', 'B', 8.5)
+            self.set_font('Arial', 'B', 10.5)
             
             self.set_text_color(40, 70, 120)
             self.cell(35, 5.5, 'Obtained Score:', 1, 0, 'L', 1)
@@ -698,10 +706,10 @@ class ResultPDF(FPDF):
             tot_possible = str(summary.get('max_possible', 1000 if 'SS' in str(s_class).upper() else 1700))
             self.cell(25, 5.5, tot_possible, 1, 1, 'C') 
             
-        self.set_y(start_y + 20) # Safely drop Y cursor below header box
+        self.set_y(start_y + 22)
 
     def draw_scores_table(self, subject_data, s_class):
-        f_size = 9.5
+        f_size = 11.5
         row_h = 5.2
         
         self.set_fill_color(40, 70, 120) 
@@ -763,13 +771,13 @@ class ResultPDF(FPDF):
                 
                 self.cell(w[4], row_h, g, 1, 1, 'C', 1)
                 fill = not fill
-        self.ln(1.5)
+        self.ln(1)
 
     def draw_transcript_summary(self, summary, term):
         if "3rd" in str(term).lower():
             self.set_fill_color(40, 70, 120)
             self.set_text_color(255, 255, 255)
-            self.set_font('Arial', 'B', 9)
+            self.set_font('Arial', 'B', 11)
             self.cell(0, 4.5, 'ANNUAL CUMULATIVE TRANSCRIPT', 1, 1, 'C', 1)
             
             self.set_fill_color(230, 235, 245)
@@ -782,11 +790,11 @@ class ResultPDF(FPDF):
             self.cell(47, 4.5, '3rd Term Avg', 1, 0, 'C', 1)
             self.cell(49, 4.5, 'CUMULATIVE AVG (%)', 1, 1, 'C', 1)
             
-            self.set_font('Arial', '', 9)
+            self.set_font('Arial', '', 11)
             self.cell(47, 4.5, f"{t1}%", 1, 0, 'C')
             self.cell(47, 4.5, f"{t2}%", 1, 0, 'C')
             self.cell(47, 4.5, f"{t3}%", 1, 0, 'C')
-            self.set_font('Arial', 'B', 9)
+            self.set_font('Arial', 'B', 11)
             self.cell(49, 4.5, f"{cum}%", 1, 1, 'C')
             self.ln(1)
 
@@ -794,11 +802,10 @@ class ResultPDF(FPDF):
         is_ss = "SS" in str(s_class).upper() and "JSS" not in str(s_class).upper()
         curr_y = self.get_y()
         
-        # AFFECTIVE DOMAIN (Width: 55mm)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 8.5)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10.5)
         self.cell(55, 4.5, 'AFFECTIVE DOMAIN (A)', 1, 1, 'C', 1)
         
-        self.set_text_color(0, 0, 0); self.set_font('Arial', '', 8.5)
+        self.set_text_color(0, 0, 0); self.set_font('Arial', '', 10.5)
         fill = False
         for k, v in list(beh.items())[1:8]: 
             v_clean = str(v).split('.')[0]
@@ -807,15 +814,14 @@ class ResultPDF(FPDF):
             fill = not fill
             
         self.ln(1)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 8)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10)
         self.cell(55, 4, 'POSITION OF RESPONSIBILITY', 1, 1, 'L', 1)
-        self.set_text_color(0,0,0); self.set_font('Arial', '', 8); self.cell(55, 4.5, f" {comm.get('Position', 'None')}", 1, 1, 'L')
+        self.set_text_color(0,0,0); self.set_font('Arial', '', 10); self.cell(55, 4.5, f" {comm.get('Position', 'None')}", 1, 1, 'L')
         
-        # PSYCHOMOTOR SKILLS (Width: 55mm)
         self.set_xy(70, curr_y)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 8.5)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10.5)
         self.cell(55, 4.5, 'PSYCHOMOTOR SKILLS (B)', 1, 1, 'C', 1)
-        self.set_text_color(0,0,0); self.set_font('Arial', '', 8.5)
+        self.set_text_color(0,0,0); self.set_font('Arial', '', 10.5)
         fill = False
         for k, v in list(sk.items())[1:6]:
             v_clean = str(v).split('.')[0]
@@ -823,17 +829,16 @@ class ResultPDF(FPDF):
             self.set_x(70); self.cell(40, 4, k, 1, 0, 'L', 1); self.cell(15, 4, v_clean, 1, 1, 'C', 1)
             fill = not fill
             
-        # REMARKS & COMMENTS (Width: 60mm)
         self.set_xy(135, curr_y)
-        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 8.5)
+        self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10.5)
         self.cell(60, 4.5, "HOUSE MASTER'S REPORT", 1, 1, 'L', 1)
-        self.set_text_color(0,0,0); self.set_x(135); self.set_font('Arial', '', 8.5); self.cell(60, 4.5, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
+        self.set_text_color(0,0,0); self.set_x(135); self.set_font('Arial', '', 10.5); self.cell(60, 4.5, f" {comm.get('House_Master_Report', 'Satisfactory')}", 1, 1, 'L')
         
-        self.ln(1); self.set_x(135); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 8.5)
+        self.ln(1); self.set_x(135); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10.5)
         self.cell(60, 4.5, "FORM MASTER'S COMMENT", 1, 1, 'L', 1)
-        self.set_text_color(0,0,0); self.set_x(135); self.set_font('Arial', '', 8.5); self.cell(60, 4.5, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
+        self.set_text_color(0,0,0); self.set_x(135); self.set_font('Arial', '', 10.5); self.cell(60, 4.5, f" {comm.get('Form_Master_Comment', 'Good performance.')}", 1, 1, 'L')
         
-        self.ln(1); self.set_x(135); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 8.5)
+        self.ln(1); self.set_x(135); self.set_fill_color(40, 70, 120); self.set_text_color(255,255,255); self.set_font('Arial', 'B', 10.5)
         self.cell(60, 4.5, "PRINCIPAL'S COMMENT", 1, 1, 'L', 1)
         self.set_text_color(0,0,0); self.set_x(135)
         avg = summary['avg']
@@ -841,10 +846,10 @@ class ResultPDF(FPDF):
             p_remark = "Outstanding performance." if avg >= 75 else "Average performance." if avg >= 50 else "Poor result."
         else:
             p_remark = "An Impressive performance!" if avg >= 75 else "A fair performance." if avg >= 50 else "Sit up."
-        self.set_font('Arial', 'I', 8.5); self.multi_cell(60, 4.5, f" {p_remark}", 1, 'L')
+        self.set_font('Arial', 'I', 10.5); self.multi_cell(60, 4.5, f" {p_remark}", 1, 'L')
         
         if "3rd" in str(term).lower():
-            self.ln(1); self.set_x(10); self.set_font('Arial', 'B', 9)
+            self.ln(1); self.set_x(10); self.set_font('Arial', 'B', 11)
             status = "PROMOTED TO NEXT CLASS" if avg >= 40 else "HELD BACK"
             self.set_fill_color(230, 245, 230) if avg >= 40 else self.set_fill_color(255, 230, 230)
             self.cell(115, 4.5, f"PROMOTION STATUS: {status}", 1, 1, 'C', 1)
@@ -853,19 +858,18 @@ class ResultPDF(FPDF):
         if os.path.exists(STAMP_PATH): self.image(STAMP_PATH, 140, sig_y - 2, 40) 
         if os.path.exists(SIG_PATH): self.image(SIG_PATH, 150, sig_y - 1, 20)
         self.set_x(135); self.cell(60, 0, '', 'T', 1, 'C')
-        self.set_x(135); self.set_font('Arial', 'B', 8.5); self.set_text_color(40,70,120); self.cell(60, 4, "Principal's Signature & Stamp", 0, 1, 'C')
+        self.set_x(135); self.set_font('Arial', 'B', 10.5); self.set_text_color(40,70,120); self.cell(60, 4, "Principal's Signature & Stamp", 0, 1, 'C')
 
-        # DYNAMIC NEXT TERM BEGINS BANNER
         next_term_date = str(summary.get('next_term_begins', '7TH SEPTEMBER, 2026')).strip().upper()
-        self.ln(2.5)
+        self.ln(2)
         self.set_x(10)
         self.set_fill_color(240, 242, 248)
         self.set_text_color(40, 70, 120)
-        self.set_font('Arial', 'B', 9)
-        self.cell(185, 5, f"NEXT TERM BEGINS: {next_term_date}", 1, 1, 'C', 1)
+        self.set_font('Arial', 'B', 11)
+        self.cell(185, 4.5, f"NEXT TERM BEGINS: {next_term_date}", 1, 1, 'C', 1)
 
     def draw_test_table(self, test_results):
-        f_size = 11
+        f_size = 12
         row_h = 8
         self.set_fill_color(40, 70, 120)
         self.set_text_color(255, 255, 255)
@@ -977,7 +981,7 @@ if page == "🎓 Result Portal":
                         student_name = str(student.get(name_col, 'Student')).upper()
                         term = student.get('Term', 'N/A')
                         
-                        sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment'])]
+                        sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment', 'data'])]
                         data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
 
                         def find_s(key):
@@ -1086,7 +1090,7 @@ if page == "🎓 Result Portal":
                             max_possible = 1000 if is_ss_class else 1700
                             
                             s_age = student.get('Age', student.get('AGE', 'N/A'))
-                            s_state = student.get('State_of_Origin', student.get('State', 'N/A'))
+                            s_state = student.get('State_of_Origin', student.get('State of Origin', student.get('State', student.get('Origin', 'N/A'))))
                             s_lga = student.get('LGA', student.get('L.G.A', 'N/A'))
                             next_term_date = student.get('Next_Term_Begins', student.get('Next Term Begins', student.get('Next Term', '7TH SEPTEMBER, 2026')))
 
@@ -1430,7 +1434,7 @@ elif page == "🛠️ Staff Management":
                                         active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
                                         
                                         s_age = data_tab_info.get('Age', data_tab_info.get('AGE', 'N/A'))
-                                        s_state = data_tab_info.get('State_of_Origin', data_tab_info.get('State', 'N/A'))
+                                        s_state = data_tab_info.get('State_of_Origin', data_tab_info.get('State of Origin', data_tab_info.get('State', data_tab_info.get('Origin', 'N/A'))))
                                         s_lga = data_tab_info.get('LGA', data_tab_info.get('L.G.A', 'N/A'))
                                         next_term_date = data_tab_info.get('Next_Term_Begins', data_tab_info.get('Next Term Begins', data_tab_info.get('Next Term', '7TH SEPTEMBER, 2026')))
 
