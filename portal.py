@@ -1531,12 +1531,141 @@ elif page == "🛠️ Staff Management":
 
             with col_notif:
                 st.markdown("#### 🔔 Parent Notifications")
-                test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com")
                 
-                if st.button("🧪 Send Test Email"):
-                    success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
-                    if success: st.success("✅ Test Email Sent!")
-                    else: st.error("❌ Email Failed.")
+                # --- TEST SECTION ---
+                st.markdown("##### 🧪 EMAIL TEST STATION")
+                test_email = st.text_input("Test Email Address", placeholder="yourname@gmail.com", key="test_email_input")
+                
+                test_col1, test_col2 = st.columns(2)
+                with test_col1:
+                    if st.button("🧪 Send Test Email (Text Only)"):
+                        if not test_email or "@" not in test_email:
+                            st.error("❌ Enter valid email!")
+                        else:
+                            success = send_email_notification(test_email, "Test Student", bulk_class, "RSC-TEST-001", "1234")
+                            if success: st.success("✅ Text Email Sent!")
+                            else: st.error("❌ Email Failed.")
+
+                with test_col2:
+                    if st.button("📄 SEND SAMPLE RESULT PDF TO MY MAIL"):
+                        if not test_email or "@" not in test_email:
+                            st.error("❌ Enter valid email!")
+                        else:
+                            f_path = f"Report {bulk_class}.xlsx"
+                            if os.path.exists(f_path):
+                                with st.spinner("Generating sample individual PDF and sending to your mail..."):
+                                    try:
+                                        xl = pd.ExcelFile(f_path)
+                                        sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment', 'data'])]
+                                        data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
+                                        
+                                        def find_s(key):
+                                            return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
+
+                                        sc_n = find_s('Scoresheet')
+                                        data_sheet_name = find_s('Data')
+
+                                        if sc_n and data_sheet_name:
+                                            df_sc_raw = data_sheets[sc_n]
+                                            header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                                            header_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
+                                            
+                                            subject_row = df_sc_raw.iloc[header_idx - 1]
+                                            label_row = df_sc_raw.iloc[header_idx] 
+                                            total_class_subjects = sum(1 for col_val in label_row if str(col_val).strip().lower() == 'total')
+
+                                            # Pick the first student in the class as a sample
+                                            sample_row_data = df_sc_raw.iloc[2]
+                                            adm_clean = str(sample_row_data.iloc[0]).split('.')[0].strip()
+                                            student_name = str(sample_row_data.iloc[1]).upper()
+
+                                            pdf = ResultPDF()
+                                            pdf.set_margins(left=10, top=10, right=10)
+                                            pdf.set_auto_page_break(auto=True, margin=10)
+                                            pdf.add_page()
+
+                                            processed_results = {}
+                                            total_marks = 0
+                                            for i, label in enumerate(label_row):
+                                                if str(label).strip().lower() == 'total':
+                                                    subject_name = "Unknown"
+                                                    for j in range(i, -1, -1):
+                                                        val = str(subject_row.iloc[j]).strip()
+                                                        if val.lower() != 'nan' and val != '':
+                                                            subject_name = val
+                                                            break
+                                                    try:
+                                                        ca = float(sample_row_data.iloc[i-2]) if pd.notna(sample_row_data.iloc[i-2]) else 0
+                                                        ex = float(sample_row_data.iloc[i-1]) if pd.notna(sample_row_data.iloc[i-1]) else 0
+                                                        tot = float(sample_row_data.iloc[i]) if pd.notna(sample_row_data.iloc[i]) else 0
+                                                        if subject_name != "Unknown":
+                                                            processed_results[subject_name] = {"CA": ca, "Exam": ex, "Total": tot}
+                                                            total_marks += tot
+                                                    except: continue
+
+                                            is_ss_class = "SS" in str(bulk_class).upper() and "JSS" not in str(bulk_class).upper()
+                                            if is_ss_class:
+                                                processed_results = dict(list(processed_results.items())[:10])
+                                                total_marks = sum(v['Total'] for v in processed_results.values())
+                                                curr_total_subjects = min(10, total_class_subjects)
+                                            else:
+                                                curr_total_subjects = total_class_subjects
+
+                                            def get_meta(key):
+                                                sh = find_s(key)
+                                                if not sh: return {}
+                                                df = data_sheets[sh].copy()
+                                                df.columns = [str(c).strip() for c in df.iloc[0]]
+                                                m = df[df.iloc[:,0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
+                                                return m.iloc[0].to_dict() if not m.empty else {}
+
+                                            bsheet_data = get_meta('Bsheet')
+                                            data_tab_info = get_meta('Data')
+                                            pos_val = str(bsheet_data.get('Position', '1st')).strip()
+                                            student_class = bsheet_data.get('Class', bulk_class)
+                                            raw_avg = bsheet_data.get('Average', (total_marks/max(1, len(processed_results))))
+                                            avg_val = round(float(raw_avg), 2)
+
+                                            max_possible = 1000 if is_ss_class else 1700
+                                            active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
+                                            
+                                            s_age = data_tab_info.get('Age', data_tab_info.get('AGE', '15'))
+                                            s_state = data_tab_info.get('State_of_Origin', data_tab_info.get('State of Origin', data_tab_info.get('State', data_tab_info.get('Origin', 'Borno'))))
+                                            s_lga = data_tab_info.get('LGA', data_tab_info.get('L.G.A', 'Maiduguri'))
+                                            next_term_date = data_tab_info.get('Next_Term_Begins', data_tab_info.get('Next Term Begins', data_tab_info.get('Next Term', '7TH SEPTEMBER, 2026')))
+
+                                            summary = {
+                                                'obtained': total_marks, 
+                                                'avg': avg_val, 
+                                                'pos': pos_val, 
+                                                'max_possible': max_possible,
+                                                'age': s_age,
+                                                'state': s_state,
+                                                'lga': s_lga,
+                                                'subs_offered': len(active_subs),
+                                                'subs_reg': curr_total_subjects,
+                                                'next_term_begins': next_term_date
+                                            }
+                                            
+                                            pdf.student_info_box(student_name, adm_clean, student_class, "3RD TERM", summary)
+                                            pdf.draw_scores_table(processed_results, student_class)
+                                            pdf.draw_transcript_summary(summary, "3RD TERM")
+                                            pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, student_class, "3RD TERM")
+                                            
+                                            pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
+                                            pdf_filename = f"{student_name.replace(' ', '_')}_Result.pdf"
+
+                                            if send_email_with_pdf_attachment(test_email, student_name, student_class, adm_clean, "1234", pdf_bytes, pdf_filename):
+                                                st.success(f"✅ Sample Result PDF sent to {test_email}!")
+                                                st.balloons()
+                                            else:
+                                                st.error("❌ Failed to send email.")
+                                        else:
+                                            st.error("❌ Required sheets not found.")
+                                    except Exception as e:
+                                        st.error(f"❌ Error: {e}")
+                            else:
+                                st.error("❌ Report file not found.")
 
                 st.markdown("---")
                 if st.button("📢 BLAST NOTIFY ALL PARENTS (TEXT ONLY)"):
@@ -1631,7 +1760,6 @@ elif page == "🛠️ Staff Management":
                                                 </div>
                                             """, unsafe_allow_html=True)
 
-                                            # Generate PDF for this student
                                             s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
                                             if s_row_data.empty:
                                                 continue
@@ -1715,7 +1843,6 @@ elif page == "🛠️ Staff Management":
                                             pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
                                             pdf_filename = f"{student_name.replace(' ', '_')}_Result.pdf"
 
-                                            # Send email with attachment
                                             if send_email_with_pdf_attachment(p_email, student_name, student_class, adm_clean, p_pass, pdf_bytes, pdf_filename):
                                                 success_emails += 1
 
