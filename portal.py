@@ -16,6 +16,7 @@ import plotly.graph_objects as go
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 import ast 
 import time
 import requests 
@@ -216,7 +217,7 @@ df = load_main_database()
 if 'portal_storage' not in st.session_state:
     st.session_state.portal_storage = load_portal_data()
     
-# --- STEP 5: EMAIL FUNCTION ---
+# --- STEP 5: EMAIL FUNCTIONS ---
 def send_email_notification(receiver_email, student_name, class_name, reg_number, access_key):
     sender_email = "sumilogics247@gmail.com"
     sender_password = "upsw jbon rhoy aiai" 
@@ -262,8 +263,58 @@ def send_email_notification(receiver_email, student_name, class_name, reg_number
         server.quit()
         return True
     except Exception as e:
-        st.error(f"❌ Mail Error: {e}")
         return False      
+
+def send_email_with_pdf_attachment(receiver_email, student_name, class_name, reg_number, access_key, pdf_bytes, filename):
+    sender_email = "sumilogics247@gmail.com"
+    sender_password = "upsw jbon rhoy aiai" 
+    portal_link = "https://rubyspringfield-college.streamlit.app/" 
+
+    message = MIMEMultipart()
+    message["From"] = f"Ruby Springfield College Admin <{sender_email}>"
+    message["To"] = receiver_email
+    message["Subject"] = f"OFFICIAL REPORT CARD: {student_name} - {class_name}"
+
+    body = f"""
+    <html>
+    <body>
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2 style="color: #1e3a8a;">Ruby Springfield College, Maiduguri</h2>
+            <p>Dear Parent/Guardian,</p>
+            <p>Please find attached the official termly academic performance report card for <strong>{student_name}</strong> in <strong>{class_name}</strong>.</p>
+            
+            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; border-left: 5px solid #2563eb;">
+                <h3 style="margin-top: 0;">Portal Access Credentials</h3>
+                <p style="margin-bottom: 5px;"><strong>Portal Link:</strong> <a href="{portal_link}">{portal_link}</a></p>
+                <p style="margin-bottom: 5px;"><strong>Admission Number:</strong> {reg_number}</p>
+                <p style="margin-top: 0;"><strong>Access Key/Password:</strong> {access_key}</p>
+            </div>
+
+            <p>You can also log in to the portal at any time using the credentials above to check history and updates.</p>
+            <br>
+            <p>Best Regards,</p>
+            <hr style="border: 0; border-top: 1px solid #ccc; width: 200px; margin-left: 0;">
+            <p><strong>School Management</strong><br>
+            Ruby Springfield College</p>
+        </div>
+    </body>
+    </html>
+    """
+    message.attach(MIMEText(body, "html"))
+
+    pdf_attachment = MIMEApplication(pdf_bytes, Name=filename)
+    pdf_attachment['Content-Disposition'] = f'attachment; filename="{filename}"'
+    message.attach(pdf_attachment)
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        return False
 
 # --- STEP 6: CONFIGURATION & DIRECTORIES ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -635,7 +686,6 @@ class ResultPDF(FPDF):
         subs_offered = str(summary.get('subs_offered', 10 if 'SS' in str(s_class).upper() else 17))
         subs_reg = str(summary.get('subs_reg', 10 if 'SS' in str(s_class).upper() else 17))
 
-        # SCALED UP FONT SIZES BY 2 (11pt / 10.5pt)
         self.set_font('Arial', 'B', 11)
         self.set_text_color(40, 70, 120)
         self.cell(30, 5, 'Name of student:', 0, 0)
@@ -680,7 +730,6 @@ class ResultPDF(FPDF):
         self.set_text_color(0, 0, 0)
         self.cell(84, 5, f" {subs_offered} / {subs_reg}", 'B', 1)
 
-        # RIGHT SUMMARY BOX SCALED UP
         if summary.get('avg') not in ["N/A", 0, "0", None]:
             self.set_xy(135, start_y)
             self.set_fill_color(240, 242, 248) 
@@ -1490,7 +1539,7 @@ elif page == "🛠️ Staff Management":
                     else: st.error("❌ Email Failed.")
 
                 st.markdown("---")
-                if st.button("📢 BLAST NOTIFY ALL PARENTS"):
+                if st.button("📢 BLAST NOTIFY ALL PARENTS (TEXT ONLY)"):
                     f_path = f"Report {bulk_class}.xlsx"
                     if os.path.exists(f_path):
                         with st.spinner(f"Reading {bulk_class} Data..."):
@@ -1501,7 +1550,7 @@ elif page == "🛠️ Staff Management":
                                     df_bulk = pd.read_excel(f_path, sheet_name=target_sheet)
                                     df_bulk.columns = [str(c).strip() for c in df_bulk.columns]
                                     
-                                    st.info(f"🚀 Found {len(df_bulk)} parents. Starting blast...")
+                                    st.info(f"🚀 Found {len(df_bulk)} parents. Starting text blast...")
                                     p_bar = st.progress(0)
                                     success_count = 0
                                     for i, row in df_bulk.iterrows():
@@ -1517,9 +1566,168 @@ elif page == "🛠️ Staff Management":
                                                     success_count += 1
                                         except: pass
                                         p_bar.progress((i + 1) / len(df_bulk))
-                                    st.success(f"🏁 Blast complete! {success_count} emails sent.")
+                                    st.success(f"🏁 Text blast complete! {success_count} emails sent.")
                                 else: st.error("❌ Sheet 'Data' not found.")
-                            except Exception as e: st.error(f"❌ Error during blast: {e}")
+                            except Exception as e: st.error(f"❌ Error during text blast: {e}")
+                    else:
+                        st.error("❌ File not found.")
+
+                st.markdown("---")
+                if st.button("📧 BLAST EXACT RESULT PDFs TO ALL PARENTS"):
+                    f_path = f"Report {bulk_class}.xlsx"
+                    if os.path.exists(f_path):
+                        with st.spinner(f"Reading {bulk_class} data and compiling individual PDFs for email blast..."):
+                            try:
+                                xl = pd.ExcelFile(f_path)
+                                sheets_to_load = [s for s in xl.sheet_names if any(k in s.lower() for k in ['bsheet', 'scoresheet', 'behaviour', 'skill', 'comment', 'data'])]
+                                data_sheets = {s: xl.parse(s, header=None) for s in sheets_to_load}
+                                
+                                def find_s(key):
+                                    return next((s for s in data_sheets.keys() if key.lower() in s.lower()), None)
+
+                                sc_n = find_s('Scoresheet')
+                                data_sheet_name = find_s('Data')
+
+                                if not sc_n or not data_sheet_name:
+                                    st.error("❌ Required sheets ('Scoresheet' or 'Data') not found in the spreadsheet.")
+                                else:
+                                    df_data_raw = data_sheets[data_sheet_name].copy()
+                                    df_data_raw.columns = [str(c).strip() for c in df_data_raw.iloc[0]]
+                                    df_data_students = df_data_raw[1:]
+
+                                    df_sc_raw = data_sheets[sc_n]
+                                    header_mask = df_sc_raw.apply(lambda row: row.astype(str).str.contains('Total', case=False).any(), axis=1)
+                                    header_idx = df_sc_raw[header_mask].index[0] if any(header_mask) else 1
+                                    
+                                    subject_row = df_sc_raw.iloc[header_idx - 1]
+                                    label_row = df_sc_raw.iloc[header_idx] 
+                                    total_class_subjects = sum(1 for col_val in label_row if str(col_val).strip().lower() == 'total')
+
+                                    status_window = st.empty()
+                                    p_bar = st.progress(0)
+                                    success_emails = 0
+                                    total_students_count = len(df_data_students)
+
+                                    for index, (_, student_row) in enumerate(df_data_students.iterrows()):
+                                        try:
+                                            cols_d = df_data_students.columns.tolist()
+                                            adm_col = next((c for c in cols_d if "admission" in c.lower()), "Admission_No")
+                                            pwd_col = next((c for c in cols_d if "pass" in c.lower() or "key" in c.lower()), "Password")
+                                            name_col = next((c for c in cols_d if "name" in c.lower()), "Name")
+                                            email_col = next((c for c in cols_d if "email" in c.lower()), "Email")
+
+                                            adm_clean = str(student_row.get(adm_col, '')).split('.')[0].strip()
+                                            student_name = str(student_row.get(name_col, 'Student')).upper()
+                                            p_email = str(student_row.get(email_col, '')).strip()
+                                            p_pass = str(student_row.get(pwd_col, '')).split('.')[0].strip()
+
+                                            if not adm_clean or "@" not in p_email:
+                                                continue
+
+                                            status_window.markdown(f"""
+                                                <div style="padding:10px; border-radius:8px; background-color:#eff6ff; border-left: 4px solid #2563eb;">
+                                                    <span style="color:#1e3a8a; font-weight:bold; font-size:11px;">EMAILING RESULT PDF... ({index+1}/{total_students_count})</span><br>
+                                                    <span style="font-size:15px; color:#333;"><b>{student_name}</b> &rarr; {p_email}</span>
+                                                </div>
+                                            """, unsafe_allow_html=True)
+
+                                            # Generate PDF for this student
+                                            s_row_data = df_sc_raw[df_sc_raw.iloc[:, 0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
+                                            if s_row_data.empty:
+                                                continue
+                                            
+                                            student_vals = s_row_data.iloc[0]
+
+                                            pdf = ResultPDF()
+                                            pdf.set_margins(left=10, top=10, right=10)
+                                            pdf.set_auto_page_break(auto=True, margin=10)
+                                            pdf.add_page()
+
+                                            processed_results = {}
+                                            total_marks = 0
+                                            for i, label in enumerate(label_row):
+                                                if str(label).strip().lower() == 'total':
+                                                    subject_name = "Unknown"
+                                                    for j in range(i, -1, -1):
+                                                        val = str(subject_row.iloc[j]).strip()
+                                                        if val.lower() != 'nan' and val != '':
+                                                            subject_name = val
+                                                            break
+                                                    try:
+                                                        ca = float(student_vals.iloc[i-2]) if pd.notna(student_vals.iloc[i-2]) else 0
+                                                        ex = float(student_vals.iloc[i-1]) if pd.notna(student_vals.iloc[i-1]) else 0
+                                                        tot = float(student_vals.iloc[i]) if pd.notna(student_vals.iloc[i]) else 0
+                                                        if subject_name != "Unknown":
+                                                            processed_results[subject_name] = {"CA": ca, "Exam": ex, "Total": tot}
+                                                            total_marks += tot
+                                                    except: continue
+
+                                            is_ss_class = "SS" in str(bulk_class).upper() and "JSS" not in str(bulk_class).upper()
+                                            if is_ss_class:
+                                                processed_results = dict(list(processed_results.items())[:10])
+                                                total_marks = sum(v['Total'] for v in processed_results.values())
+                                                curr_total_subjects = min(10, total_class_subjects)
+                                            else:
+                                                curr_total_subjects = total_class_subjects
+
+                                            def get_meta(key):
+                                                sh = find_s(key)
+                                                if not sh: return {}
+                                                df = data_sheets[sh].copy()
+                                                df.columns = [str(c).strip() for c in df.iloc[0]]
+                                                m = df[df.iloc[:,0].astype(str).str.strip().str.replace('.0', '', regex=False) == adm_clean]
+                                                return m.iloc[0].to_dict() if not m.empty else {}
+
+                                            bsheet_data = get_meta('Bsheet')
+                                            data_tab_info = get_meta('Data')
+                                            pos_val = str(bsheet_data.get('Position', 'N/A')).strip()
+                                            
+                                            student_class = bsheet_data.get('Class', bulk_class)
+                                            raw_avg = bsheet_data.get('Average', (total_marks/max(1, len(processed_results))))
+                                            avg_val = round(float(raw_avg), 2)
+
+                                            max_possible = 1000 if is_ss_class else 1700
+                                            active_subs = [v for k, v in processed_results.items() if v['Total'] > 0]
+                                            
+                                            s_age = data_tab_info.get('Age', data_tab_info.get('AGE', 'N/A'))
+                                            s_state = data_tab_info.get('State_of_Origin', data_tab_info.get('State of Origin', data_tab_info.get('State', data_tab_info.get('Origin', 'N/A'))))
+                                            s_lga = data_tab_info.get('LGA', data_tab_info.get('L.G.A', 'N/A'))
+                                            next_term_date = data_tab_info.get('Next_Term_Begins', data_tab_info.get('Next Term Begins', data_tab_info.get('Next Term', '7TH SEPTEMBER, 2026')))
+
+                                            summary = {
+                                                'obtained': total_marks, 
+                                                'avg': avg_val, 
+                                                'pos': pos_val, 
+                                                'max_possible': max_possible,
+                                                'age': s_age,
+                                                'state': s_state,
+                                                'lga': s_lga,
+                                                'subs_offered': len(active_subs),
+                                                'subs_reg': curr_total_subjects,
+                                                'next_term_begins': next_term_date
+                                            }
+                                            
+                                            pdf.student_info_box(student_name, adm_clean, student_class, "3RD TERM", summary)
+                                            pdf.draw_scores_table(processed_results, student_class)
+                                            pdf.draw_transcript_summary(summary, "3RD TERM")
+                                            pdf.draw_footer_sections(get_meta('Behaviour'), get_meta('Skill'), get_meta('Comment'), summary, student_class, "3RD TERM")
+                                            
+                                            pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='replace')
+                                            pdf_filename = f"{student_name.replace(' ', '_')}_Result.pdf"
+
+                                            # Send email with attachment
+                                            if send_email_with_pdf_attachment(p_email, student_name, student_class, adm_clean, p_pass, pdf_bytes, pdf_filename):
+                                                success_emails += 1
+
+                                        except Exception as e:
+                                            pass
+
+                                        p_bar.progress((index + 1) / total_students_count)
+
+                                    status_window.success(f"🏁 PDF Email Blast Complete! Successfully emailed {success_emails} report cards to parents.")
+                                    st.balloons()
+                            except Exception as e:
+                                st.error(f"❌ Error during PDF email blast: {e}")
                     else:
                         st.error("❌ File not found.")
 
