@@ -1987,19 +1987,42 @@ elif page == "🛠️ Staff Management":
             else:
                 st.info("No notices found to delete.")
 
-        # --- 5TH UPDATE ADDITION: NEWSLETTER & NOTICE EMAIL BLAST ---
+        # --- NEWSLETTER & NOTICE EMAIL BLAST & TEST STATION ---
         st.markdown("---")
         st.subheader("📧 Broadcast Newsletter / Notice PDF to Parents")
-        st.info("Select any pinned notice or newsletter PDF below and blast it to parents in a chosen class or all classes.")
+        st.info("Select any pinned notice or newsletter PDF below and test or blast it to parents.")
 
         notice_dir = os.path.abspath("notices")
         if os.path.exists(notice_dir):
             pdf_notices = [f for f in os.listdir(notice_dir) if f.endswith('.pdf')]
             if pdf_notices:
-                selected_notice_file = st.selectbox("Select Notice / Newsletter PDF to Send", pdf_notices)
+                selected_notice_file = st.selectbox("Select Notice / Newsletter PDF", pdf_notices)
+                
+                # --- TEST SECTION FOR NEWSLETTER ---
+                st.markdown("##### 🧪 TEST NEWSLETTER EMAIL")
+                test_newsletter_email = st.text_input("Enter Test Email Address for Newsletter", placeholder="yourname@gmail.com", key="test_newsletter_email_input")
+                if st.button("🧪 SEND TEST NEWSLETTER TO MY MAIL"):
+                    if not test_newsletter_email or "@" not in test_newsletter_email:
+                        st.error("❌ Please enter a valid test email address!")
+                    else:
+                        notice_path = os.path.join(notice_dir, selected_notice_file)
+                        if os.path.exists(notice_path):
+                            with open(notice_path, "rb") as nf:
+                                notice_bytes = nf.read()
+                            clean_notice_title = selected_notice_file.replace("notice_", "").replace(".pdf", "").replace("_", " ").upper()
+                            
+                            if send_newsletter_email(test_newsletter_email, clean_notice_title, notice_bytes, selected_notice_file):
+                                st.success(f"✅ Test newsletter sent successfully to {test_newsletter_email}!")
+                                st.balloons()
+                            else:
+                                st.error("❌ Failed to send test newsletter.")
+                        else:
+                            st.error("❌ Notice PDF file not found.")
+
+                st.markdown("---")
                 newsletter_target_class = st.selectbox("Select Target Class for Newsletter Blast", get_available_classes(), key="newsletter_class_select")
 
-                if st.button("🚀 BLAST NEWSLETTER PDF TO PARENTS"):
+                if st.button("🚀 BLAST NEWSLETTER PDF TO ALL PARENTS"):
                     target_file = f"Report {newsletter_target_class}.xlsx"
                     if os.path.exists(target_file):
                         with st.spinner(f"Broadcasting newsletter to parents in {newsletter_target_class}..."):
