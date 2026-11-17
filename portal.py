@@ -385,7 +385,7 @@ SIG_PATH = os.path.join(BASE_DIR, "signature.png")
 STAMP_PATH = os.path.join(BASE_DIR, "Stamp.jpg") 
 
 STAFF_MASTER_KEY = "MGTRSC2026" 
-SECRET_EXPORT_KEY = "MANGO@48"
+SECRET_EXPORT_KEY = "MANGO@048"
 EXAM_OFFICE_KEY = "EXAM2026"
 CONTENT_EDITOR_KEY = "MEDIA2026"
 
@@ -1266,7 +1266,7 @@ elif page == "🛠️ Staff Management":
 
     if master_auth == SECRET_EXPORT_KEY:
         log_activity("Admin", "Secret Export Access", "MANGO@48 unlocked live database download panel")
-        st.success("🔓 Secret Database Export Key Authenticated (MANGO@48).")
+        st.success("🔓 Secret Database Export Key Authenticated (MANGO@048).")
         st.markdown("### 🗄️ Secret Live Databases Export Panel")
         st.info("Download all live class report databases (`Report *.xlsx`) currently in the system.")
 
