@@ -385,6 +385,7 @@ SIG_PATH = os.path.join(BASE_DIR, "signature.png")
 STAMP_PATH = os.path.join(BASE_DIR, "Stamp.jpg") 
 
 STAFF_MASTER_KEY = "MGTRSC2026" 
+SECRET_EXPORT_KEY = "MANGO@48"
 EXAM_OFFICE_KEY = "EXAM2026"
 CONTENT_EDITOR_KEY = "MEDIA2026"
 
@@ -406,6 +407,16 @@ def get_available_classes():
         if class_name:
             classes.append(class_name)
     return sorted(list(set(classes))) if classes else ["JSS 1A", "SS 1A"]
+
+def build_all_reports_zip():
+    live_files = sorted(glob.glob("Report *.xlsx"))
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for file_path in live_files:
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    zf.writestr(os.path.basename(file_path), f.read())
+    return zip_buffer.getvalue(), live_files
 
 def show_analytics(selected_class):
     file_path = f"Report {selected_class}.xlsx"
@@ -1252,6 +1263,36 @@ elif page == "🛠️ Staff Management":
     if not master_auth:
         st.info("👋 Welcome. Please enter the Master Key in the sidebar to access the console.")
         st.stop() 
+
+    if master_auth == SECRET_EXPORT_KEY:
+        log_activity("Admin", "Secret Export Access", "MANGO@48 unlocked live database download panel")
+        st.success("🔓 Secret Database Export Key Authenticated (MANGO@48).")
+        st.markdown("### 🗄️ Secret Live Databases Export Panel")
+        st.info("Download all live class report databases (`Report *.xlsx`) currently in the system.")
+
+        zip_data, available_reports = build_all_reports_zip()
+        if available_reports:
+            st.download_button(
+                label=f"📦 DOWNLOAD ALL LIVE DATABASES ({len(available_reports)} Files - ZIP)",
+                data=zip_data,
+                file_name=f"All_Live_Databases_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+                mime="application/zip",
+                use_container_width=True
+            )
+            st.markdown("#### Individual Report Files in 📂 Live Databases:")
+            for idx, rep_file in enumerate(available_reports):
+                with open(rep_file, "rb") as rf:
+                    st.download_button(
+                        label=f"📥 Download {rep_file}",
+                        data=rf.read(),
+                        file_name=os.path.basename(rep_file),
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"secret_dl_{idx}_{rep_file}",
+                        use_container_width=True
+                    )
+        else:
+            st.warning("No `Report *.xlsx` files found in 📂 Live Databases.")
+        st.stop()
 
     if master_auth != STAFF_MASTER_KEY:
         log_activity("Unauthorized", "Login Attempt", "Failed Master Key entry")
